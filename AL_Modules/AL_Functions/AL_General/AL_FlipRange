@@ -1,0 +1,25 @@
+Sub AL_FlipRange(ByVal InputRange As Range, Optional ByVal FlipDirection As Boolean = False)
+
+    Dim FlippedRange As Range
+    Dim LastColumn As Long
+    Dim LastRow As Long
+    Dim i As Long, j As Long
+
+    Set FlippedRange = Range(ActiveCell, ActiveCell.Offset(InputRange.Rows.Count, InputRange.Columns.Count))
+    LastColumn = InputRange.Columns.Count
+    LastRow = InputRange.Rows.Count
+    If FlipDirection = True Then
+            For i = 0 To LastRow
+                For j = 0 To LastColumn
+                    FlippedRange.Cells(i, j + 1).Formula = InputRange.Cells(i, LastColumn - j).Formula
+                Next
+            Next
+        Else
+            For i = 0 To LastColumn
+                For j = 0 To LastRow
+                    FlippedRange.Cells(j, i + 1).Formula = InputRange.Cells(LastRow + 1 - j, i + 1).Formula
+                Next
+            Next
+    End If
+    
+End Sub

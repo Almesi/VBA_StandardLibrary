@@ -1,0 +1,10 @@
+Function AL_ArrayInArrayInteger(ByRef Array1() As Integer, ByVal SearchValue As Integer) As Boolean
+
+    For I = 0 To UBound(Array1)
+        If Array1(I) = SearchValue Then
+            AL_ArrayInArrayInteger = True
+            Exit Function
+        End If
+    Next
+
+End Function

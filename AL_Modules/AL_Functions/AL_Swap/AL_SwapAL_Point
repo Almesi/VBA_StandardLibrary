@@ -1,0 +1,8 @@
+Sub AL_SwapAL_Point(ByRef AL_Point1 As AL_Point, ByRef AL_Point2 As AL_Point)
+
+    Dim Temp As AL_Point
+    Temp = AL_Point1
+    AL_Point1 = AL_Point2
+    AL_Point2 = Temp
+
+End Sub

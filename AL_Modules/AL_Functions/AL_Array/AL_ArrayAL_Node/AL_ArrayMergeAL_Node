@@ -1,0 +1,18 @@
+Function AL_ArrayMergeAL_Node(ByRef Array1() As AL_Node, ByRef Array2() As AL_Node) As AL_Node()
+
+    Dim Array1Length As Long
+    Dim Array2Length As Long
+    Dim TempArray() As New AL_Node
+
+    Array1Length = UBound(Array1)
+    Array2Length = UBound(Array2)
+    ReDim TempArray(Array1Length + Array2Length + 1)
+    For i = 0 To Array1Length
+        Set TempArray(i) = Array1(i)
+    Next
+    For j = 0 To Array2Length
+        Set TempArray(i + j + 1) = Array2(j)
+    Next
+    Set AL_ArrayMergeAL_Node = TempArray
+
+End Function

@@ -1,0 +1,30 @@
+Function AL_CheckSheet(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
+
+    ' InstanceExistence = True exists and throws error
+    ' InstanceExistence = False doesnt exist and throws error
+    Dim ws As Worksheet
+
+    For Each ws In Worksheets
+        If InstanceExistence = True Then
+                If ws.Name = InstanceName Then
+                    AL_ErrorPrint 3, 1, InstanceName
+                    AL_ErrorShow 3, 1, InstanceName
+                    AL_CheckSheet = False
+                    Exit Function
+                End If
+            Else
+                If ws.Name = InstanceName Then
+                    AL_CheckSheet = True
+                    Exit Function
+                End If
+        End If
+    Next ws
+    If InstanceExistence = True Then
+        AL_CheckSheet = True
+        Exit Function
+    End If
+    AL_ErrorPrint 3, 2, InstanceName
+    AL_ErrorShow 3, 2, InstanceName
+    AL_CheckSheet = False
+
+End Function

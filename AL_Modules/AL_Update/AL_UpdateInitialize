@@ -1,0 +1,18 @@
+    Public AL_UpdateInitialization As Boolean
+    Public AL_Update_Sheet As Worksheet
+    Public AL_Update_Range As Range
+    Public AL_UpdateLib_Range As Range
+    
+Sub AL_UpdateInitialize()
+
+    If AL_UpdateInitialization <> True Then
+        For Each ws In Worksheets
+            If ws.Name = "Update" Then
+                    Set AL_Update_Sheet = ThisWorkbook.Sheets("Update")
+                    Set AL_Update_Range = AL_Update_Sheet.Range("A2")
+                    AL_UpdateInitialization = True
+            End If
+        Next ws
+    End If
+
+End Sub

@@ -1,0 +1,35 @@
+Sub AL_UpdateDelete(ByVal InstanceName As String, FunctionName As String)
+
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
+    Dim CodeMod As VBIDE.CodeModule
+    Dim StartLine As Long
+    Dim EndLine As Long
+    Dim Index As Long
+    Dim FileLine As String
+    Dim FoundStart As Boolean
+
+    If AL_CheckString(FunctionName, 0) = True Then
+        Set VBProj = ThisWorkbook.VBProject
+        If AL_CheckInstance(InstanceName, False) = True Then
+            Set VBComp = VBProj.VBComponents(InstanceName)
+            Set CodeMod = VBComp.CodeModule
+            
+            ' Deletes a Function from declaration to End
+            For Index = 1 To CodeMod.CountOfLines
+                If CodeMod.Lines(Index, 1) Like "*" & FunctionName & "*" Then
+                    StartLine = Index
+                    FoundStart = True
+                End If
+                If CodeMod.Lines(Index, 1) = "End Function" Or CodeMod.Lines(Index, 1) = "End Sub" And FoundStart = True Then
+                    EndLine = Index
+                    Exit For
+                End If
+            Next Index
+            If AL_CheckLong(StartLine) = True And AL_CheckLong(EndLine) = True Then
+                CodeMod.DeleteLines StartLine, EndLine - StartLine + 1
+            End If
+        End If
+    End If
+
+End Sub

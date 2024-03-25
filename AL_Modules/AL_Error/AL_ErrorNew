@@ -1,0 +1,16 @@
+Sub AL_ErrorNew(ByVal ErrorCategory As Integer, ByVal ErrorMessage As String)
+
+    Dim Distance As Integer
+    Dim i As Integer
+
+    Distance = ((ErrorCategory * 5) - 5)
+
+    Do Until AL_ErrorLib_Range.Offset(i, Distance + 1).Formula = ""
+        i = i + 1
+    Loop
+    AL_ErrorLib_Range.Offset(i, Distance + 1).Value = ErrorCategory
+    AL_ErrorLib_Range.Offset(i, Distance + 2).Formula = AL_ErrorGetCategory(ErrorCategory)
+    AL_ErrorLib_Range.Offset(i, Distance + 3).Value = i
+    AL_ErrorLib_Range.Offset(i, Distance + 4).Formula = ErrorMessage
+
+End Sub

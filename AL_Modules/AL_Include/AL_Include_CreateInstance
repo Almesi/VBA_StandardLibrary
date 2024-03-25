@@ -1,0 +1,17 @@
+' Creates an Instance (Module, Class, Userform)
+Sub AL_Include_CreateInstance(ByVal InstanceType, ByVal InstanceName As String)
+
+    Select Case InstanceType
+        Case 1, 2, 3, 11, 100:
+            Dim vbProj As VBIDE.VBProject
+            Dim vbComp As VBIDE.VBComponent
+
+            Set vbProj = ThisWorkbook.VBProject
+            Set vbComp = vbProj.VBComponents.Add(InstanceType)
+            vbComp.Name = InstanceName
+        Case Else
+            AL_ErrorShow 1, 2, InstanceType, InstanceName
+            Exit Sub
+    End Select
+
+End Sub

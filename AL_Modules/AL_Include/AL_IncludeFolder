@@ -1,0 +1,66 @@
+' Loops through Folders (Create Module per folder)
+' Loop through Files and adds Code to Module
+Sub AL_IncludeFolder(ByVal FolderPath As String)
+
+    Dim fso As Object
+    Dim Folder As Object
+    Dim SubFolder As Object
+    Dim File As Object
+    Dim InstanceName As String
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
+    Dim VBCodeModule As VBIDE.CodeModule
+    
+    ' Create a FileSystemObject
+    If FolderPath = "" Then
+        AL_ErrorPrint 1, 3, FolderPath
+        AL_ErrorShow 1, 3, FolderPath
+        Exit Sub
+    End If
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    
+    ' Get the Folder object
+    Set Folder = fso.GetFolder(FolderPath)
+    
+    ' Checks if Instance already exists
+    InstanceName = fso.GetBaseName(FolderPath)
+    Set VBProj = ThisWorkbook.VBProject
+    For Each VBComp In VBProj.VBComponents
+        If VBComp.Name = InstanceName Then
+                AL_ErrorPrint 2, 3, InstanceName
+                AL_ErrorShow 2, 3, InstanceName
+                Exit Sub
+        End If
+    Next VBComp
+
+    ' Check if dependencies are included
+    For Each File In Folder.Files
+        If File.Path Like "*Dependencies" Then
+                If AL_CheckDependencies(File.Path) = True Then
+                        Exit Sub
+                End If
+        End If
+    Next File
+
+    ' Create an Instance (Module, Class, Userform)
+    AL_Include_CreateInstance 1, InstanceName
+    
+    Set VBComp = VBProj.VBComponents(InstanceName)
+    Set VBCodeModule = VBComp.CodeModule
+
+
+    ' Loop through each File in the Folder
+    For Each File In Folder.Files
+        If File.Path Like "*Dependencies" Or File.Path Like "*README" Then
+            Else
+                AL_Include_AddCode VBCodeModule, File.Path
+        End If
+    Next File
+    
+    ' Recursively loop through each SubFolder
+    For Each SubFolder In Folder.SubFolders
+        AL_Include SubFolder.Path
+    Next SubFolder
+    
+End Sub

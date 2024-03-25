@@ -1,0 +1,8 @@
+Sub AL_SwapInt(ByRef Int1 As Integer, ByRef Int2 As Integer)
+
+    Dim Temp As Integer
+    Temp = Int1
+    Int1 = Int2
+    Int2 = Temp
+
+End Sub

@@ -1,0 +1,12 @@
+Sub AL_ArraySpliceAL_Node(ByRef Array1() As AL_Node, ByVal SpliceValue As AL_Node, ByVal Splice As Long)
+
+    Dim Array1Length As Long
+
+    Array1Length = UBound(Array1)
+    ReDim Preserve Array1(Array1Length)
+    For i = Array1Length To SpliceValue + 1 Step-1
+        Set Array1(i) = Array1(i - 1)
+    Next
+    Set Array1(SpliceValue) = Splice
+
+End Sub

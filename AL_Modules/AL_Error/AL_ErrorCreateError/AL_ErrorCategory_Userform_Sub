@@ -1,0 +1,16 @@
+Sub AL_ErrorCategory_Userform_Sub()
+    Dim Distance As Integer
+
+    Distance = 35
+
+    AL_ErrorLib_Range.Offset(0, Distance + 0).Formula = "Error Category Index"
+    AL_ErrorLib_Range.Offset(0, Distance + 1).Formula = "Error Category"
+    AL_ErrorLib_Range.Offset(0, Distance + 2).Formula = "Error Type"
+    AL_ErrorLib_Range.Offset(0, Distance + 3).Formula = "Error Message"
+
+    AL_ErrorLib_Range.Offset(1, Distance + 0).Value = AL_ErrorCategory_Userform
+    AL_ErrorLib_Range.Offset(1, Distance + 1).Formula = "Userform"
+    AL_ErrorLib_Range.Offset(1, Distance + 2).Value = 1
+    AL_ErrorLib_Range.Offset(1, Distance + 3).Formula = "PLACEHOLDER"
+
+End Sub

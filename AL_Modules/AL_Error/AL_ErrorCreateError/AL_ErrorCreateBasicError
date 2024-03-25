@@ -1,0 +1,12 @@
+Sub AL_ErrorCreateBasicError()
+
+    AL_ErrorCategory_System_Sub
+    AL_ErrorCategory_Workbook_Sub
+    AL_ErrorCategory_Worksheet_Sub
+    AL_ErrorCategory_Linker_Sub
+    AL_ErrorCategory_Compiler_Sub
+    AL_ErrorCategory_Module_Sub
+    AL_ErrorCategory_Class_Sub
+    AL_ErrorCategory_Userform_Sub
+
+End Sub

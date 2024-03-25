@@ -1,0 +1,25 @@
+' ErrorCategory describes where the error comes from (Linker, Compiler, Module etc)
+' ErrorType describes what error it is
+' ErrorValue describes what caused the Error
+Sub AL_ErrorShow(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, ByVal Optional ErrorValue2 As Variant = 0)
+
+    AL_ErrorInitialize
+    Dim ErrorCategoryString As String
+    Dim ErrorMessage As String
+    Dim ErrorString1 As String
+    Dim ErrorString2 As String
+    If ErrorValue1 = 0 Then
+                ErrorString1 = "No_Error"
+            Else
+                ErrorString1 = ErrorValue1
+        End If
+        If ErrorValue2 = 0 Then
+                ErrorString2 = "No_Error"
+            Else
+                ErrorString2 = ErrorValue2
+        End If
+    ErrorCategoryString = AL_ErrorGetCategory(ErrorCategory)
+    ErrorMessage = "( " & ErrorCategory & " ): ( " & ErrorCategoryString & " ) / ( " & ErrorType & " ): ( " & (AL_ErrorLib_Range.Offset(ErrorType, 3 + (ErrorCategory * 5 - 5)).Formula) & " ) / ( " & ErrorValue1 & " ) ( " & ErrorValue2 & " )"
+    MsgBox(ErrorMessage)
+
+End Sub

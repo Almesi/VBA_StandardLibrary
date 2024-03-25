@@ -1,0 +1,15 @@
+Function AL_CheckString(ByVal Text As String, ByVal CheckType As Integer) As Boolean
+
+    Select Case CheckType
+        Case 0
+            If Text = "" Then
+                AL_CheckString = False
+                AL_ErrorPrint 1, 4, InstanceName
+                AL_ErrorShow 1, 4, InstanceName
+                Exit Function
+            End If
+
+    End Select
+    AL_CheckString = True
+
+End Function

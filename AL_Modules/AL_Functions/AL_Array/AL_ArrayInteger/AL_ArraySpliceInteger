@@ -1,0 +1,12 @@
+Sub AL_ArraySpliceInteger(ByRef Array1() As Integer, ByVal SpliceValue As Integer, ByVal Splice As Long)
+
+    Dim Array1Length As Long
+
+    Array1Length = UBound(Array1)
+    ReDim Preserve Array1(Array1Length)
+    For i = Array1Length To SpliceValue + 1 Step-1
+        Array1(i) = Array1(i - 1)
+    Next
+    Array1(SpliceValue) = Splice
+
+End Sub

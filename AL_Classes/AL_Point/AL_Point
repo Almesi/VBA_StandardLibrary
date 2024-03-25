@@ -1,0 +1,30 @@
+' Class module: AL_Point
+' Describes a Point in 3D-Space
+
+Private p_X As Integer
+Private p_Y As Integer
+Private p_Z As Integer
+
+Public Property Let X(ByVal Value As Integer)
+    p_X = Value
+End Property
+
+Public Property Get X() As Integer
+    X = p_X
+End Property
+
+Public Property Let Y(ByVal Value As Integer)
+    p_Y = Value
+End Property
+
+Public Property Get Y() As Integer
+    Y = p_Y
+End Property
+
+Public Property Let Z(ByVal Value As Integer)
+    p_Z = Value
+End Property
+
+Public Property Get Z() As Integer
+    Z = p_Z
+End Property

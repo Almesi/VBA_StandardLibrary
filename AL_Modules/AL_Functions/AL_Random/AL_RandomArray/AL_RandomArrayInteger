@@ -1,0 +1,34 @@
+Sub AL_RandomArrayInteger(ByRef Array1() As Integer, Optional ByVal Seed As Long = 0, Optional ByVal UpperLimit As Integer = 0, Optional ByVal LowerLimit As Integer = 0, Optional ByVal Unique As Boolean = False)
+    
+    Dim Temp As Integer
+
+    ' Check for devault cases
+    If Seed = 0 Then
+        Dim Seconds As New AL_Date
+        Seed = Seconds.AbsoluteSecond
+    End If
+    Randomize Seed
+    If UpperLimit = 0 Then
+        UpperLimit = 32.767
+    End If
+    If LowerLimit = 0 Then
+        LowerLimit = -32.767
+    End If
+
+    ' Check if it should only contain unique Values and also check if there is enough room in the Array to save all unique Values inbetween the limits
+    If Unique = True And UpperLimit - LowerLimit > UBound(Array1) Then
+            For i = 0 To UBound(Array1)
+                Temp = Int((UpperLimit - LowerLimit + 1) * Rnd + LowerLimit)
+                If AL_ArrayInArrayInteger(Array1, Temp) = True Then
+                        i = i - 1
+                    Else
+                        Array1(i) = Temp
+                End If
+            Next
+        Else
+            For i = 0 To UBound(Array1)
+                Array1(i) = Int((UpperLimit - LowerLimit + 1) * Rnd + LowerLimit)
+            Next
+    End If
+
+End Sub

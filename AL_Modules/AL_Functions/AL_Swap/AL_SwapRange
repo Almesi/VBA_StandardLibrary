@@ -1,0 +1,8 @@
+Sub AL_SwapRange(ByRef Range1 As Range, ByRef Range2 As Range)
+
+    Dim Temp As Range
+    Set Temp = Range1
+    Set Range1 = Range2
+    Set Range2 = Temp
+
+End Sub

@@ -1,0 +1,203 @@
+' Class module: AL_Window
+' Describes a Range of Cells as Interface/Window
+
+Private p_WindowPosition As Range
+Private p_Length As Integer
+Private p_Width As Integer
+Private p_Depth As Integer
+Private p_UpperBound As Integer
+Private p_LowerBound As Integer
+Private p_LeftBound As Integer
+Private p_RightBound As Integer
+Private p_Center As AL_Point
+Private p_NormalLength As Float
+Private p_NormalWidth As Float
+Private p_NormalDepth As Float
+Private p_Window As Range
+Private p_WindowObjects(1024) As Range
+
+Public Property Let WindowPosition(ByVal Value As Range)
+    Set p_WindowPosition = Value
+End Property
+
+Public Property Get WindowPosition() As Range
+    Set WindowPosition = p_WindowPosition
+End Property
+    
+Public Property Let Length(ByVal Value As Integer)
+    p_Length = Value
+End Property
+
+Public Property Get Length() As Integer
+    Length = p_Length
+End Property
+
+Public Property Let Width(ByVal Value As Integer)
+    p_Depth = Value
+End Property
+
+Public Property Get Width() As Integer
+    Width = p_Width
+End Property
+
+Public Property Let Depth(ByVal Value As Integer)
+    p_Depth = Value
+End Property
+
+Public Property Get Depth() As Integer
+    Depth = p_Depth
+End Property
+
+Public Property Let UpperBound(ByVal Value As Integer)
+    p_UpperBound = Value
+End Property
+    
+Public Property Get UpperBound() As Integer
+    UpperBound = p_UpperBound
+End Property
+    
+Public Property Let LowerBound(ByVal Value As Integer)
+    p_LowerBound = Value
+End Property
+    
+Public Property Get LowerBound() As Integer
+    LowerBound = p_LowerBound
+End Property
+        
+Public Property Let LeftBound(ByVal Value As Integer)
+    p_LeftBound = Value
+End Property
+    
+Public Property Get LeftBound() As Integer
+    LeftBound = p_LeftBound
+End Property
+Public Property Let RightBound(ByVal Value As Integer)
+    p_RightBound = Value
+End Property
+
+Public Property Get RightBound() As Integer
+    RightBound = p_RightBound
+End Property
+                    
+Public Property Let Center(ByVal Value As AL_Point)
+    p_Center = Value
+End Property
+    
+Public Property Get Center() As AL_Point
+    Center = p_Center
+End Property
+
+Public Property Let NormalLength(ByVal Value As Float)
+    p_NormalLength = Value
+End Property
+        
+Public Property Get NormalLength() As Float
+    NormalLength = p_NormalLength
+End Property
+
+Public Property Let NormalWidth(ByVal Value As Float)
+    p_NormalWidth = Value
+End Property
+            
+Public Property Get NormalWidth() As Float
+    NormalWidth = p_NormalWidth
+End Property
+
+Public Property Let NormalDepth(ByVal Value As Float)
+    p_NormalDepth = Value
+End Property
+                
+Public Property Get NormalDepth() As Float
+    NormalDepth = p_NormalDepth
+End Property
+
+Public Property Let Window(ByVal Value As Range)
+    Set p_Window = Value
+End Property
+                    
+Public Property Get Window() As Range
+    Set Window = p_Window
+End Property
+
+Public Sub LetBounds()
+    UpperBound = WindowPosition.Row
+    LowerBound = WindowPosition.Column
+    LeftBound = WindowPosition.Offset(Width - 1, 0)
+    RightBound = WindowPosition.Offset(0, Length - 1)
+End Sub
+
+Public Sub LetCenter()
+    p_Center.X = Int((p_Length / 2) + 0,5) + p_WindowPosition.Column
+    p_Center.Y = Int((p_Width / 2) + 0,5) + p_WindowPosition.Row
+    p_Center.Z = 0
+End Sub
+
+Public Sub LetNormal(ByVal n_NormalLength As Float, ByVal n_NormalWidth As Float, ByVal n_NormalDepth As Float)
+    p_NormalLength = n_NormalLength
+    p_NormalWidth = n_NormalWidth
+    p_NormalWidth = n_NormalDepth
+End Sub
+
+Public Sub Clear(Optional ByVal Color As Long = 16777215)
+    Color = Int(Color)
+    p_Window.Interior.Color = Color
+Sub
+
+Public Sub Draw()
+    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
+        If InBounds(p_WindowObjects(i)) = True Then
+            p_Window.Cells(p_Center.Y - p_WindowObjects(i).Row, p_Center.X - p_WindowObjects(i).Column).Interior.Color = p_WindowObjects(i).Interior.Color
+        End If
+    Loop
+Sub
+
+Public Sub Insert(ByVal RangeObject As Range)
+    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
+        i = i + 1
+    Loop
+    Set p_WindowObjects(i) = RangeObject
+Sub
+
+Public Sub Release()
+    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
+        Set p_WindowObjects(i) = Nothing
+        i = i + 1
+    Loop
+Sub
+
+Private Function InBounds(ByVal RangeObject As Range) As Boolean
+    If UpperBound >= RangeObject.Row Or LowerBound =< RangeObject.Row Or LeftBound >= RangeObject.Column Or RightBound =< RangeObject.Column Then
+        InBounds = False
+    End If
+    InBounds = True
+End Function
+
+Private Function CutToBounds(ByVal RangeObject As Rnage) As Range
+    Dim FirstRow As Integer
+    Dim LastRow As Integer
+    Dim FirstColumn As Integer
+    Dim LastColumn As Integer
+    Dim RowCut As Integer
+    Dim ColumnCut As Integer
+
+    FirstRow = RangeObject.Row
+    LastRow = RangeObject.Row + RangeObject.Rows.Count - 1
+    FirstColumn = RangeObject.Column
+    LastColumn = RangeObject.Columns + RangeObject.Columns.Count - 1
+    If UpperBound >= FirstRow And UpperBound =< LastRow Then
+            RowCut = LastRow - UpperBound + 1
+    If LeftBound >= FirstColumn And LowerBound =< LastColumn Then
+            ColumnCut = LastColumn - LowerBound + 1
+    End If
+    If LowerBound >= FirstRow And LowerBound =< LastRow Then
+        RowCut = LastRow - LowerBound + 1
+    If LeftBound >= FirstColumn And LowerBound =< LastColumn Then
+        ColumnCut = LastColumn - LowerBound + 1
+    End If
+End Function
+
+    flkjhdskfhldshfkjhskjfhkshfkshflkjhdslkjfhdskfhskdhflkjsadhflkjdshflkhsalkfhsalkjfhldskjhflkshf
+
+    Do be worked on
+
+    lfhsapojfhdsofhlkjsfölkjsdfölkjdshfldsöfkjsölkfjslkdjfölksjfölksdjfölkdsjölkfj

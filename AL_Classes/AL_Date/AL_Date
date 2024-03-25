@@ -1,0 +1,94 @@
+' Class module: AL_Point
+' Describes a time
+
+Private p_Year As Integer
+Private p_Month As Integer
+Private p_Day As Integer
+Private p_Hour As Integer
+Private p_Minute As Integer
+Private p_Second As Integer
+Private p_Week As Integer
+
+Private p_CurrentSecond As Long
+
+Public Property Let Year(ByVal Value As Integer)
+    p_Year = Value
+End Property
+
+Public Property Get Year() As Integer
+    Year = p_Year
+End Property
+
+Public Property Let Month(ByVal Value As Integer)
+    p_Month = Value
+End Property
+
+Public Property Get Month() As Integer
+    Month = p_Month
+End Property
+
+Public Property Let Day(ByVal Value As Integer)
+    p_Day = Value
+End Property
+
+Public Property Get Day() As Integer
+    Day = p_Day
+End Property
+
+Public Property Let Hour(ByVal Value As Integer)
+    p_Hour = Value
+End Property
+
+Public Property Get Hour() As Integer
+    Hour = p_Hour
+End Property
+
+Public Property Let Minute(ByVal Value As Integer)
+    p_Minute = Value
+End Property
+
+Public Property Get Minute() As Integer
+    Minute = p_Minute
+End Property
+
+Public Property Let Second(ByVal Value As Integer)
+    p_Second = Value
+End Property
+
+Public Property Get Second() As Integer
+    Second = p_Second
+End Property
+
+Public Property Let Week(ByVal Value As Integer)
+    p_Week = Value
+End Property
+
+Public Property Get Week() As Integer
+    Week = p_Week
+End Property
+
+Public Property Let CurrentSecond(ByVal Value As Integer)
+    p_CurrentSecond = Value
+End Property
+
+Public Property Get CurrentSecond() As Integer
+    CurrentSecond = p_CurrentSecond
+End Property
+
+Public Sub SetTime()
+
+    p_Year = Year(Date)
+    p_Month = Month(Date)
+    p_Day = Day(Date)
+    p_Hour = Hour(Time)
+    p_Minute = Minute(Time)
+    p_Second = Second(Time)
+    p_Week = Week(Date)
+
+    p_CurrentSecond = p_CurrentSecond + 31536000 / 12 * p_Month
+    p_CurrentSecond = p_CurrentSecond + p_Day * 86400
+    p_CurrentSecond = p_CurrentSecond + p_Hour * 3600
+    p_CurrentSecond = p_CurrentSecond + p_Minute * 60
+    p_CurrentSecond = p_CurrentSecond + p_Second
+
+End Sub

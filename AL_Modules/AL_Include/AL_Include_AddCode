@@ -1,0 +1,18 @@
+' Adds Code to a given Instance
+Sub AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String)
+
+    Dim FileLine As String
+    Dim Index As Long
+    Dim FileNumber As Integer
+
+    Index = 1
+    FileNumber = FreeFile
+    Open FilePath For Input As #FileNumber
+    Do Until EOF(FileNumber)
+        Line Input #FileNumber, FileLine
+        VBCodeModule.InsertLines Index, FileLine
+        Index = Index + 1
+    Loop
+    Close #FileNumber
+
+End Sub

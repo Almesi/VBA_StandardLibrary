@@ -1,0 +1,12 @@
+Sub AL_UpdateGet(ByVal UpdateName As String)
+
+    Dim i As Integer
+    Do Until AL_Update_Range.Offset(i, 0).Formula = ""
+        If AL_Update_Range.Offset(i, 0).Formula = UpdateName Then
+            Exit Sub
+        End If
+    Loop
+    AL_ErrorPrint 1, 5, UpdateName
+    AL_ErrorShow 1, 5, UpdateName
+
+End Sub

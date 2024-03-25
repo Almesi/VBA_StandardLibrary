@@ -1,0 +1,32 @@
+Function AL_CheckInstance(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
+
+    ' InstanceExistence = True exists and throws error
+    ' InstanceExistence = False doesnt exist and throws error
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
+
+    Set VbProj = ThisWorkbook.VBProject
+    For Each VBComp In VbProj.VBComponents
+        If InstanceExistence = True Then
+                If VBComp.Name = InstanceName Then
+                    AL_ErrorPrint 2, 3, InstanceName
+                    AL_ErrorShow 2, 3, InstanceName
+                    AL_CheckInstance = False
+                    Exit Function
+                End If
+            Else
+                If VBComp.Name = InstanceName Then
+                    AL_CheckInstance = True
+                    Exit Function
+                End If
+        End If
+    Next VBComp
+    If InstanceExistence = True Then
+        AL_CheckInstance = True
+        Exit Function
+    End If
+    AL_ErrorPrint 2, 6, InstanceName
+    AL_ErrorShow 2, 6, InstanceName
+    AL_CheckInstance = False
+
+End Function
