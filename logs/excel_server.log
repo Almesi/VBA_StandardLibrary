@@ -1,0 +1,70 @@
+15.03.2024 14:57:58 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+15.03.2024 14:57:59 - DEBUG:MODULE IMPORTED: Test.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test.bas TO EXCEL
+15.03.2024 14:58:00 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+15.03.2024 14:58:01 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+15.03.2024 14:58:05 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+15.03.2024 14:58:07 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+15.03.2024 14:58:09 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+15.03.2024 14:58:10 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+15.03.2024 14:58:12 - DEBUG:Import VBA Files Finish
+15.03.2024 15:07:08 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+15.03.2024 15:07:09 - DEBUG:MODULE IMPORTED: Test.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test.bas TO EXCEL
+15.03.2024 15:07:11 - DEBUG:MODULE IMPORTED: Test2.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test2.bas TO EXCEL
+15.03.2024 15:07:12 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+15.03.2024 15:07:13 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+15.03.2024 15:07:18 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+15.03.2024 15:07:20 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+15.03.2024 15:07:23 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+15.03.2024 15:07:25 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+15.03.2024 15:07:26 - DEBUG:Import VBA Files Finish
+15.03.2024 15:15:59 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+15.03.2024 15:16:01 - DEBUG:MODULE IMPORTED: Test2.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test2.bas TO EXCEL
+15.03.2024 15:16:02 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule
+15.03.2024 15:16:04 - DEBUG:MODULE IMPORTED: Test.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule\Test.bas TO EXCEL
+15.03.2024 15:16:05 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+15.03.2024 15:16:06 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+15.03.2024 15:16:09 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+15.03.2024 15:16:12 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+15.03.2024 15:16:14 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+15.03.2024 15:16:15 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+15.03.2024 15:16:17 - DEBUG:Import VBA Files Finish
+15.03.2024 15:18:19 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+15.03.2024 15:18:20 - DEBUG:MODULE IMPORTED: Test2.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test2.bas TO EXCEL
+15.03.2024 15:18:22 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule
+15.03.2024 15:18:23 - DEBUG:MODULE IMPORTED: Test.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule\Test.bas TO EXCEL
+15.03.2024 15:18:25 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+15.03.2024 15:18:27 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+15.03.2024 15:18:30 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+15.03.2024 15:18:32 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+15.03.2024 15:18:34 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+15.03.2024 15:18:35 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+15.03.2024 15:18:37 - DEBUG:Import VBA Files Finish
+15.03.2024 15:21:41 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+15.03.2024 15:21:43 - DEBUG:MODULE IMPORTED: Test2.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\Test2.bas TO EXCEL
+15.03.2024 15:21:44 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule
+15.03.2024 15:21:45 - DEBUG:MODULE IMPORTED: Test.bas FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\testmodule\Test.bas TO EXCEL
+15.03.2024 15:21:46 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+15.03.2024 15:21:47 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+15.03.2024 15:21:51 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+15.03.2024 15:21:53 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+15.03.2024 15:21:54 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+15.03.2024 15:21:56 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+15.03.2024 15:21:57 - DEBUG:Import VBA Files Finish
+18.03.2024 06:31:49 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+18.03.2024 06:31:49 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\AL_Update
+18.03.2024 06:31:49 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+18.03.2024 06:31:50 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+18.03.2024 06:31:50 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+18.03.2024 06:31:50 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+18.03.2024 06:31:51 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+18.03.2024 06:31:59 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+18.03.2024 06:31:59 - DEBUG:Import VBA Files Finish
+18.03.2024 06:32:11 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files
+18.03.2024 06:32:11 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\vba-files\AL_Update
+18.03.2024 06:32:11 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules
+18.03.2024 06:32:11 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types
+18.03.2024 06:32:12 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\excel-types\logs
+18.03.2024 06:32:12 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug
+18.03.2024 06:32:13 - DEBUG:CLASS IMPORTED: Xdebug FROM FILE: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\Xdebug.cls
+18.03.2024 06:32:13 - DEBUG:Importing VBA Files from: L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary\xvba_modules\Xdebug\images
+18.03.2024 06:32:13 - DEBUG:Import VBA Files Finish
