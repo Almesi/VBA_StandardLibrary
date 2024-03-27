@@ -31,7 +31,7 @@ Function AL_PathfindAStar(ByVal StartNode As AL_Node, ByVal GoalNode As AL_Node,
     Do Until OpenNodesIndex < 0
         
         ' If on Goal reconstruct Path
-        If CurrentNode.IsPoint(GoalNode) = True Then
+        If CurrentNode.IsNode(GoalNode) = True Then
             Set FinalPath(0) = CurrentNode
             Do Until CurrentNode.Parent Is Nothing
                 AL_ArrayPushAL_Node FinalPath, CurrentNode.Parent
@@ -51,12 +51,12 @@ Function AL_PathfindAStar(ByVal StartNode As AL_Node, ByVal GoalNode As AL_Node,
                             If (X + CurrentNode.X < MaxX) And (X + CurrentNode.X > MinX) Then
                                 NeighbourNode.LetPoint CurrentNode.X + X, CurrentNode.Y + Y, CurrentNode.Z + Z
                                 ' If Neighbour is CurrentNode skip this node
-                                If NeighbourNode.IsPoint(CurrentNode) = False Then
+                                If NeighbourNode.IsNode(CurrentNode) = False Then
                                     
                                     ' For each Impassable Node check if its the current one
                                     If Not ImpassableNodes(0) Is Nothing Then
                                         For I = 0 To ImpassableNodesIndex
-                                            If NeighbourNode.IsPoint(ImpassableNodes(I)) = True Then
+                                            If NeighbourNode.IsNode(ImpassableNodes(I)) = True Then
                                                 GoTo NodeUnavailable
                                             End If
                                         Next
@@ -64,7 +64,7 @@ Function AL_PathfindAStar(ByVal StartNode As AL_Node, ByVal GoalNode As AL_Node,
 
                                     ' For each Closed Node check if its the current one
                                     For I = 0 To ClosedNodesIndex
-                                        If NeighbourNode.IsPoint(ClosedNodes(I)) = True Then
+                                        If NeighbourNode.IsNode(ClosedNodes(I)) = True Then
                                             GoTo NodeUnavailable
                                         End If
                                     Next

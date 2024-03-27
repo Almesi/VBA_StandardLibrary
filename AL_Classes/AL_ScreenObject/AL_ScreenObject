@@ -1,0 +1,75 @@
+' Class module: AL_ScreenObject
+' Describes a Point in 3D-Space with the RangeLength for a Window with Texture in form of a Range
+' Only use should be to put it to screen, nothing else
+
+' Variable Declaration
+    ' Sets to Const
+    Private p_Initialized As Boolean
+    
+    ' Whole Value as Point of upper Left corner
+    Private p_og_Point As AL_Point
+    
+    ' Float Value and variable
+    Private p_Point As AL_Point
+    
+    ' Whole Value for Number of Cells in Length to Down Right Corner
+    Private p_og_Length As AL_Point
+    
+    ' Float Value and variable
+    Private p_Length As AL_Point
+    
+    ' Range of Texture of upper Points
+    Private p_Texture As Range
+'
+
+'Get Let Set 
+    Public Property Let Point(ByVal Value As AL_Point)
+        p_Point = Value
+    End Property
+
+    Public Property Get Point() As AL_Point
+        Point = p_Point
+    End Property
+
+    Public Property Let Length(ByVal Value As AL_Point)
+        p_Length = Value
+    End Property
+
+    Public Property Get Length() As AL_Point
+        Length = p_Length
+    End Property
+
+    Public Property Let Texture(ByVal Value As Range)
+        Set p_Texture = Value
+    End Property
+
+    Public Property Get Texture() As Range
+        Set Texture = p_Texture
+    End Property
+
+    Public Property Get OgPoint() As AL_Point
+        Set OgPoint = og_Point
+    End Property
+
+    Public Property Get OgLength() As AL_Point
+        Set OgLength = og_Length
+    End Property
+'
+
+Public Sub Initialize(ByVal Point_X As Float, ByVal Point_Y As Float, ByVal Point_Z As Float, ByVal Length_X As Float, ByVal Length_Y As Float, ByVal Length_Z As Float)
+    If p_Initialized = False Then
+        p_Point.X  = Point_X
+        p_Point.Y  = Point_Y
+        p_Point.Z  = Point_Z
+        p_Length.X = Length_X
+        p_Length.Y = Length_Y
+        p_Length.Z = Length_Z
+        p_og_Point.X  = Point_X
+        p_og_Point.Y  = Point_Y
+        p_og_Point.Z  = Point_Z
+        p_og_Length.X = Length_X
+        p_og_Length.Y = Length_Y
+        p_og_Length.Z = Length_Z
+        p_Initialized = True
+    End If
+End Sub

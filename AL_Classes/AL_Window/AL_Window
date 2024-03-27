@@ -1,203 +1,378 @@
 ' Class module: AL_Window
 ' Describes a Range of Cells as Interface/Window
 
-Private p_WindowPosition As Range
-Private p_Length As Integer
-Private p_Width As Integer
-Private p_Depth As Integer
-Private p_UpperBound As Integer
-Private p_LowerBound As Integer
-Private p_LeftBound As Integer
-Private p_RightBound As Integer
-Private p_Center As AL_Point
-Private p_NormalLength As Float
-Private p_NormalWidth As Float
-Private p_NormalDepth As Float
-Private p_Window As Range
-Private p_WindowObjects(1024) As Range
+' Variable Declaration
 
-Public Property Let WindowPosition(ByVal Value As Range)
-    Set p_WindowPosition = Value
-End Property
+    ' Boolean if the window is open, upper left corner of window and window itself
+    Private p_WindowOpen As Boolean
+    Private p_WindowPosition As Range
+    Private p_Window As Range
 
-Public Property Get WindowPosition() As Range
-    Set WindowPosition = p_WindowPosition
-End Property
-    
-Public Property Let Length(ByVal Value As Integer)
-    p_Length = Value
-End Property
+    ' Windowsize
+    Private p_Length As Integer
+    Private p_Width As Integer
+    Private p_Depth As Integer
 
-Public Property Get Length() As Integer
-    Length = p_Length
-End Property
+    ' Boundaries
+    Private p_UpperBound As Integer
+    Private p_LowerBound As Integer
+    Private p_LeftBound As Integer
+    Private p_RightBound As Integer
+    Private p_DepthBound As
 
-Public Property Let Width(ByVal Value As Integer)
-    p_Depth = Value
-End Property
+    ' Center and Normals(Factor needed to multiply to get the size)
+    Private p_Center As AL_Point
+    Private p_NormalLength As Float
+    Private p_NormalWidth As Float
+    Private p_NormalDepth As Float
 
-Public Property Get Width() As Integer
-    Width = p_Width
-End Property
+    ' The objects that get printed to the window (or not)
+    Private p_ScreenObjects(1024) As AL_ScreenObject
+    Private p_NullCell As AL_ScreenObject
 
-Public Property Let Depth(ByVal Value As Integer)
-    p_Depth = Value
-End Property
+' Let Get Set
 
-Public Property Get Depth() As Integer
-    Depth = p_Depth
-End Property
+    Public Property Let WindowOpen(ByVal Value As Boolean)
+        p_WindowOpen = Value
+    End Property
 
-Public Property Let UpperBound(ByVal Value As Integer)
-    p_UpperBound = Value
-End Property
-    
-Public Property Get UpperBound() As Integer
-    UpperBound = p_UpperBound
-End Property
-    
-Public Property Let LowerBound(ByVal Value As Integer)
-    p_LowerBound = Value
-End Property
-    
-Public Property Get LowerBound() As Integer
-    LowerBound = p_LowerBound
-End Property
-        
-Public Property Let LeftBound(ByVal Value As Integer)
-    p_LeftBound = Value
-End Property
-    
-Public Property Get LeftBound() As Integer
-    LeftBound = p_LeftBound
-End Property
-Public Property Let RightBound(ByVal Value As Integer)
-    p_RightBound = Value
-End Property
+    Public Property Get WindowOpen() As Boolean
+        WindowPosition = p_WindowOpen
+    End Property
 
-Public Property Get RightBound() As Integer
-    RightBound = p_RightBound
-End Property
-                    
-Public Property Let Center(ByVal Value As AL_Point)
-    p_Center = Value
-End Property
-    
-Public Property Get Center() As AL_Point
-    Center = p_Center
-End Property
+    Public Property Let WindowPosition(ByVal Value As Range)
+        Set p_WindowPosition = Value
+    End Property
 
-Public Property Let NormalLength(ByVal Value As Float)
-    p_NormalLength = Value
-End Property
-        
-Public Property Get NormalLength() As Float
-    NormalLength = p_NormalLength
-End Property
+    Public Property Get WindowPosition() As Range
+        Set WindowPosition = p_WindowPosition
+    End Property
 
-Public Property Let NormalWidth(ByVal Value As Float)
-    p_NormalWidth = Value
-End Property
-            
-Public Property Get NormalWidth() As Float
-    NormalWidth = p_NormalWidth
-End Property
+    Public Property Let Length(ByVal Value As Integer)
+        p_Length = Value
+    End Property
 
-Public Property Let NormalDepth(ByVal Value As Float)
-    p_NormalDepth = Value
-End Property
-                
-Public Property Get NormalDepth() As Float
-    NormalDepth = p_NormalDepth
-End Property
+    Public Property Get Length() As Integer
+        Length = p_Length
+    End Property
 
-Public Property Let Window(ByVal Value As Range)
-    Set p_Window = Value
-End Property
-                    
-Public Property Get Window() As Range
-    Set Window = p_Window
-End Property
+    Public Property Let Width(ByVal Value As Integer)
+        p_Depth = Value
+    End Property
 
-Public Sub LetBounds()
-    UpperBound = WindowPosition.Row
-    LowerBound = WindowPosition.Column
-    LeftBound = WindowPosition.Offset(Width - 1, 0)
-    RightBound = WindowPosition.Offset(0, Length - 1)
-End Sub
+    Public Property Get Width() As Integer
+        Width = p_Width
+    End Property
+
+    Public Property Let Depth(ByVal Value As Integer)
+        p_Depth = Value
+    End Property
+
+    Public Property Get Depth() As Integer
+        Depth = p_Depth
+    End Property
+
+    Public Property Let UpperBound(ByVal Value As Integer)
+        p_UpperBound = Value
+    End Property
+
+    Public Property Get UpperBound() As Integer
+        UpperBound = p_UpperBound
+    End Property
+
+    Public Property Let LowerBound(ByVal Value As Integer)
+        p_LowerBound = Value
+    End Property
+
+    Public Property Get LowerBound() As Integer
+        LowerBound = p_LowerBound
+    End Property
+
+    Public Property Let LeftBound(ByVal Value As Integer)
+        p_LeftBound = Value
+    End Property
+
+    Public Property Get LeftBound() As Integer
+        LeftBound = p_LeftBound
+    End Property
+    Public Property Let RightBound(ByVal Value As Integer)
+        p_RightBound = Value
+    End Property
+
+    Public Property Get RightBound() As Integer
+        RightBound = p_RightBound
+    End Property
+
+    Public Property Let DepthBound(ByVal Value As Integer)
+        p_DepthBound = Value
+    End Property
+
+    Public Property Get DepthBound() As Integer
+        DepthBound = p_DepthBound
+    End Property
+
+    Public Property Let Center(ByVal Value As AL_Point)
+        p_Center = Value
+    End Property
+
+    Public Property Get Center() As AL_Point
+        Center = p_Center
+    End Property
+
+    Public Property Let NormalLength(ByVal Value As Float)
+        p_NormalLength = Value
+    End Property
+
+    Public Property Get NormalLength() As Float
+        NormalLength = p_NormalLength
+    End Property
+
+    Public Property Let NormalWidth(ByVal Value As Float)
+        p_NormalWidth = Value
+    End Property
+
+    Public Property Get NormalWidth() As Float
+        NormalWidth = p_NormalWidth
+    End Property
+
+    Public Property Let NormalDepth(ByVal Value As Float)
+        p_NormalDepth = Value
+    End Property
+
+    Public Property Get NormalDepth() As Float
+        NormalDepth = p_NormalDepth
+    End Property
+
+    Public Property Let Window(ByVal Value As Range)
+        Set p_Window = Value
+    End Property
+
+    Public Property Get Window() As Range
+        Set Window = p_Window
+    End Property
+
+    Public Property Let NullCell(ByVal Value As Range)
+        Set p_NullCell = Value
+    End Property
+
+    Public Property Get NullCell() As Range
+        Set NullCell = p_NullCell
+    End Property
+'
 
 Public Sub LetCenter()
-    p_Center.X = Int((p_Length / 2) + 0,5) + p_WindowPosition.Column
-    p_Center.Y = Int((p_Width / 2) + 0,5) + p_WindowPosition.Row
-    p_Center.Z = 0
+    p_Center.X = Int((p_Length / 2) + 0,5)
+    p_Center.Y = Int((p_Width / 2) + 0,5)
+    p_Center.Z = Depth
 End Sub
 
-Public Sub LetNormal(ByVal n_NormalLength As Float, ByVal n_NormalWidth As Float, ByVal n_NormalDepth As Float)
-    p_NormalLength = n_NormalLength
-    p_NormalWidth = n_NormalWidth
-    p_NormalWidth = n_NormalDepth
+' Sets the Normals
+Public Sub LetNormal()
+    p_NormalLength = 1 / p_Center.X
+    p_NormalWidth  = 1 / p_Center.Y
+    p_NormalWidth  = 1 / p_Center.Z
 End Sub
 
+' Sets the Bounds
+Public Sub LetBounds()
+    p_UpperBound = p_Center.Y * NormalWidth
+    p_LowerBound = p_Center.Y * NormalWidth  * -1
+    p_LeftBound  = p_Center.X * NormalLength
+    p_RightBound = p_Center.X * NormalLength * -1
+    p_DepthBound = P_Center.Z
+End Sub
+
+' Clears the Window with a color or standard with white
 Public Sub Clear(Optional ByVal Color As Long = 16777215)
     Color = Int(Color)
     p_Window.Interior.Color = Color
 Sub
 
+' Draws all used Ranges in DrawRange Array
 Public Sub Draw()
-    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
-        If InBounds(p_WindowObjects(i)) = True Then
-            p_Window.Cells(p_Center.Y - p_WindowObjects(i).Row, p_Center.X - p_WindowObjects(i).Column).Interior.Color = p_WindowObjects(i).Interior.Color
+    Dim i As As Integer
+    
+    i = 0
+    Do Until p_ScreenObjects(i) Is Nothing
+        
+        ' Cut to Window or NullCenter and then Draw
+        Transform p_ScreenObjects(i)
+        Set p_ScreenObjects(i) = CutToBounds(p_ScreenObjects(i))
+
+        ' Get Negative Offset and add it to the Center resulting in the true Cell value to offset
+        Range(p_Window.Cells                                                                                      _
+        (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Point.Y /  p_NormalWidth)),                     _
+         WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Point.X /  p_NormalLength))), p_Window.Cells    _
+        (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Length.Y / p_NormalWidth)),                     _
+         WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Length.X / p_NormalLength)))).Interior.Color = p_ScreenObjects(i).Interior.Color
+        i = i + 1
+        If i > 1024 Then
+            AL_Error_Print 1, 5, i
+            AL_Error_Show 1, 5, i
+            End
         End If
     Loop
 Sub
 
-Public Sub Insert(ByVal RangeObject As Range)
-    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
+' Inserts a Range into the DrawRange Array
+Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
+    Dim i As As Integer
+    
+    i = 0
+    Do Until p_ScreenObjects(i) Is Nothing
         i = i + 1
+        If i > 1024 Then
+            AL_Error_Print 1, 5, LongValue
+            AL_Error_Show 1, 5, LongValue
+            End
+        End If
     Loop
-    Set p_WindowObjects(i) = RangeObject
+    Set p_ScreenObjects(i) = ScreenObject
 Sub
 
+' Releases all Ranges from the DrawRange
 Public Sub Release()
-    Do Until p_WindowObjects(i) Is Nothing Or i > 1024
-        Set p_WindowObjects(i) = Nothing
+    Dim i As As Integer
+    
+    i = 0
+    Do Until p_ScreenObjects(i) Is Nothing
+        Set p_ScreenObjects(i) = Nothing
         i = i + 1
+        If i > 1024 Then
+            AL_Error_Print 1, 5, LongValue
+            AL_Error_Show 1, 5, LongValue
+            End
+        End If
     Loop
 Sub
 
-Private Function InBounds(ByVal RangeObject As Range) As Boolean
-    If UpperBound >= RangeObject.Row Or LowerBound =< RangeObject.Row Or LeftBound >= RangeObject.Column Or RightBound =< RangeObject.Column Then
-        InBounds = False
-    End If
-    InBounds = True
-End Function
-
-Private Function CutToBounds(ByVal RangeObject As Rnage) As Range
-    Dim FirstRow As Integer
-    Dim LastRow As Integer
-    Dim FirstColumn As Integer
-    Dim LastColumn As Integer
-    Dim RowCut As Integer
-    Dim ColumnCut As Integer
-
-    FirstRow = RangeObject.Row
-    LastRow = RangeObject.Row + RangeObject.Rows.Count - 1
-    FirstColumn = RangeObject.Column
-    LastColumn = RangeObject.Columns + RangeObject.Columns.Count - 1
-    If UpperBound >= FirstRow And UpperBound =< LastRow Then
-            RowCut = LastRow - UpperBound + 1
-    If LeftBound >= FirstColumn And LowerBound =< LastColumn Then
-            ColumnCut = LastColumn - LowerBound + 1
-    End If
-    If LowerBound >= FirstRow And LowerBound =< LastRow Then
-        RowCut = LastRow - LowerBound + 1
-    If LeftBound >= FirstColumn And LowerBound =< LastColumn Then
-        ColumnCut = LastColumn - LowerBound + 1
+' Check if Range is in Bounds of Window
+Private Function InBounds(ByVal ScreenObject As AL_ScreenObject) As Boolean
+    If  (DepthBound >= ScreenObject.Point.Z Or DepthBound >= ScreenObject.Length.Z) And _
+        (UpperBound >= ScreenObject.Point.Y Or LowerBound =< ScreenObject.Point.Y) Or _
+        (LeftBound =< ScreenObject.Point.X Or RightBound >= ScreenObject.Point.X) Or _
+        (UpperBound >= ScreenObject.Length.Y Or LowerBound =< ScreenObject.Length.Y) Or _
+        (LeftBound =< ScreenObject.Length.X Or RightBound >= ScreenObject.Length.X) Then
+            InBounds = False
+        Else
+            InBounds = True
     End If
 End Function
 
-    flkjhdskfhldshfkjhskjfhkshfkshflkjhdslkjfhdskfhskdhflkjsadhflkjdshflkhsalkfhsalkjfhldskjhflkshf
+' Cut Range to Bounds of Window
+Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_ScreenObject
 
-    Do be worked on
+    Dim TempObj As AL_ScreenObject
+    ' Cut Range to Window boundaries
+    If InBounds(ScreenObject) = False Then
+            Dim Point As AL_Point
+            Dim Length As AL_Point
+            Dim CutPoint As AL_Point
+            Dim CutLength As AL_Point
+            Dim CutDifference(3) As Float
 
-    lfhsapojfhdsofhlkjsfölkjsdfölkjdshfldsöfkjsölkfjslkdjfölksjfölksdjfölkdsjölkfj
+            Point.X  = ScreenObject.Point.X
+            Point.Y  = ScreenObject.Point.Y
+            Length.X = ScreenObject.Length.X
+            Length.Y = ScreenObject.Length.Y
+
+            ' Looks how far the Point are outside the Border and sets the Cutpoint to the Border
+            ' Cutdifference is the product of the factor of the cut from the borders multiplied by the maxlength, resulting in an "offset factor", which is set to a whole value (Cell value)
+            If p_UpperBound < Point.Y Then
+                    CutPoint.Y = p_UpperBound
+                    CutDifference(0) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Point.Y - p_UpperBound) / (Length.Y)))
+                Else
+                    CutPoint.Y = Point.Y
+                    CutDifference(0) = 1
+            End If
+            If p_LeftBound > Point.X Then
+                    CutPoint.X = p_LeftBound
+                    CutDifference(1) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Abs(Point.Y) - Abs(p_LeftBound)) / (Length.X)))
+                Else
+                    CutPoint.X = Point.X
+                    CutDifference(1) = 1
+            End If
+
+            If p_LowerBound > Length.Y + Point.Y Then
+                    CutLength.Y = p_LowerBound
+                    CutDifference(2) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * (Abs(Length.Y) - Abs(p_LowerBound)) / (Length.Y)))
+                Else
+                    CutLength.Y = Length.Y + Point.Y
+                    CutDifference(2) = Length.Y
+            End If
+            If p_RightBound < Length.X + Point.X Then
+                    CutLength.X = p_RightBound
+                    CutDifference(3) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Length.X - p_RightBound) / (Length.Y)))
+                Else
+                    CutLength.X = Length.X + Point.X
+                    CutDifference(3) = Length.X
+            End If
+
+            TempObj.Point.X     = CutPoint.X
+            TempObj.Point.Y     = CutPoint.Y
+            TempObj.Length.X    = CutLength.X
+            TempObj.Length.Y    = CutLength.Y
+            Set TempObj.Texture = Range(ScreenObject.Texture.Cells(CutDifference(0), CutDifference(1)), ScreenObject.Texture.Cells(CutDifference(2), CutDifference(3)))
+        Else
+            TempObj.Point.X     = p_NullCell.Texture.Column
+            TempObj.Point.Y     = p_NullCell.Texture.Row
+            TempObj.Length.X    = p_NullCell.Texture.Column
+            TempObj.Length.Y    = p_NullCell.Texture.Row
+            Set TempObj.Texture = p_NullCell.Texture
+    End If
+    CutToBounds = TempObj
+    
+End Function
+
+' Translates, Rotates and Scales the Screenobject
+Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslatePoint As AL_Point = Nothing, Optional ByVal ScalePoint As AL_Point = Nothing, Optional ByVal ThetaX As Float = 0 , Optional ByVal ThetaY As Float = 0, Optional ByVal ThetaZ As Float = 0)
+    If Not TranslatePoint Is Nothing Then
+        Translate ScreenObject, TranslatePoint
+    End If
+    If ThetaX > 0 Then
+        Rotate ScreenObject, ThetaX, "X"
+    End If
+    If ThetaY > 0 Then
+        Rotate ScreenObject, ThetaY, "Y"
+    End If
+    If ThetaZ > 0 Then
+        Rotate ScreenObject, ThetaZ, "Z"
+    End If
+    If Not ScalePoint Is Nothing Then
+        ScaleScreenObject, ScalePoint
+    End If
+End Sub
+
+Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, ByVal Point As AL_Point)
+    ScreenObject.Point.X = ScreenObject.Point.X + Point.X
+    ScreenObject.Point.Y = ScreenObject.Point.Y + Point.Y
+    ScreenObject.Point.Z = ScreenObject.Point.Z + Point.Z
+    ScreenObject.Point.W = ScreenObject.Point.W + Point.W
+End Sub
+
+Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Float, ByVal Axis As AL_Char)
+
+    Select Case Axis
+        Case Is = "X"
+            ScreenObject.Point.Y = ScreenObject.Point.Y *  Cos(Theta) + ScreenObject.Point.Y  * Sin(Theta)
+            ScreenObject.Point.Z = ScreenObject.Point.Z * -Sin(Theta) + ScreenObject.Point.XZ * Cos(Theta)
+        Case Is = "Y"
+            ScreenObject.Point.X = ScreenObject.Point.X *  Cos(Theta) + ScreenObject.Point.X  * -Sin(Theta)
+            ScreenObject.Point.Z = ScreenObject.Point.Z *  Sin(Theta) + ScreenObject.Point.Z  * Cos(Theta)
+        Case Is = "Z"
+            ScreenObject.Point.X = ScreenObject.Point.X *  Cos(Theta) + ScreenObject.Point.X  * Sin(Theta)
+            ScreenObject.Point.Y = ScreenObject.Point.Y * -Sin(Theta) + ScreenObject.Point.Y  * Cos(Theta)
+        Case Else
+            AL_Error_Print 1, 2, Axis
+            AL_Error_Show 1, 2, Axis
+            End
+    End Select
+
+End Sub
+
+Private Sub Scale(ByRef ScreenObject As AL_ScreenObject, ByVal Point As AL_Point)
+    ScreenObject.Point.X = ScreenObject.Point.X * Point.X
+    ScreenObject.Point.Y = ScreenObject.Point.Y * Point.Y
+    ScreenObject.Point.Z = ScreenObject.Point.Z * Point.Z
+    ScreenObject.Point.W = ScreenObject.Point.W * Point.W
+End Sub

@@ -1,0 +1,11 @@
+Function AL_Check_Long(ByVal LongValue As Long)
+
+    Select Case LongValue
+        Case 0
+            AL_Error_Print 1, 3, LongValue
+            AL_Error_Show 1, 3, LongValue
+            AL_Check_Long = False
+    End Select
+    AL_Check_Long = True
+
+End Function

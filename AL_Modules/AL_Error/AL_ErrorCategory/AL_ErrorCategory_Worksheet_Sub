@@ -1,0 +1,21 @@
+Sub AL_ErrorCategory_Worksheet_Sub()
+    Dim Distance As Integer
+
+    Distance = 10
+
+    AL_ErrorLib_Range.Offset(0, Distance + 0).Formula = "Error Category Index"
+    AL_ErrorLib_Range.Offset(0, Distance + 1).Formula = "Error Category"
+    AL_ErrorLib_Range.Offset(0, Distance + 2).Formula = "Error Type"
+    AL_ErrorLib_Range.Offset(0, Distance + 3).Formula = "Error Message"
+
+    AL_ErrorLib_Range.Offset(1, Distance + 0).Value = AL_ErrorCategory_Worksheet
+    AL_ErrorLib_Range.Offset(1, Distance + 1).Formula = "Worksheet"
+    AL_ErrorLib_Range.Offset(1, Distance + 2).Value = 1
+    AL_ErrorLib_Range.Offset(1, Distance + 3).Formula = "Worksheet already exists"
+
+    AL_ErrorLib_Range.Offset(2, Distance + 0).Value = AL_ErrorCategory_Worksheet
+    AL_ErrorLib_Range.Offset(2, Distance + 1).Formula = "Worksheet"
+    AL_ErrorLib_Range.Offset(2, Distance + 2).Value = 2
+    AL_ErrorLib_Range.Offset(2, Distance + 3).Formula = "Worksheet doesnt exist"
+
+End Sub

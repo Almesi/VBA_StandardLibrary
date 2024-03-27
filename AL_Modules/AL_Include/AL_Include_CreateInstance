@@ -10,7 +10,8 @@ Sub AL_Include_CreateInstance(ByVal InstanceType, ByVal InstanceName As String)
             Set vbComp = vbProj.VBComponents.Add(InstanceType)
             vbComp.Name = InstanceName
         Case Else
-            AL_ErrorShow 1, 2, InstanceType, InstanceName
+            AL_Error_Print 1, 2, InstanceType, InstanceName
+            AL_Error_Show 1, 2, InstanceType, InstanceName
             Exit Sub
     End Select
 

@@ -1,0 +1,13 @@
+Sub AL_General_TransposeRange(ByVal InputRange As Range)
+    Dim TransposedRange As Range
+    Dim i As Long
+    Dim j As Long
+
+    Set TransposedRange = Range(ActiveCell, ActiveCell.Offset(InputRange.Columns.Count - InputRange.Column, InputRange.Rows.Count - InputRange.Row))
+    For i = 1 To InputRange.Rows.Count
+        For j = 1 To InputRange.Columns.Count
+            TransposedRange.Cells(j, i).Formula = InputRange.Cells(i, j).Formula
+        Next j
+    Next i
+
+End Sub

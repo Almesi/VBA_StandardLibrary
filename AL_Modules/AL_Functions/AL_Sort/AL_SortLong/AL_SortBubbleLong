@@ -1,0 +1,14 @@
+Sub AL_SortBubbleLong(ByRef Array1() As Long)
+
+    Dim Array1Length As Long
+    Array1Length = UBound(Array1) - LBound(Array1)
+
+    For i = 0 To Array1Length
+        For j = i + 1 To Array1Length
+            If Array1(i) > Array1(j) Then
+                AL_SwapInt Array1(i), Array1(j)
+            End If
+        Next j
+    Next i
+
+End Sub

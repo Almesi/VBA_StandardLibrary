@@ -1,0 +1,8 @@
+Sub AL_Swap_Long(ByRef Long1 As Long, ByRef Long2 As Long)
+
+    Dim Temp As Long
+    Temp = Long1
+    Long1 = Long2
+    Long2 = Temp
+
+End Sub

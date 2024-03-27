@@ -13,8 +13,8 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     
     ' Create a FileSystemObject
     If FolderPath = "" Then
-        AL_ErrorPrint 1, 3, FolderPath
-        AL_ErrorShow 1, 3, FolderPath
+        AL_Error_Print 1, 3, FolderPath
+        AL_Error_Show 1, 3, FolderPath
         Exit Sub
     End If
 
@@ -28,8 +28,8 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     Set VBProj = ThisWorkbook.VBProject
     For Each VBComp In VBProj.VBComponents
         If VBComp.Name = InstanceName Then
-                AL_ErrorPrint 2, 3, InstanceName
-                AL_ErrorShow 2, 3, InstanceName
+                AL_Error_Print 2, 3, InstanceName
+                AL_Error_Show 2, 3, InstanceName
                 Exit Sub
         End If
     Next VBComp
@@ -37,7 +37,7 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     ' Check if dependencies are included
     For Each File In Folder.Files
         If File.Path Like "*Dependencies" Then
-                If AL_CheckDependencies(File.Path) = True Then
+                If AL_Include_CheckDependencies(File.Path) = True Then
                         Exit Sub
                 End If
         End If

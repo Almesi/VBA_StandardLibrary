@@ -1,11 +1,12 @@
 Sub AL_UpdateCreate()
 
     Dim ws As Worksheet
+
     AL_UpdateInitialize
     For Each ws In Worksheets
         If ws.Name = "Update" Then
-                AL_ErrorPrint 3, 1, "Update"
-                AL_ErrorShow 3, 1, "Update"
+                AL_Error_Print 3, 1, "Update"
+                AL_Error_Show 3, 1, "Update"
                 Exit Sub
         End If
     Next ws

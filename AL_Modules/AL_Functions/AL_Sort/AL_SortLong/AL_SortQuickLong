@@ -1,0 +1,31 @@
+Sub AL_SortQuickLong(ByRef Array1() As Long, ByVal Low As Long, ByVal High As Long)
+
+    If Low < High Then
+        Dim Pivot As Long
+
+        Pivot = AL_Partition(Array1, Low, High)
+        AL_SortQuickInt Array1, Low, Pivot - 1
+        AL_SortQuickInt Array1, Pivot + 1, High
+    End If
+
+End Sub
+
+Function AL_Partition(ByRef Array1() As Long, ByVal Low As Long, ByVal High As Long) As Long
+
+    Dim Pivot As Long
+    Dim i As Long
+    Dim j As Long
+    
+    Pivot = Array1(High)
+    i = Low - 1
+    For j = Low To High - 1
+        If Array1(j) =< Pivot Then
+            i = i + 1
+            Range("A1").Offset(0, i).Select
+            AL_SwapInt Array1(i), Array1(j)
+        End If
+    Next j
+    AL_SwapInt Array1(i + 1), Array1(High)
+    AL_Partition = i + 1
+
+End Function

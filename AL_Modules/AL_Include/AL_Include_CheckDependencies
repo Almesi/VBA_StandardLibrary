@@ -1,0 +1,39 @@
+Function AL_Include_CheckDependencies(ByVal FilePath As String) As Boolean
+
+    If AL_Check_String(FilePath, 0) = False Then
+        Exit Sub
+    End If
+    Dim FileLine As String
+    Dim Index As Long
+    Dim FileNumber As Integer
+    Dim Included As Boolean
+    Dim vbProj As VBIDE.VBProject
+    Dim vbComp As VBIDE.VBComponent
+
+    Set vbProj = ThisWorkbook.VBProject
+
+    Index = 1
+    FileNumber = FreeFile
+    Open FilePath For Input As #FileNumber
+
+    Do Until EOF(FileNumber)
+        Line Input #FileNumber, FileLine
+        For Each vbComp in vbProj.VBComponents
+                If vbComp.Name = FileLine Then
+                    Included = True
+                End If
+        Next vbComp
+        If Included = False Then
+                AL_Error_Print 2, 4, FileLine
+                AL_Error_Show 2, 4, FileLine
+                AL_Include_CheckDependencies = True
+                Exit Function
+            Else
+                Included = False
+        End If
+        Index = Index + 1
+    Loop
+    Close #FileNumber
+    AL_Include_CheckDependencies = False
+
+End Function

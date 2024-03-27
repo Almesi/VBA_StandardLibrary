@@ -1,6 +1,14 @@
 ' Loops through a folder and Builds a single Module for each Folder
 Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, ByVal InstanceType As Integer)
 
+    ' Create a FileSystemObject
+    If AL_Check_String(FolderPath, 0) = False Or AL_Check_String(OGFilePath, 0) = False Then
+        Exit Sub
+    End If
+    If AL_Check_Integer(InstanceType) = False Then
+        Exit Sub
+    End If
+
     Dim fso As Object
     Dim Folder As Object
     Dim SubFolder As Object
@@ -9,13 +17,6 @@ Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, 
     Dim VBProj As VBIDE.VBProject
     Dim VBComp As VBIDE.VBComponent
     Dim VBCodeModule As VBIDE.CodeModule
-
-    ' Create a FileSystemObject
-    If FolderPath = "" Then
-        AL_ErrorPrint 1, 3, FolderPath
-        AL_ErrorShow 1, 3, FolderPath
-        Exit Sub
-    End If
 
     Set fso = CreateObject("Scripting.FileSystemObject")
 
@@ -27,8 +28,8 @@ Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, 
     Set VBProj = ThisWorkbook.VBProject
     For Each VBComp In VBProj.VBComponents
         If VBComp.Name = InstanceName Then
-                AL_ErrorPrint 2, 3, InstanceName
-                AL_ErrorShow 2, 3, InstanceName
+                AL_Error_Print 2, 3, InstanceName
+                AL_Error_Show 2, 3, InstanceName
                 Exit Sub
         End If
     Next VBComp

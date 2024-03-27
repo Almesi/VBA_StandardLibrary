@@ -1,8 +1,0 @@
-Sub AL_SwapAL_Char(ByRef AL_Char1 As AL_Char, ByRef AL_Char2 As AL_Char)
-
-    Dim Temp As AL_Char
-    Temp = AL_Char1
-    AL_Char1 = AL_Char2
-    AL_Char2 = Temp
-
-End Sub

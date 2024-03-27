@@ -1,0 +1,41 @@
+Sub AL_ErrorCategory_Workbook_Sub()
+    Dim Distance As Integer
+
+    Distance = 5
+
+    AL_ErrorLib_Range.Offset(0, Distance + 0).Formula = "Error Category Index"
+    AL_ErrorLib_Range.Offset(0, Distance + 1).Formula = "Error Category"
+    AL_ErrorLib_Range.Offset(0, Distance + 2).Formula = "Error Type"
+    AL_ErrorLib_Range.Offset(0, Distance + 3).Formula = "Error Message"
+
+    AL_ErrorLib_Range.Offset(1, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(1, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(1, Distance + 2).Value = 1
+    AL_ErrorLib_Range.Offset(1, Distance + 3).Formula = "Errormessage doesnt exist"
+
+    AL_ErrorLib_Range.Offset(2, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(2, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(2, Distance + 2).Value = 2
+    AL_ErrorLib_Range.Offset(2, Distance + 3).Formula = "Workbook doesnt exist"
+
+    AL_ErrorLib_Range.Offset(3, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(3, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(3, Distance + 2).Value = 3
+    AL_ErrorLib_Range.Offset(3, Distance + 3).Formula = "Instance already exists"
+
+    AL_ErrorLib_Range.Offset(4, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(4, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(4, Distance + 2).Value = 4
+    AL_ErrorLib_Range.Offset(4, Distance + 3).Formula = "Dependency missing"
+
+    AL_ErrorLib_Range.Offset(5, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(5, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(5, Distance + 2).Value = 5
+    AL_ErrorLib_Range.Offset(5, Distance + 3).Formula = "Not available in Workbook"
+
+    AL_ErrorLib_Range.Offset(6, Distance + 0).Value = AL_ErrorCategory_Workbook
+    AL_ErrorLib_Range.Offset(6, Distance + 1).Formula = "Workbook"
+    AL_ErrorLib_Range.Offset(6, Distance + 2).Value = 6
+    AL_ErrorLib_Range.Offset(6, Distance + 3).Formula = "Instance doesnt exists"
+
+End Sub

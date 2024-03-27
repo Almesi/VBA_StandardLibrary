@@ -1,0 +1,16 @@
+Function AL_Error_GetCategory(ByVal ErrorCategory As Integer) As String
+
+    Select Case ErrorCategory
+        Case AL_ErrorCategory_System: AL_Error_GetCategory = "System"
+        Case AL_ErrorCategory_Workbook: AL_Error_GetCategory = "Workbook"
+        Case AL_ErrorCategory_Worksheet: AL_Error_GetCategory = "Worksheet"
+        Case AL_ErrorCategory_Linker: AL_Error_GetCategory = "Linker"
+        Case AL_ErrorCategory_Compiler: AL_Error_GetCategory = "Compiler"
+        Case AL_ErrorCategory_Module: AL_Error_GetCategory = "Module"
+        Case AL_ErrorCategory_Class: AL_Error_GetCategory = "Class"
+        Case AL_ErrorCategory_Userform: AL_Error_GetCategory = "Userform"
+        Case Else
+            AL_Error_GetCategory = "UNKNOWN"
+    End Select
+
+End Function

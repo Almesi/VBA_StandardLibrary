@@ -1,0 +1,8 @@
+Sub AL_Swap_Double(ByRef Double1 As Double, ByRef Double2 As Double)
+
+    Dim Temp As Double
+    Temp = Double1
+    Double1 = Double2
+    Double2 = Temp
+
+End Sub

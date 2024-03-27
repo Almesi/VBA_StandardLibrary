@@ -1,0 +1,8 @@
+Sub AL_Swap_Float(ByRef Float1 As Float, ByRef Float2 As Float)
+
+    Dim Temp As Float
+    Temp = Float1
+    Float1 = Float2
+    Float2 = Temp
+
+End Sub

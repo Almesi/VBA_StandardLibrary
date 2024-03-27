@@ -11,7 +11,7 @@ Public Const AL_ErrorCategory_Compiler As Integer = 5
 Public Const AL_ErrorCategory_Module As Integer = 6
 Public Const AL_ErrorCategory_Class As Integer = 7
 Public Const AL_ErrorCategory_Userform As Integer = 8
-Sub AL_ErrorCreateBasicError()
+Sub AL_ErrorCategory_Create()
 
     AL_ErrorCategory_System_Sub
     AL_ErrorCategory_Workbook_Sub
@@ -198,23 +198,23 @@ Sub AL_ErrorCategory_Class_Sub()
 End Sub
 
 
-Function AL_CheckLong(ByVal LongValue As Long)
+Function AL_Check_Long(ByVal LongValue As Long)
 
     Select Case LongValue
         Case 0
-            AL_ErrorPrint 1, 3, LongValue
-            AL_ErrorShow 1, 3, LongValue
-            AL_CheckLong = False
+            AL_Error_Print 1, 3, LongValue
+            AL_Error_Show 1, 3, LongValue
+            AL_Check_Long = False
     End Select
-    AL_CheckLong = True
+    AL_Check_Long = True
 
 End Function
 ' ErrorCategory describes where the error comes from (Linker, Compiler, Module etc)
 ' ErrorType describes what error it is
 ' ErrorValue describes what caused the Error
-Sub AL_ErrorShow(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, Optional ByVal ErrorValue2 As Variant = 0)
+Sub AL_Error_Show(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, Optional ByVal ErrorValue2 As Variant = 0)
     
-    AL_ErrorInitialize
+    AL_Error_Initialize
     Dim ErrorCategoryString As String
     Dim ErrorMessage As String
     Dim ErrorString1 As String
@@ -229,7 +229,7 @@ Sub AL_ErrorShow(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Opt
             Else
                 ErrorString2 = ErrorValue2
         End If
-    ErrorCategoryString = AL_ErrorGetCategory(ErrorCategory)
+    ErrorCategoryString = AL_Error_GetCategory(ErrorCategory)
     ErrorMessage = "( " & ErrorCategory & " ): ( " & ErrorCategoryString & " ) / ( " & ErrorType & " ): ( " & (AL_ErrorLib_Range.Offset(ErrorType, 3 + (ErrorCategory * 5 - 5)).Formula) & " ) / ( " & ErrorValue1 & " ) ( " & ErrorValue2 & " )"
     MsgBox (ErrorMessage)
     
@@ -237,11 +237,11 @@ End Sub
 ' ErrorCategory describes where the error comes from (Linker, Compiler, Module etc)
 ' ErrorType describes what error it is
 ' ErrorValue describes what caused the Error
-Sub AL_ErrorPrint(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, Optional ByVal ErrorValue2 As Variant = 0)
+Sub AL_Error_Print(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, Optional ByVal ErrorValue2 As Variant = 0)
     
-    AL_ErrorInitialize
+    AL_Error_Initialize
     Dim ErrorCategoryString As String
-    ErrorCategoryString = AL_ErrorGetCategory(ErrorCategory)
+    ErrorCategoryString = AL_Error_GetCategory(ErrorCategory)
     Do Until AL_Error_Range.Offset(AL_Error_Index, 0).Formula = ""
         AL_Error_Index = AL_Error_Index + 1
     Loop
@@ -261,7 +261,7 @@ Sub AL_ErrorPrint(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Op
     End If
 
 End Sub
-Sub AL_ErrorNew(ByVal ErrorCategory As Integer, ByVal ErrorMessage As String)
+Sub AL_Error_New(ByVal ErrorCategory As Integer, ByVal ErrorMessage As String)
 
     Dim Distance As Integer
     Dim I As Integer
@@ -272,14 +272,14 @@ Sub AL_ErrorNew(ByVal ErrorCategory As Integer, ByVal ErrorMessage As String)
         I = I + 1
     Loop
     AL_ErrorLib_Range.Offset(I, Distance + 1).Value = ErrorCategory
-    AL_ErrorLib_Range.Offset(I, Distance + 2).Formula = AL_ErrorGetCategory(ErrorCategory)
+    AL_ErrorLib_Range.Offset(I, Distance + 2).Formula = AL_Error_GetCategory(ErrorCategory)
     AL_ErrorLib_Range.Offset(I, Distance + 3).Value = I
     AL_ErrorLib_Range.Offset(I, Distance + 4).Formula = ErrorMessage
 
 End Sub
     
     
-Sub AL_ErrorInitialize()
+Sub AL_Error_Initialize()
 
     If AL_ErrorInitialization <> True Then
         For Each ws In Worksheets
@@ -294,56 +294,56 @@ Sub AL_ErrorInitialize()
     AL_Error_Index = 0
 
 End Sub
-Function AL_ErrorGetCategory(ByVal ErrorCategory As Integer) As String
+Function AL_Error_GetCategory(ByVal ErrorCategory As Integer) As String
 
     Select Case ErrorCategory
-        Case AL_ErrorCategory_System: AL_ErrorGetCategory = "System"
-        Case AL_ErrorCategory_Workbook: AL_ErrorGetCategory = "Workbook"
-        Case AL_ErrorCategory_Worksheet: AL_ErrorGetCategory = "Worksheet"
-        Case AL_ErrorCategory_Linker: AL_ErrorGetCategory = "Linker"
-        Case AL_ErrorCategory_Compiler: AL_ErrorGetCategory = "Compiler"
-        Case AL_ErrorCategory_Module: AL_ErrorGetCategory = "Module"
-        Case AL_ErrorCategory_Class: AL_ErrorGetCategory = "Class"
-        Case AL_ErrorCategory_Userform: AL_ErrorGetCategory = "Userform"
+        Case AL_ErrorCategory_System: AL_Error_GetCategory = "System"
+        Case AL_ErrorCategory_Workbook: AL_Error_GetCategory = "Workbook"
+        Case AL_ErrorCategory_Worksheet: AL_Error_GetCategory = "Worksheet"
+        Case AL_ErrorCategory_Linker: AL_Error_GetCategory = "Linker"
+        Case AL_ErrorCategory_Compiler: AL_Error_GetCategory = "Compiler"
+        Case AL_ErrorCategory_Module: AL_Error_GetCategory = "Module"
+        Case AL_ErrorCategory_Class: AL_Error_GetCategory = "Class"
+        Case AL_ErrorCategory_Userform: AL_Error_GetCategory = "Userform"
         Case Else
-            AL_ErrorGetCategory = "UNKNOWN"
+            AL_Error_GetCategory = "UNKNOWN"
     End Select
 
 End Function
-Sub AL_ErrorCreate()
+Sub AL_Error_Create()
 
     Dim ws As Worksheet
-    AL_ErrorInitialize
-    If AL_CheckSheet("Error", True) = True Then
+    AL_Error_Initialize
+    If AL_Check_Sheet("Error", True) = True Then
         Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
         ws.Name = "Error"
-        AL_ErrorInitialize
-        AL_ErrorCreateBasicError
+        AL_Error_Initialize
+        AL_ErrorCategory_Create
     End If
 
 End Sub
-Sub AL_ErrorClear()
+Sub AL_Error_Clear()
 
-    AL_ErrorInitialize
+    AL_Error_Initialize
     Range(AL_Error_Range, AL_Error_Range.Offset(100000, 5)).ClearContents
 
 End Sub
-Function AL_CheckString(ByVal Text As String, ByVal CheckType As Integer) As Boolean
+Function AL_Check_String(ByVal Text As String, ByVal CheckType As Integer) As Boolean
 
     Select Case CheckType
         Case 0
             If Text = "" Then
-                AL_CheckString = False
-                AL_ErrorPrint 1, 4, InstanceName
-                AL_ErrorShow 1, 4, InstanceName
+                AL_Check_String = False
+                AL_Error_Print 1, 4, InstanceName
+                AL_Error_Show 1, 4, InstanceName
                 Exit Function
             End If
 
     End Select
-    AL_CheckString = True
+    AL_Check_String = True
 
 End Function
-Function AL_CheckSheet(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
+Function AL_Check_Sheet(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
 
     ' InstanceExistence = True exists and throws error
     ' InstanceExistence = False doesnt exist and throws error
@@ -352,28 +352,28 @@ Function AL_CheckSheet(ByVal InstanceName As String, ByVal InstanceExistence As 
     For Each ws In Worksheets
         If InstanceExistence = True Then
                 If ws.Name = InstanceName Then
-                    AL_ErrorPrint 3, 1, InstanceName
-                    AL_ErrorShow 3, 1, InstanceName
-                    AL_CheckSheet = False
+                    AL_Error_Print 3, 1, InstanceName
+                    AL_Error_Show 3, 1, InstanceName
+                    AL_Check_Sheet = False
                     Exit Function
                 End If
             Else
                 If ws.Name = InstanceName Then
-                    AL_CheckSheet = True
+                    AL_Check_Sheet = True
                     Exit Function
                 End If
         End If
     Next ws
     If InstanceExistence = True Then
-        AL_CheckSheet = True
+        AL_Check_Sheet = True
         Exit Function
     End If
-    AL_ErrorPrint 3, 2, InstanceName
-    AL_ErrorShow 3, 2, InstanceName
-    AL_CheckSheet = False
+    AL_Error_Print 3, 2, InstanceName
+    AL_Error_Show 3, 2, InstanceName
+    AL_Check_Sheet = False
 
 End Function
-Function AL_CheckInstance(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
+Function AL_Check_Instance(ByVal InstanceName As String, ByVal InstanceExistence As Boolean) As Boolean
 
     ' InstanceExistence = True exists and throws error
     ' InstanceExistence = False doesnt exist and throws error
@@ -384,25 +384,25 @@ Function AL_CheckInstance(ByVal InstanceName As String, ByVal InstanceExistence 
     For Each VBComp In VBProj.VBComponents
         If InstanceExistence = True Then
                 If VBComp.Name = InstanceName Then
-                    AL_ErrorPrint 2, 3, InstanceName
-                    AL_ErrorShow 2, 3, InstanceName
-                    AL_CheckInstance = False
+                    AL_Error_Print 2, 3, InstanceName
+                    AL_Error_Show 2, 3, InstanceName
+                    AL_Check_Instance = False
                     Exit Function
                 End If
             Else
                 If VBComp.Name = InstanceName Then
-                    AL_CheckInstance = True
+                    AL_Check_Instance = True
                     Exit Function
                 End If
         End If
     Next VBComp
     If InstanceExistence = True Then
-        AL_CheckInstance = True
+        AL_Check_Instance = True
         Exit Function
     End If
-    AL_ErrorPrint 2, 6, InstanceName
-    AL_ErrorShow 2, 6, InstanceName
-    AL_CheckInstance = False
+    AL_Error_Print 2, 6, InstanceName
+    AL_Error_Show 2, 6, InstanceName
+    AL_Check_Instance = False
 
 End Function
 
@@ -418,7 +418,7 @@ Sub AL_Include_CreateInstance(ByVal InstanceType, ByVal InstanceName As String)
             Set VBComp = VBProj.VBComponents.Add(InstanceType)
             VBComp.Name = InstanceName
         Case Else
-            AL_ErrorShow 1, 2, InstanceType, InstanceName
+            AL_Error_Show 1, 2, InstanceType, InstanceName
             Exit Sub
     End Select
 
@@ -456,8 +456,8 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     
     ' Create a FileSystemObject
     If FolderPath = "" Then
-        AL_ErrorPrint 1, 3, FolderPath
-        AL_ErrorShow 1, 3, FolderPath
+        AL_Error_Print 1, 3, FolderPath
+        AL_Error_Show 1, 3, FolderPath
         Exit Sub
     End If
 
@@ -471,8 +471,8 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     Set VBProj = ThisWorkbook.VBProject
     For Each VBComp In VBProj.VBComponents
         If VBComp.Name = InstanceName Then
-                AL_ErrorPrint 2, 3, InstanceName
-                AL_ErrorShow 2, 3, InstanceName
+                AL_Error_Print 2, 3, InstanceName
+                AL_Error_Show 2, 3, InstanceName
                 Exit Sub
         End If
     Next VBComp
@@ -480,7 +480,7 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     ' Check if dependencies are included
     For Each File In Folder.Files
         If File.Path Like "*Dependencies" Then
-                If AL_CheckDependencies(File.Path) = True Then
+                If AL_Include_CheckDependencies(File.Path) = True Then
                         Exit Sub
                 End If
         End If
@@ -507,7 +507,7 @@ Sub AL_IncludeFolder(ByVal FolderPath As String)
     Next SubFolder
     
 End Sub
-Function AL_CheckDependencies(ByVal FilePath As String) As Boolean
+Function AL_Include_CheckDependencies(ByVal FilePath As String) As Boolean
 
     Dim FileLine As String
     Dim Index As Long
@@ -530,9 +530,9 @@ Function AL_CheckDependencies(ByVal FilePath As String) As Boolean
                 End If
         Next VBComp
         If Included = False Then
-                AL_ErrorPrint 2, 4, FileLine
-                AL_ErrorShow 2, 4, FileLine
-                AL_CheckDependencies = True
+                AL_Error_Print 2, 4, FileLine
+                AL_Error_Show 2, 4, FileLine
+                AL_Include_CheckDependencies = True
                 Exit Function
             Else
                 Included = False
@@ -540,7 +540,7 @@ Function AL_CheckDependencies(ByVal FilePath As String) As Boolean
         Index = Index + 1
     Loop
     Close #FileNumber
-    AL_CheckDependencies = False
+    AL_Include_CheckDependencies = False
 
 End Function
     
@@ -556,11 +556,11 @@ Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, 
     Dim VBCodeModule As VBIDE.CodeModule
 
 
-    AL_ErrorCreate
+    AL_Error_Create
     ' Create a FileSystemObject
     If FolderPath = "" Then
-        AL_ErrorPrint 1, 3, FolderPath
-        AL_ErrorShow 1, 3, FolderPath
+        AL_Error_Print 1, 3, FolderPath
+        AL_Error_Show 1, 3, FolderPath
         Exit Sub
     End If
 
@@ -574,8 +574,8 @@ Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, 
     Set VBProj = ThisWorkbook.VBProject
     For Each VBComp In VBProj.VBComponents
         If VBComp.Name = InstanceName Then
-                AL_ErrorPrint 2, 3, InstanceName
-                AL_ErrorShow 2, 3, InstanceName
+                AL_Error_Print 2, 3, InstanceName
+                AL_Error_Show 2, 3, InstanceName
                 Exit Sub
         End If
     Next VBComp
@@ -612,7 +612,7 @@ End Sub
 
 Sub Build()
 
-    AL_ErrorCreate
+    AL_Error_Create
     AL_BuildApplication "L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary", "L:\RD\Automotive - Elastomere\Mitarbeiter\RD-AL\Projekte\AL_CustomLibrary", 1
 
 End Sub

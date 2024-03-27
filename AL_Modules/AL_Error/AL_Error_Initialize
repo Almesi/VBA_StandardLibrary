@@ -1,0 +1,29 @@
+    Public AL_ErrorInitialization As Boolean
+    Public AL_Error_Sheet As Worksheet
+    Public AL_Error_Range As Range
+    Public AL_ErrorLib_Range As Range
+    Public AL_Error_Index As Integer
+    Public Const AL_ErrorCategory_System As Integer = 1
+    Public Const AL_ErrorCategory_Workbook As Integer = 2
+    Public Const AL_ErrorCategory_Worksheet As Integer = 3
+    Public Const AL_ErrorCategory_Linker As Integer = 4
+    Public Const AL_ErrorCategory_Compiler As Integer = 5
+    Public Const AL_ErrorCategory_Module As Integer = 6
+    Public Const AL_ErrorCategory_Class As Integer = 7
+    Public Const AL_ErrorCategory_Userform As Integer = 8
+    
+Sub AL_Error_Initialize()
+
+    If AL_ErrorInitialization <> True Then
+        For Each ws In Worksheets
+            If ws.Name = "Error" Then
+                    Set AL_Error_Sheet = ThisWorkbook.Sheets("Error")
+                    Set AL_Error_Range = AL_Error_Sheet.Range("A1")
+                    Set AL_ErrorLib_Range = AL_Error_Sheet.Range("H1")
+                    AL_ErrorInitialization = True
+            End If
+        Next ws
+    End If
+    AL_Error_Index = 0
+
+End Sub

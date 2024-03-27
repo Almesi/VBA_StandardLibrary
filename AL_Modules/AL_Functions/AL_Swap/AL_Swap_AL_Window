@@ -1,0 +1,8 @@
+Sub AL_Swap_AL_Window(ByRef AL_Window1 As AL_Window, ByRef AL_Window2 As AL_Window)
+
+    Dim Temp As AL_Window
+    Temp = AL_Window1
+    AL_Window1 = AL_Window2
+    AL_Window2 = Temp
+
+End Sub

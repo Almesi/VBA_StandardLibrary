@@ -1,0 +1,8 @@
+Sub AL_Swap_AL_ScreenObject(ByRef AL_ScreenObject1 As AL_ScreenObject, ByRef AL_ScreenObject2 As AL_ScreenObject)
+
+    Dim Temp As AL_ScreenObject
+    Temp = AL_ScreenObject1
+    AL_ScreenObject1 = AL_ScreenObject2
+    AL_ScreenObject2 = Temp
+
+End Sub

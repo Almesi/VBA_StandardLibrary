@@ -9,27 +9,29 @@ Sub AL_UpdateDelete(ByVal InstanceName As String, FunctionName As String)
     Dim FileLine As String
     Dim FoundStart As Boolean
 
-    If AL_CheckString(FunctionName, 0) = True Then
-        Set VBProj = ThisWorkbook.VBProject
-        If AL_CheckInstance(InstanceName, False) = True Then
-            Set VBComp = VBProj.VBComponents(InstanceName)
-            Set CodeMod = VBComp.CodeModule
-            
-            ' Deletes a Function from declaration to End
-            For Index = 1 To CodeMod.CountOfLines
-                If CodeMod.Lines(Index, 1) Like "*" & FunctionName & "*" Then
-                    StartLine = Index
-                    FoundStart = True
-                End If
-                If CodeMod.Lines(Index, 1) = "End Function" Or CodeMod.Lines(Index, 1) = "End Sub" And FoundStart = True Then
-                    EndLine = Index
-                    Exit For
-                End If
-            Next Index
-            If AL_CheckLong(StartLine) = True And AL_CheckLong(EndLine) = True Then
-                CodeMod.DeleteLines StartLine, EndLine - StartLine + 1
-            End If
+    If AL_Check_String(FunctionName, 0) = False Then
+        Exit Sub
+    End If
+    Set VBProj = ThisWorkbook.VBProject
+    If AL_Check_Instance(InstanceName, False) = False Then
+        Exit Sub
+    End If
+    Set VBComp = VBProj.VBComponents(InstanceName)
+    Set CodeMod = VBComp.CodeModule
+    
+    ' Deletes a Function from declaration to End
+    For Index = 1 To CodeMod.CountOfLines
+        If CodeMod.Lines(Index, 1) Like "*" & FunctionName & "*" Then
+            StartLine = Index
+            FoundStart = True
         End If
+        If CodeMod.Lines(Index, 1) = "End Function" Or CodeMod.Lines(Index, 1) = "End Sub" And FoundStart = True Then
+            EndLine = Index
+            Exit For
+        End If
+    Next Index
+    If AL_Check_Long(StartLine) = True And AL_Check_Long(EndLine) = True Then
+            CodeMod.DeleteLines StartLine, EndLine - StartLine + 1
     End If
 
 End Sub

@@ -1,0 +1,8 @@
+Sub AL_Swap_AL_String(ByRef AL_String1 As AL_String, ByRef AL_String2 As AL_String)
+
+    Dim Temp As AL_String
+    Temp = AL_String1
+    AL_String1 = AL_String2
+    AL_String2 = Temp
+
+End Sub

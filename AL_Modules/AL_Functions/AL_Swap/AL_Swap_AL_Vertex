@@ -1,0 +1,8 @@
+Sub AL_Swap_AL_Vertex(ByRef AL_Vertex1 As AL_Vertex, ByRef AL_Vertex2 As AL_Vertex)
+
+    Dim Temp As AL_Vertex
+    Temp = AL_Vertex1
+    AL_Vertex1 = AL_Vertex2
+    AL_Vertex2 = Temp
+
+End Sub

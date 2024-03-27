@@ -263,7 +263,8 @@ Public Property Get Character() As String
         Case 254: Character = "þ"
         Case 255: Character = "ÿ"
         Case Else
-            MsgBox ("Overflow")
+            AL_Error_Print 7, 1, p_Char
+            AL_Error_Show 7, 1, p_Char
             End
     End Select
 End Property
@@ -527,7 +528,8 @@ Public Property Let Character(ByVal n_Char As String)
         Case "þ": p_Char = 254
         Case "ÿ": p_Char = 255
         Case Else
-            MsgBox ("Overflow")
+            AL_Error_Print 7, 1, p_Char
+            AL_Error_Show 7, 1, p_Char
             End
     End Select
 End Property

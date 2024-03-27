@@ -2,6 +2,7 @@ Function AL_RandomValueInteger(Optional ByVal Seed As Long = 0, Optional ByVal U
     
     If Seed = 0 Then
         Dim Seconds As New AL_Date
+        Seconds.SetTime
         Seed = Seconds.AbsoluteSecond
     End If
     Randomize Seed

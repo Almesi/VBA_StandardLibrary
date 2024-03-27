@@ -5,6 +5,7 @@ Sub AL_RandomArrayInteger(ByRef Array1() As Integer, Optional ByVal Seed As Long
     ' Check for devault cases
     If Seed = 0 Then
         Dim Seconds As New AL_Date
+        Seconds.SetTime
         Seed = Seconds.AbsoluteSecond
     End If
     Randomize Seed
