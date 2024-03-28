@@ -9,7 +9,7 @@ Function AL_Check_Sheet(ByVal InstanceName As String, ByVal InstanceExistence As
                 If ws.Name = InstanceName Then
                     AL_Error_Print 3, 1, InstanceName
                     AL_Error_Show 3, 1, InstanceName
-                    AL_Check_Sheet = False
+                    AL_Check_Sheet = Is_Error
                     Exit Function
                 End If
             Else
@@ -25,6 +25,6 @@ Function AL_Check_Sheet(ByVal InstanceName As String, ByVal InstanceExistence As
     End If
     AL_Error_Print 3, 2, InstanceName
     AL_Error_Show 3, 2, InstanceName
-    AL_Check_Sheet = False
+    AL_Check_Sheet = Is_Error
 
 End Function

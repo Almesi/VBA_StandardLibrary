@@ -1,0 +1,17 @@
+Sub AL_Update_Change(ByVal InstanceName As String, ByVal OldProcedure As String, ByVal NewProcedureFilePath As String)
+
+    If AL_Check_String(InstanceName, 0) = No_Error And AL_Check_String(OldProcedure, 0) = No_Error And AL_Check_String(NewProcedureFilePath, 0) = No_Error Then
+        If AL_Check_Instance(InstanceName, False) = No_Error Then 
+            Dim VBProj As VBIDE.VBProject
+            Dim VBComp As VBIDE.VBComponent
+            Dim VBCodeMod As VBIDE.CodeModule
+
+            Set VBProj = ThisWorkbook.VBProject
+            Set VBComp = VBProj.VBComponents(InstanceName)
+            Set VBCodeMod = VBComp.CodeModule
+            AL_Update_Delete InstanceName, OldProcedure
+            AL_Update_Add NewProcedureFilePath, 0, InstanceName
+        End If
+    End If
+        
+End Sub

@@ -1,0 +1,4 @@
+' This folder contains all nessecary files to include another folder into the project
+' It is the second most important Folder apart from AL_Error, cause it handles all possible future code imported
+' To do that you neet to Run the Code "AL_Include_Folder". This will generate a new .bas / .cls / .frm file in your Project
+' Make sure to use the rigth file format

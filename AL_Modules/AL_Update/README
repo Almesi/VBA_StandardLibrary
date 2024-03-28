@@ -1,0 +1,9 @@
+' This folder contains all nessecary files to update existing files in your project
+' It is the third most important Folder apart from AL_Error and AL_Include, cause it handles all existing code
+' Make sure to run "AL_Update_Create" first. It creates a new sheet, where all updates are documented
+' To do an update you need to run one of the code in this folder
+    ' Change searches a certain code by name and replaces it with another one
+    ' Delete deletes a certain code by name
+    ' Add adds either the code to an existing instance or adds an instance
+' Make sure to use the right file format
+' Update_Get gets a certain update and throws an error if it doesnt find it

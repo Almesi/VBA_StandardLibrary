@@ -91,17 +91,17 @@ End Function
 
 Public Sub CalculateDistance(ByVal ReferenceNode As AL_Node, ByVal StartNode As AL_Node, ByVal GoalNode As AL_Node)
     If ReferenceNode Is Nothing Then
-        AL_ErrorPrint 7, 2, "ReferenceNode"
+        AL_Error_Print 7, 2, "ReferenceNode"
         AL_PrintShow 7, 2, "ReferenceNode"
         End
     End If
     If ReferenceNode Is Nothing Then
-        AL_ErrorPrint 7, 2, "StartNode"
+        AL_Error_Print 7, 2, "StartNode"
         AL_PrintShow 7, 2, "StartNode"
         End
     End If
     If ReferenceNode Is Nothing Then
-        AL_ErrorPrint 7, 2, "GoalNode"
+        AL_Error_Print 7, 2, "GoalNode"
         AL_PrintShow 7, 2, "GoalNode"
         End
     End If

@@ -1,5 +1,5 @@
-' Class module: AL_Point
-' Describes a time
+' Class module: AL_Date
+' Describes the building blocks of the Time
 
 ' Variable Declaration
     Private p_Year As Integer

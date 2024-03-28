@@ -1,0 +1,25 @@
+Sub AL_Array_TEST_Integer()
+    Dim Array1(6) As Integer
+    Dim Test_Integer() As Integer
+    Dim i As Long
+
+    Array1(0) = 0
+    Array1(0) = 1
+    Array1(0) = 2
+    Array1(0) = 3
+    Array1(0) = 4
+    Array1(0) = 5
+    Array1(0) = 6
+
+    AL_Array_Delete_Integer Array1 3
+    If AL_Array_InArray_Integer(Array1, 3) = False Then
+        AL_Array_Splice_Integer Array1, 3, 3
+    End If
+    AL_Array_Pop_Integer
+    AL_Array_Push_Integer 6
+    AL_Array_Shift_Integer
+    AL_Array_Unshift_Integer, 6
+    i = AL_Array_Search_Integer(Array1, 3)
+    Test_Integer = AL_Array_Merge_Integer(Array1, Array1)
+
+End Sub

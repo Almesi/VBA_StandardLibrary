@@ -3,6 +3,8 @@
     Public AL_Error_Range As Range
     Public AL_ErrorLib_Range As Range
     Public AL_Error_Index As Integer
+    Public Const Is_Error As Boolean = False
+    Public Const No_Error As Boolean = True
     Public Const AL_ErrorCategory_System As Integer = 1
     Public Const AL_ErrorCategory_Workbook As Integer = 2
     Public Const AL_ErrorCategory_Worksheet As Integer = 3

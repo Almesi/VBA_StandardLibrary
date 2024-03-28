@@ -11,7 +11,7 @@ Function AL_Check_Instance(ByVal InstanceName As String, ByVal InstanceExistence
                 If VBComp.Name = InstanceName Then
                     AL_Error_Print 2, 3, InstanceName
                     AL_Error_Show 2, 3, InstanceName
-                    AL_Check_Instance = False
+                    AL_Check_Instance = Is_Error
                     Exit Function
                 End If
             Else
@@ -27,6 +27,6 @@ Function AL_Check_Instance(ByVal InstanceName As String, ByVal InstanceExistence
     End If
     AL_Error_Print 2, 6, InstanceName
     AL_Error_Show 2, 6, InstanceName
-    AL_Check_Instance = False
+    AL_Check_Instance = Is_Error
 
 End Function

@@ -1,6 +1,6 @@
 Function AL_Include_CheckDependencies(ByVal FilePath As String) As Boolean
 
-    If AL_Check_String(FilePath, 0) = False Then
+    If AL_Check_String(FilePath, 0) = Is_Error Then
         Exit Sub
     End If
     Dim FileLine As String

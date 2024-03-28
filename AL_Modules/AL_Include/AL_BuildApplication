@@ -2,10 +2,10 @@
 Sub AL_BuildApplication(ByVal FolderPath As String, ByVal OGFilePath As String, ByVal InstanceType As Integer)
 
     ' Create a FileSystemObject
-    If AL_Check_String(FolderPath, 0) = False Or AL_Check_String(OGFilePath, 0) = False Then
+    If AL_Check_String(FolderPath, 0) = Is_Error Or AL_Check_String(OGFilePath, 0) = Is_Error Then
         Exit Sub
     End If
-    If AL_Check_Integer(InstanceType) = False Then
+    If AL_Check_Integer(InstanceType) = Is_Error Then
         Exit Sub
     End If
 

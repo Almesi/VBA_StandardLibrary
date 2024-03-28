@@ -3,7 +3,7 @@ Function AL_Check_String(ByVal Text As String, ByVal CheckType As Integer) As Bo
     Select Case CheckType
         Case 0
             If Text = "" Then
-                AL_Check_String = False
+                AL_Check_String = Is_Error
                 AL_Error_Print 1, 4, InstanceName
                 AL_Error_Show 1, 4, InstanceName
                 Exit Function

@@ -1,0 +1,21 @@
+' This Library is a collection of Subs and Functions used in VBA Excel
+' They are based on the VBA programming Language
+' They contain basic algorithms like swap, draw, sort(many methods), pathfind, array-methods etc.
+
+
+' HOW TO USE IT
+    ' To Build this Library into your Project copy the code from the file "AL_BuildApplication.bas" or import it into your Project
+    ' Scroll down to the Sub "Build()" and replace the "YOUR_FILEPATH" with the filepath, where the folder "AL_CUSTOMLIBRARY" is stored
+    ' You do not need to put in a "\" at the end: "XXX\AL_CustomLibrary" is enough
+    ' Run the Sub and after it finishes delete "AL_BuildApplication.bas" from your project, because most of these codes are already in another folder after building it and it isnt needed anymore
+    ' You now have access to all methods in this folder
+
+' NOTE:
+    ' All files are dependend on the "AL_Error, AL_Include and AL_Update" Folder. If you do not have these Included your Code might act funny
+    ' Because of this all Folders have these 3 as their minimum requierement to run
+    ' When building the application a new sheet called "Error" will be generated
+    ' Do not delete this sheet, as it is the source to all potential error-messages and is also the home to the errorlog, which shows all errormessages after a code is run
+
+
+
+' All further details are found inside the other folders

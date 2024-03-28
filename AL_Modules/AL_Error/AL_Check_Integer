@@ -4,7 +4,7 @@ Function AL_Check_Integer(ByVal IntegerValue As Integer)
         Case 0
             AL_Error_Print 1, 3, IntegerValue
             AL_Error_Show 1, 3, IntegerValue
-            AL_Check_Integer = False
+            AL_Check_Integer = Is_Error
     End Select
     AL_Check_Integer = True
 

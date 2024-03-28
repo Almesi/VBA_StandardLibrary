@@ -1,5 +1,5 @@
 ' Class module: AL_ScreenObject
-' Describes a Point in 3D-Space with the RangeLength for a Window with Texture in form of a Range
+' Describes a Point in 3D-Space with the Range-Length for a Window with Texture in form of a Range
 ' Only use should be to put it to screen, nothing else
 
 ' Variable Declaration

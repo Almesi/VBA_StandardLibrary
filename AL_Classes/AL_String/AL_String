@@ -1,5 +1,4 @@
 ' Class module: AL_String
-' Dependencies: AL_Char
 ' Describes a Custom String, which is an Array of chars
 ' Takes a String as Input and outputs a String. But the processing is different
 
@@ -44,8 +43,8 @@
 ' If new length is shorter than old length everything after shorter one will be discarded
 Private Sub LetLength(ByVal n_Length As Integer)
     If n_Length < 0 Then
-        AL_ErrorPrint 7, 3, n_Length
-        AL_ErrorShow 7, 3, n_Length
+        AL_Error_Print 7, 3, n_Length
+        AL_Error_Show 7, 3, n_Length
         End 
     End If
 

@@ -1,5 +1,5 @@
 ' Class module: AL_Window
-' Describes a Range of Cells as Interface/Window
+' Describes an output Window
 
 ' Variable Declaration
 
@@ -14,11 +14,11 @@
     Private p_Depth As Integer
 
     ' Boundaries
-    Private p_UpperBound As Integer
-    Private p_LowerBound As Integer
-    Private p_LeftBound As Integer
-    Private p_RightBound As Integer
-    Private p_DepthBound As
+    Private p_UpperBound As Float
+    Private p_LowerBound As Float
+    Private p_LeftBound As Float
+    Private p_RightBound As Float
+    Private p_DepthBound As Float
 
     ' Center and Normals(Factor needed to multiply to get the size)
     Private p_Center As AL_Point
@@ -26,7 +26,7 @@
     Private p_NormalWidth As Float
     Private p_NormalDepth As Float
 
-    ' The objects that get printed to the window (or not)
+    ' The objects that gets drawn to the window and the NullCell, which is used when nothing should be drawn
     Private p_ScreenObjects(1024) As AL_ScreenObject
     Private p_NullCell As AL_ScreenObject
 

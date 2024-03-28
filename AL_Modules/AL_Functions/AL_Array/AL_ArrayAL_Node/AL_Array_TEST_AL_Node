@@ -1,0 +1,27 @@
+Sub AL_Array_TEST_AL_Node()
+
+    Dim Array1(6) As New AL_Node
+    Dim Test_AL_Node(6) As New AL_Node
+    Dim Test2_AL_Node() As New AL_Node
+    Dim i As Long
+
+    Set Array1(0) = Test_AL_Node(0)
+    Set Array1(0) = Test_AL_Node(1)
+    Set Array1(0) = Test_AL_Node(2)
+    Set Array1(0) = Test_AL_Node(3)
+    Set Array1(0) = Test_AL_Node(4)
+    Set Array1(0) = Test_AL_Node(5)
+    Set Array1(0) = Test_AL_Node(6)
+
+    AL_Array_Delete_AL_Node Array1 3
+    If AL_Array_InArray_AL_Node(Array1, Test_AL_Node(3)) = False Then
+        AL_Array_Splice_AL_Node Array1, 3, Test_AL_Node(3)
+    End If
+    AL_Array_Pop_AL_Node
+    AL_Array_Push_AL_Node Test_AL_Node(6)
+    AL_Array_Shift_AL_Node
+    AL_Array_Unshift_AL_Node, Test_AL_Node(6)
+    i = AL_Array_Search_AL_Node(Array1, Test_AL_Node(3))
+    Set Test2_AL_Node = AL_Array_Merge_AL_Node(Array1, Test_AL_Node)
+
+End Sub

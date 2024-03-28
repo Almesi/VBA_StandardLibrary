@@ -1,0 +1,17 @@
+Sub AL_Update_Create()
+
+    Dim ws As Worksheet
+
+    AL_UpdateInitialize
+    For Each ws In Worksheets
+        If ws.Name = "Update" Then
+                AL_Error_Print 3, 1, "Update"
+                AL_Error_Show 3, 1, "Update"
+                Exit Sub
+        End If
+    Next ws
+    Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+    ws.Name = "Update"
+    AL_Update_Initialize
+
+End Sub

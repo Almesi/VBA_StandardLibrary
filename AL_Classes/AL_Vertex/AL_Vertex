@@ -1,5 +1,5 @@
 ' Class module: AL_Vertex
-' Describes a Vertex in 3D-Space
+' Describes a Vertex in 3D-Space with w as extra Value
 
 ' Variable Declaration
     Private p_X As Integer

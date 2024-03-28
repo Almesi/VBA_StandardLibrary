@@ -1,0 +1,3 @@
+' This Module is the basis for all other files in this Library, as it is the errorhandler for all possible errors
+' Before using it check if a sheet with the name "Error" was created.
+' If it wasnt run the Code "AL_Error_Create" once. This will generate the errorhandler

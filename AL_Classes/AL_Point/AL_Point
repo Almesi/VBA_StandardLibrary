@@ -1,5 +1,5 @@
 ' Class module: AL_Point
-' Describes a Point in 3D-Space
+' Describes a Point in 3D-Space with w as extra Value
 
 ' Variable Declaration
     Private p_X As Integer

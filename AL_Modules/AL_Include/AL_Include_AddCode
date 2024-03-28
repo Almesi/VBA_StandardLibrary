@@ -1,12 +1,12 @@
 ' Adds Code to a given Instance
 Sub AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String)
 
-    If AL_Check_String(FilePath, 0) = False Then
+    If AL_Check_String(FilePath, 0) = Is_Error Then
         Exit Sub
     End If
     If VBCodeModule Is Nothing Then
-        AL_ErrorPrint 1, 4, "AL_Include_AddCode"
-        AL_ErrorPrint 1, 4, 
+        AL_Error_Print 1, 4, "AL_Include_AddCode"
+        AL_Error_Print 1, 4, "AL_Include_AddCode"
     End If
     Dim FileLine As String
     Dim Index As Long
