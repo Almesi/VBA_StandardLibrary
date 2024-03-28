@@ -1,0 +1,11 @@
+Sub AL_RandomArray_TEST()
+
+    Dim Test(30) As Integer
+
+    AL_RandomArray_Integer Test, 1, 100, 10, True
+    AL_RandomArray_Integer Test, 1, 100, 10
+    AL_RandomArray_Integer Test, 1, 100
+    AL_RandomArray_Integer Test, 1
+    AL_RandomArray_Integer Test
+
+End Sub
