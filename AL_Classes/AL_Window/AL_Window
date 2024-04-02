@@ -158,6 +158,14 @@
     Public Property Get NullCell() As Range
         Set NullCell = p_NullCell
     End Property
+
+    Public Property Let ScreenObjects(ByVal Value As AL_ScreenObject, ByVal Index As Integer)
+        Set p_ScreenObjects(Index) = Value
+    End Property
+    
+    Public Property Get ScreenObjects(ByVal Index As Integer) As AL_ScreenObject
+        Set ScreenObjects = p_ScreenObjects(Index)
+    End Property
 '
 
 Public Sub LetCenter()
@@ -375,4 +383,27 @@ Private Sub Scale(ByRef ScreenObject As AL_ScreenObject, ByVal Point As AL_Point
     ScreenObject.Point.Y = ScreenObject.Point.Y * Point.Y
     ScreenObject.Point.Z = ScreenObject.Point.Z * Point.Z
     ScreenObject.Point.W = ScreenObject.Point.W * Point.W
+End Sub
+
+
+Public Sub TEST()
+    Dim Window As AL_Window
+    Dim ScreenObject As AL_ScreenObject
+    Dim TranslatePoint As AL_Point
+    Dim ScalePoint As AL_Point
+    ScreenObject.Initialize 1, 1, 1, 2, 2, 2
+    ScreenObject.Texture = ActiveSheet.Range(Range("A1"), Range("A1").Offset(1, 1))
+    TranslatePoint.X = 1
+    TranslatePoint.Y = 3
+    TranslatePoint.Z = 2
+    ScalePoint.X = 1
+    ScalePoint.Y = 3
+    ScalePoint.Z = 2
+    Window.Insert(ScreenObject)
+    Window.Insert(ScreenObject)
+    Window.Release
+    Window.Insert(ScreenObject)
+    Window.Transform Window.ScreenObjects(0), TranslatePoint, ScalePoint, 1.5, 2, 1.3
+    Window.Draw
+
 End Sub

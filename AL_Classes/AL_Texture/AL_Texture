@@ -1,0 +1,79 @@
+' Class module: AL_Texture
+' Describes a Texture and its Position and Length
+
+' Variable Declaration
+    
+    ' Whole Value as Offset of upper Left corner of the Texture Collection Sheet
+    Private p_LastRow As Long
+    Private p_LastColumn As Long
+
+    Private p_SheetRow As Long
+    Private p_SheetColumn As Long
+
+    Private p_Texture As Range
+'
+
+'Get Let Set 
+    Public Property Let LastRow(ByVal Value As Long)
+        p_LastRow = Value
+    End Property
+
+    Public Property Get LastRow() As Long
+        LastRow = p_LastRow
+    End Property
+
+    Public Property Let LastColumn(ByVal Value As Long)
+        p_LastColumn = Value
+    End Property
+
+    Public Property Get LastColumn() As Long
+        LastColumn = p_LastColumn
+    End Property
+
+    Public Property Let SheetRow(ByVal Value As Long)
+        p_SheetRow = Value
+    End Property
+
+    Public Property Get SheetRow() As Long
+        SheetRow = p_SheetRow
+    End Property
+
+    Public Property Let SheetColumn(ByVal Value As Long)
+        p_SheetColumn = Value
+    End Property
+
+    Public Property Get SheetColumn() As Long
+        SheetColumn = p_SheetColumn
+    End Property
+
+    Public Property Let Texture(ByVal Value As Range)
+        Set p_Texture = Value
+    End Property
+
+    Public Property Get Texture() As Range
+        Set Texture = p_Texture
+    End Property 
+'
+
+Public Sub Initialize(ByVal WorkbookName As String, ByVal n_SheetName As String, ByVal n_SheetRow As Long, ByVal n_SheetColumn As Long, ByVal n_LastRow As Long, ByVal LastColumn As Long)
+    Dim TextureSheet As Range
+    p_SheetRow = n_SheetRow
+    p_SheetColumn = n_SheetColumn
+    p_LastRow = n_LastRow
+    p_LastColumn = n_LastColumn
+    Set TextureSheet = Workbooks(WorkbookName).Sheets(SheetName).Range("A1")
+    Set p_Texture = Range(TextureSheet.Offset(p_SheetRow, p_SheetColumn), TextureSheet.Range("A1").Offset(p_SheetRow + p_LastRow, p_SheetColumn + p_LastColumn))
+End Sub
+
+Public Function Cut(ByVal Texture As Range, StartRowFactor As Float, StartColumnFactor As Float, LastRowFactor As Float, LastColumnFactor As Float) As Range
+    Dim StartRow As Integer
+    Dim StartColumn As Integer
+    Dim LastRow As Integer
+    Dim LastColumn As Integer
+    StartRow = Int((Texture.Rows.Count) * StartRowFactor)
+    StartColumn = Int((Texture.Columns.Count) * StartColumnFactor)
+    LastRow = Int((Texture.Rows.Count) * LastRowFactor)
+    LastColumn = Int((Texture.Columns.Count) * LastRowFactor)
+    Set Cut = Range(Texture.Offset(StartRow, StartColumn), Texture.Offset(LastRow, LastColumn))
+
+End Function
