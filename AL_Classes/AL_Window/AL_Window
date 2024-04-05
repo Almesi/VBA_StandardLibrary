@@ -16,17 +16,17 @@
     Private p_Depth As Integer
 
     ' Boundaries
-    Private p_UpperBound As Float
-    Private p_LowerBound As Float
-    Private p_LeftBound As Float
-    Private p_RightBound As Float
-    Private p_DepthBound As Float
+    Private p_UpperBound As Single
+    Private p_LowerBound As Single
+    Private p_LeftBound As Single
+    Private p_RightBound As Single
+    Private p_DepthBound As Single
 
     ' Center and Normals(Factor needed to multiply to get the size)
     Private p_Center As AL_Vertex
-    Private p_NormalLength As Float
-    Private p_NormalWidth As Float
-    Private p_NormalDepth As Float
+    Private p_NormalLength As Single
+    Private p_NormalWidth As Single
+    Private p_NormalDepth As Single
 
     ' The objects that gets drawn to the window and the NullCell, which is used when nothing should be drawn
     Private p_ScreenObjects(1024) As AL_ScreenObject
@@ -129,27 +129,27 @@
         Center = p_Center
     End Property
 
-    Public Property Let NormalLength(ByVal Value As Float)
+    Public Property Let NormalLength(ByVal Value As Single)
         p_NormalLength = Value
     End Property
 
-    Public Property Get NormalLength() As Float
+    Public Property Get NormalLength() As Single
         NormalLength = p_NormalLength
     End Property
 
-    Public Property Let NormalWidth(ByVal Value As Float)
+    Public Property Let NormalWidth(ByVal Value As Single)
         p_NormalWidth = Value
     End Property
 
-    Public Property Get NormalWidth() As Float
+    Public Property Get NormalWidth() As Single
         NormalWidth = p_NormalWidth
     End Property
 
-    Public Property Let NormalDepth(ByVal Value As Float)
+    Public Property Let NormalDepth(ByVal Value As Single)
         p_NormalDepth = Value
     End Property
 
-    Public Property Get NormalDepth() As Float
+    Public Property Get NormalDepth() As Single
         NormalDepth = p_NormalDepth
     End Property
 
@@ -202,8 +202,8 @@ Public Sub Initialize(ByVal Camera As AL_Camera, ByVal WorkbookName As String, B
 End Sub
 
 Public Sub LetCenter()
-    p_Center.X = Int((p_Length / 2) + 0,5)
-    p_Center.Y = Int((p_Width / 2) + 0,5)
+    p_Center.X = Int((p_Length / 2) + 0.5)
+    p_Center.Y = Int((p_Width / 2) + 0.5)
     p_Center.Z = Depth
 End Sub
 
@@ -234,7 +234,7 @@ End Sub
 ' Draws all used Ranges in DrawRange Array
 Public Sub Draw()
     If IsInitialized = True Then 
-        Dim i As As Integer
+        Dim i As Integer
 
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
@@ -262,7 +262,7 @@ End Sub
 ' Inserts a Range into the DrawRange Array
 Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
     If IsInitialized = True Then
-        Dim i As As Integer
+        Dim i As Integer
         
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
@@ -275,12 +275,12 @@ Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
         Loop
         Set p_ScreenObjects(i) = ScreenObject
     End If
-Sub
+End Sub
 
 ' Releases all Ranges from the DrawRange
 Public Sub Release()
     If IsInitialized = True Then 
-        Dim i As As Integer
+        Dim i As Integer
 
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
@@ -293,7 +293,7 @@ Public Sub Release()
             End If
         Loop
     End If
-Sub
+End Sub
 
 ' Check if Range is in Bounds of Window
 Private Function InBounds(ByVal ScreenObject As AL_ScreenObject) As Boolean
@@ -321,7 +321,7 @@ Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_Screen
                 Dim Length As AL_Vertex
                 Dim CutVertex As AL_Vertex
                 Dim CutLength As AL_Vertex
-                Dim CutDifference(3) As Float
+                Dim CutDifference(3) As Single
         
                 Vertex.X  = ScreenObject.Vertex.X
                 Vertex.Y  = ScreenObject.Vertex.Y
@@ -347,7 +347,7 @@ Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_Screen
             
                 If p_LowerBound > Length.Y + Vertex.Y Then
                         CutLength.Y = p_LowerBound
-                        CutDifference(2) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * (Abs(Length.Y) - Abs(p_LowerBound)) / (Length.Y)))
+                        CutDifference(2) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Abs(Length.Y) - Abs(p_LowerBound)) / (Length.Y)))
                     Else
                         CutLength.Y = Length.Y + Vertex.Y
                         CutDifference(2) = Length.Y
@@ -379,14 +379,14 @@ End Function
 
 ' Projects to Screen
 Private Sub Project(ByRef ScreenObject As AL_ScreenObject)
-    Dim ScaleFactor As Float
+    Dim ScaleFactor As Single
     Dim Temp As AL_ScreenObject
     
     Set Temp = ScreenObject
     ScaleFactor = Camera.ScreenDistance / (ScreenObject.Vertex.Z + Camera.ScreenDistance)
-    Rotate(Temp, Camera.Direction.X, "X")
-    Rotate(Temp, Camera.Direction.Y, "Y")
-    Rotate(Temp, Camera.Direction.Z, "Z")
+    Rotate Temp, Camera.Direction.X, "X"
+    Rotate Temp, Camera.Direction.Y, "Y"
+    Rotate Temp, Camera.Direction.Z, "Z"
     ScreenObject.Vertex.Y = Camera.Location.Y + (Temp.Vertex.Y - Camera.Location.Y) * ScaleFactor
     ScreenObject.Vertex.X = Camera.Location.X + (Temp.Vertex.X - Camera.Location.X) * ScaleFactor
     ScreenObject.Length.Y = Camera.Location.Y + (Temp.Length.Y - Camera.Location.Y) * ScaleFactor
@@ -394,7 +394,7 @@ Private Sub Project(ByRef ScreenObject As AL_ScreenObject)
 End Sub
 
 ' Translates, Rotates and Scales the Screenobject
-Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslateVertex As AL_Vertex = Nothing, Optional ByVal ScaleVertex As AL_Vertex = Nothing, Optional ByVal ThetaX As Float = 0 , Optional ByVal ThetaY As Float = 0, Optional ByVal ThetaZ As Float = 0)
+Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslateVertex As AL_Vertex = Nothing, Optional ByVal ScaleVertex As AL_Vertex = Nothing, Optional ByVal ThetaX As Single = 0 , Optional ByVal ThetaY As Single = 0, Optional ByVal ThetaZ As Single = 0)
     If Not TranslateVertex Is Nothing Then
         Translate ScreenObject, TranslateVertex
     End If
@@ -408,7 +408,7 @@ Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal Trans
         Rotate ScreenObject, ThetaZ, "Z"
     End If
     If Not ScaleVertex Is Nothing Then
-        ScaleScreenObject, ScaleVertex
+        Scaling ScreenObject, ScaleVertex
     End If
 End Sub
 
@@ -421,7 +421,7 @@ Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_
     End If
 End Sub
 
-Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Float, ByVal Axis As String)
+Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Single, ByVal Axis As String)
 
     If IsInitialized = True Then
         Select Case Axis
@@ -443,7 +443,7 @@ Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Float, 
 
 End Sub
 
-Private Sub Scale(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_Vertex)
+Private Sub Scaling(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_Vertex)
     If IsInitialized = True Then
         ScreenObject.Vertex.X = ScreenObject.Vertex.X * Vertex.X
         ScreenObject.Vertex.Y = ScreenObject.Vertex.Y * Vertex.Y

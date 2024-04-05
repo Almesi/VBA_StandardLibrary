@@ -89,7 +89,7 @@ Public Sub LetTexture()
     End If
 Public Sub
 
-Public Sub Cut(StartRowFactor As Float, StartColumnFactor As Float, LastRowFactor As Float, LastColumnFactor As Float) As Range
+Public Sub Cut(StartRowFactor As Single, StartColumnFactor As Single, LastRowFactor As Single, LastColumnFactor As Single) As Range
     If IsInitialized = True Then
         Dim StartRow As Integer
         Dim StartColumn As Integer
@@ -104,7 +104,7 @@ Public Sub Cut(StartRowFactor As Float, StartColumnFactor As Float, LastRowFacto
 End Sub
 
 ' Counter Clockwise rotation of the texture
-Public Sub Rotate(ByVal Theta As Float)
+Public Sub Rotate(ByVal Theta As Single)
     If IsInitialized = True Then
         Dim X As Integer
         Dim Y As Integer
@@ -137,8 +137,8 @@ End Sub
 
 Public Sub Scale(ByRef GoalTexture As Range)
 
-    Dim RowFactor As Float
-    Dim ColumnFactor As Float
+    Dim RowFactor As Single
+    Dim ColumnFactor As Single
 
     RowFactor = p_OriginalTexture.Rows.Count / GoalTexture.Rows.Count
     ColumnFactor = p_OriginalTexture.Columns.Count / GoalTexture.Columns.Count

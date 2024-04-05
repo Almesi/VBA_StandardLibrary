@@ -10,7 +10,7 @@ Function AL_Array_Merge_AL_Node(ByRef Array1() As AL_Node, ByRef Array2() As AL_
     For i = 0 To Array1Length
         Set TempArray(i) = Array1(i)
     Next
-    For j = 0 To Array2Length
+    For j = 0 To Array2Length - 1
         Set TempArray(i + j + 1) = Array2(j)
     Next
     Set AL_Array_Merge_AL_Node = TempArray

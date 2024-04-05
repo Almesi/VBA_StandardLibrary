@@ -2,8 +2,8 @@ Sub AL_Array_Push_AL_Node(ByRef Array1() As AL_Node, ByVal PushObject As AL_Node
 
     Dim Array1Length As Long
 
-    Array1Length = UBound(Array1)
-    ReDim Preserve Array1(Array1Length + 1)
-    Set Array1(Array1Length + 1) = PushObject
+    Array1Length = UBound(Array1) + 1
+    ReDim Preserve Array1(Array1Length)
+    Set Array1(Array1Length) = PushObject
 
 End Sub

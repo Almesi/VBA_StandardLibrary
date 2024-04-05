@@ -2,14 +2,15 @@ Sub AL_Array_Shift_AL_Node(ByRef Array1() As AL_Node)
 
     Dim Array1Length As Long
     Dim NewArray1Length As Long
+    Dim TempArray1() As AL_Node
 
     Array1Length = UBound(Array1)
     NewArray1Length = Array1Length - 1
-    Dim TempArray1(NewArray1Length)
+    ReDim TempArray1(NewArray1Length)
     For i = 0 To NewArray1Length
-        TempArray1(i) = Array1(i + 1)
+        Set TempArray1(i) = Array1(i + 1)
     Next
     ReDim Array1(NewArray1Length)
-    Set Array1(i) = TempArray1(i)
+    Array1 = TempArray1
 
 End Sub

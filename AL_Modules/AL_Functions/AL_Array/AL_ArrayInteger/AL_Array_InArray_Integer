@@ -1,8 +1,8 @@
 Function AL_Array_InArray_Integer(ByRef Array1() As Integer, ByVal SearchValue As Integer) As Boolean
 
-    For I = 0 To UBound(Array1)
-        If Array1(I) = SearchValue Then
-            AL_Array_InArray_Integer = True
+    For i = 0 To UBound(Array1)
+        If Array1(i) = SearchValue Then
+            AL_Array_1InArray1Integer = True
             Exit Function
         End If
     Next

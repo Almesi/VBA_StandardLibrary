@@ -2,8 +2,8 @@ Sub AL_Array_Push_Integer(ByRef Array1() As Integer, ByVal PushObject As Integer
 
     Dim Array1Length As Long
 
-    Array1Length = UBound(Array1)
-    ReDim Preserve Array1(Array1Length + 1)
-    Array1(Array1Length + 1) = PushObject
+    Array1Length = UBound(Array1) + 1
+    ReDim Preserve Array1(Array1Length)
+    Array1(Array1Length) = PushObject
 
 End Sub

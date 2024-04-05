@@ -1,20 +1,26 @@
 Sub AL_Array_Delete_Integer(ByRef Array1() As Integer, ByVal DeleteIndex As Long)
 
-    Dim TempArray() As New Integer
+    Dim TempArray() As Integer
     Dim Array1Length As Long
     Dim j As Long
     
     Array1Length = UBound(Array1)
     ReDim TempArray(Array1Length)
     j = 0
-    TempArray(i) = Array1(i)
+    TempArray = Array1
     ReDim Array1(Array1Length - 1)
-    For i = 0 To Array1Length
-        If i = DeleteIndex Then
-            i = i + 1
-        End If
-        Array1(j) = TempArray(i)
-        j = j + 1
-    Next
+    If Array1Length = DeleteIndex Then
+        For i = 0 To Array1Length - 1
+            Array1(i) = TempArray(i)
+        Next
+        Else
+            For i = 0 To Array1Length
+                If i = DeleteIndex Then
+                    i = i + 1
+                End If
+                Array1(j) = TempArray(i)
+                j = j + 1
+            Next
+    End If
 
 End Sub
