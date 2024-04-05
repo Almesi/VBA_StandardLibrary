@@ -65,3 +65,15 @@ Private Sub LetLength(ByVal n_Length As Integer)
             ReDim Preserve p_String(p_Length)
     End If
 End Sub
+
+Public Sub TEST()
+    Dim TestString As AL_String
+    Dim TestString2 As AL_String
+    TestString.CharString = "DDLSDIVDK"
+    MsgBox(TestString.CharString)
+    MsgBox(TestString.Length)
+    TestString2.LetLength = 18
+    MsgBox(TestString2.Length)
+    TestString2.CharString = TestString.CharString
+    TestString2.CharString = "DD"
+End Sub

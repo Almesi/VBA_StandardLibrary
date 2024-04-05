@@ -2,42 +2,42 @@
 ' Describes a Vertex in 3D-Space with w as extra Value
 
 ' Variable Declaration
-    Private p_X As Integer
-    Private p_Y As Integer
-    Private p_Z As Integer
-    Private p_W As Integer
+    Private p_X As Float
+    Private p_Y As Float
+    Private p_Z As Float
+    Private p_W As Float
 '
 
 ' Get Let Set
-    Public Property Let X(ByVal Value As Integer)
+    Public Property Let X(ByVal Value As Float)
         p_X = Value
     End Property
 
-    Public Property Get X() As Integer
+    Public Property Get X() As Float
         X = p_X
     End Property
 
-    Public Property Let Y(ByVal Value As Integer)
+    Public Property Let Y(ByVal Value As Float)
         p_Y = Value
     End Property
 
-    Public Property Get Y() As Integer
+    Public Property Get Y() As Float
         Y = p_Y
     End Property
 
-    Public Property Let Z(ByVal Value As Integer)
+    Public Property Let Z(ByVal Value As Float)
         p_Z = Value
     End Property
 
-    Public Property Get Z() As Integer
+    Public Property Get Z() As Float
         Z = p_Z
     End Property
 
-    Public Property Let W(ByVal Value As Integer)
+    Public Property Let W(ByVal Value As Float)
         p_W = Value
     End Property
 
-    Public Property Get W() As Integer
+    Public Property Get W() As Float
         WZ = p_W
     End Property
 '

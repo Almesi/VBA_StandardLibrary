@@ -1,0 +1,57 @@
+' Class module: AL_Camera
+' Describes a Camera in 3D-Space which is used by a Window
+
+' Variable Declaration
+    Private Initialized As Boolean
+    Private p_Location As AL_Vertex
+    Private p_Direction As AL_Vertex
+    Private p_ScreenDistance As Float
+'
+
+' Get Let Set
+    Public Property Let Location(ByVal Value As AL_Vertex)
+        p_Location = Value
+    End Property
+
+    Public Property Get Location() As AL_Vertex
+        Location = p_Location
+    End Property
+
+    Public Property Let Direction(ByVal Value As AL_Vertex)
+        p_Direction = Value
+    End Property
+
+    Public Property Get Direction() As AL_Vertex
+        Direction = p_Direction
+    End Property
+
+    Public Property Let ScreenDistance(ByVal Value As Float)
+        p_ScreenDistance = Value
+    End Property
+
+    Public Property Get ScreenDistance() As Float
+        ScreenDistance = p_ScreenDistance
+    End Property
+'
+
+Private Function IsInitialized()
+    If p_Initialized = False Then
+        AL_ErrorPrint 7, 5, "AL_Camera"
+        AL_ErrorShow 7, 5, "AL_Camera"
+        End
+    End If
+    IsInitialized = True
+End Function
+
+Public Sub Initialize(ByVal Location_X As Float, ByVal Location_Y As Float, ByVal Location_Z As Float, ByVal Direction_X As Float, ByVal Direction_Y As Float, ByVal Direction_Z As Float, ByVal ScreenDistance As Float)
+    If p_Initialized = False Then
+        p_Location.X  = Location_X
+        p_Location.Y  = Location_Y
+        p_Location.Z  = Location_Z
+        p_Direction.X = Direction_X
+        p_Direction.Y = Direction_Y
+        p_Direction.Z = Direction_Z
+        p_ScreenDistance = ScreenDistance
+        p_Initialized = True
+    End If
+End Sub

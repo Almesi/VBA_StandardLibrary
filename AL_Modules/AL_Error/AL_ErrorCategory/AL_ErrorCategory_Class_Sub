@@ -28,4 +28,9 @@ Sub AL_ErrorCategory_Class_Sub()
     AL_ErrorLib_Range.Offset(4, Distance + 2).Value = 4
     AL_ErrorLib_Range.Offset(4, Distance + 3).Formula = "Value Overflow"
 
+    AL_ErrorLib_Range.Offset(5, Distance + 0).Value = AL_ErrorCategory_Class
+    AL_ErrorLib_Range.Offset(5, Distance + 1).Formula = "Class"
+    AL_ErrorLib_Range.Offset(5, Distance + 2).Value = 5
+    AL_ErrorLib_Range.Offset(5, Distance + 3).Formula = "Object not Initialized"
+
 End Sub
