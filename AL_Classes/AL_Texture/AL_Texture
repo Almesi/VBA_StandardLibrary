@@ -62,34 +62,34 @@
 
 Private Function IsInitialized()
     If p_Initialized = False Then
-        AL_ErrorPrint 7, 5, "AL_Texture"
-        AL_ErrorShow 7, 5, "AL_Texture"
+        AL_Error_Print 7, 5, "AL_Texture"
+        AL_Error_Show 7, 5, "AL_Texture"
         End
     End If
     IsInitialized = True
 End Function
 
-Public Sub Initialize(ByVal WorkbookName As String, ByVal n_SheetName As String, ByVal n_SheetRow As Long, ByVal n_SheetColumn As Long, ByVal n_LastRow As Long, ByVal LastColumn As Long)
+Public Sub Initialize(ByVal WorkbookName As String, ByVal SheetName As String, ByVal n_SheetRow As Long, ByVal n_SheetColumn As Long, ByVal n_LastRow As Long, ByVal n_LastColumn As Long)
     Dim TextureSheet As Range
     p_SheetRow = n_SheetRow
     p_SheetColumn = n_SheetColumn
     p_LastRow = n_LastRow
     p_LastColumn = n_LastColumn
     Set TextureSheet = Workbooks(WorkbookName).Sheets(SheetName).Range("A1")
-    Set p_OriginalTexture = Range(TextureSheet.Offset(p_SheetRow, p_SheetColumn), TextureSheet.Range("A1").Offset(p_SheetRow + p_LastRow, p_SheetColumn + p_LastColumn))
-    Set p_Texture = p_OriginalTexture.Offset(p_LastRow, 0)
-    Set p_Texture.Interior.Color = p_OriginalTexture.Interior.Color
+    Set p_OriginalTexture = Range(TextureSheet.Offset(p_SheetRow, p_SheetColumn), TextureSheet.Offset(p_SheetRow + p_LastRow, p_SheetColumn + p_LastColumn))
+    Set p_Texture = p_OriginalTexture.Offset(p_LastRow + 1, 0)
+    AssignColor p_Texture, p_OriginalTexture, p_SheetRow, p_SheetColumn, p_LastRow, p_LastColumn
     p_Initialized = True
 End Sub
 
 Public Sub LetTexture()
     If IsInitialized = True Then
-        Set p_Texture = p_OriginalTexture.Offset(p_LastRow, 0)
-        Set p_Texture.Interior.Color = p_OriginalTexture.Interior.Color
+        Set p_Texture = p_OriginalTexture.Offset(p_LastRow + 1, 0)
+        AssignColor p_Texture, p_OriginalTexture, p_SheetRow, p_SheetColumn, p_LastRow, p_LastColumn
     End If
-Public Sub
+End Sub
 
-Public Sub Cut(StartRowFactor As Single, StartColumnFactor As Single, LastRowFactor As Single, LastColumnFactor As Single) As Range
+Public Sub Cut(StartRowFactor As Single, StartColumnFactor As Single, LastRowFactor As Single, LastColumnFactor As Single)
     If IsInitialized = True Then
         Dim StartRow As Integer
         Dim StartColumn As Integer
@@ -99,7 +99,7 @@ Public Sub Cut(StartRowFactor As Single, StartColumnFactor As Single, LastRowFac
         StartColumn = Int((p_OriginalTexture.Columns.Count) * StartColumnFactor)
         LastRow = Int((p_OriginalTexture.Rows.Count) * LastRowFactor)
         LastColumn = Int((p_OriginalTexture.Columns.Count) * LastRowFactor)
-        p_Texture.Interior.Color = Range(p_OriginalTexture.Offset(StartRow, StartColumn), p_OriginalTexture.Offset(LastRow, LastColumn)).Interior.Color
+        AssignColor p_Texture, p_OriginalTexture, StartRow, StartColumn, LastRow, LastColumn
     End If
 End Sub
 
@@ -112,8 +112,8 @@ Public Sub Rotate(ByVal Theta As Single)
         Set p_Texture = p_OriginalTexture
         For i = 1 To p_OriginalTexture.Rows.Count
             For j = 1 To p_OriginalTexture.Columns.Count
-                Center(0) = Int((p_OriginalTexture.Rows.Count/2) + 0,5)
-                Center(1) = Int((p_OriginalTexture.Columns.Count/2) + 0,5)
+                Center(0) = Int((p_OriginalTexture.Rows.Count/2) + 0.5)
+                Center(1) = Int((p_OriginalTexture.Columns.Count/2) + 0.5)
                 Y = ((i - Center(0)) / (Center(0) - 1))
                 X = ((j - Center(1)) / (Center(1) - 1))
                 If (p_OriginalTexture.Rows.Count Mod 2) = 0 Then
@@ -135,7 +135,7 @@ Public Sub Rotate(ByVal Theta As Single)
 
 End Sub
 
-Public Sub Scale(ByRef GoalTexture As Range)
+Public Sub Scaling(ByRef GoalTexture As Range)
 
     Dim RowFactor As Single
     Dim ColumnFactor As Single
@@ -183,4 +183,17 @@ Public Sub Scale(ByRef GoalTexture As Range)
             Next
     End Select
 
+End Sub
+
+Public Sub AssignColor(ByRef GoalRange As Range, ByVal SourceRange As Range, ByVal FirstRow Integer, ByVal FirstColumn As Integer, ByVal LastRow Integer, ByVal LastColumn As Integer)
+    Dim i As Integer, j As Integer, ii As Integer, jj As Integer
+    ii = 1
+    For i = FirstRow To LastRow
+        jj = 1
+        For j = FirstColumn To LastColumn
+            GoalRange.Cells(ii, jj).Interior.Color = SourceRange.Cells(i, j).Interior.Color
+            jj = jj + 1
+        Next
+        ii = ii + 1
+    Next
 End Sub

@@ -1,3 +1,19 @@
+Public AL_ErrorInitialization As Boolean
+Public AL_Error_Sheet As Worksheet
+Public AL_Error_Range As Range
+Public AL_ErrorLib_Range As Range
+Public AL_Error_Index As Integer
+Public Const Is_Error As Boolean = False
+Public Const No_Error As Boolean = True
+Public Const AL_ErrorCategory_System As Integer = 1
+Public Const AL_ErrorCategory_Workbook As Integer = 2
+Public Const AL_ErrorCategory_Worksheet As Integer = 3
+Public Const AL_ErrorCategory_Linker As Integer = 4
+Public Const AL_ErrorCategory_Compiler As Integer = 5
+Public Const AL_ErrorCategory_Module As Integer = 6
+Public Const AL_ErrorCategory_Class As Integer = 7
+Public Const AL_ErrorCategory_Userform As Integer = 8
+
 ' ErrorCategory describes where the error comes from (Linker, Compiler, Module etc)
 ' ErrorType describes what error it is
 ' ErrorValue describes what caused the Error

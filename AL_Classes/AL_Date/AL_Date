@@ -9,73 +9,71 @@
     Private p_Minute As Byte
     Private p_Second As Byte
     Private p_Week As Byte
-    Private p_CurrentSecond As Long
+    Private p_CurrentSecond As LongLong
 '
 
-
-
 ' Let Get Set
-    Public Property Let Year(ByVal Value As Integer)
+    Public Property Let m_Year(ByVal Value As Integer)
         p_Year = Value
     End Property
 
-    Public Property Get Year() As Integer
-        Year = p_Year
+    Public Property Get m_Year() As Integer
+        m_Year = p_Year
     End Property
 
-    Public Property Let Month(ByVal Value As Byte)
+    Public Property Let m_Month(ByVal Value As Byte)
         p_Month = Value
     End Property
 
-    Public Property Get Month() As Byte
-        Month = p_Month
+    Public Property Get m_Month() As Byte
+        m_Month = p_Month
     End Property
 
-    Public Property Let Day(ByVal Value As Byte)
+    Public Property Let m_Day(ByVal Value As Byte)
         p_Day = Value
     End Property
 
-    Public Property Get Day() As Byte
-        Day = p_Day
+    Public Property Get m_Day() As Byte
+        m_Day = p_Day
     End Property
 
-    Public Property Let Hour(ByVal Value As Byte)
+    Public Property Let m_Hour(ByVal Value As Byte)
         p_Hour = Value
     End Property
 
-    Public Property Get Hour() As Byte
-        Hour = p_Hour
+    Public Property Get m_Hour() As Byte
+        m_Hour = p_Hour
     End Property
 
-    Public Property Let Minute(ByVal Value As Byte)
+    Public Property Let m_Minute(ByVal Value As Byte)
         p_Minute = Value
     End Property
 
-    Public Property Get Minute() As Byte
-        Minute = p_Minute
+    Public Property Get m_Minute() As Byte
+        m_Minute = p_Minute
     End Property
 
-    Public Property Let Second(ByVal Value As Byte)
+    Public Property Let m_Second(ByVal Value As Byte)
         p_Second = Value
     End Property
 
-    Public Property Get Second() As Byte
-        Second = p_Second
+    Public Property Get m_Second() As Byte
+        m_Second = p_Second
     End Property
 
-    Public Property Let Week(ByVal Value As Byte)
+    Public Property Let m_Week(ByVal Value As Byte)
         p_Week = Value
     End Property
 
-    Public Property Get Week() As Byte
-        Week = p_Week
+    Public Property Get m_Week() As Byte
+        m_Week = p_Week
     End Property
 
-    Public Property Let CurrentSecond(ByVal Value As Byte)
+    Public Property Let CurrentSecond(ByVal Value As LongLong)
         p_CurrentSecond = Value
     End Property
 
-    Public Property Get CurrentSecond() As Byte
+    Public Property Get CurrentSecond() As LongLong
         CurrentSecond = p_CurrentSecond
     End Property
 '
@@ -87,12 +85,20 @@ Public Sub SetTime()
     p_Hour = Hour(Time)
     p_Minute = Minute(Time)
     p_Second = Second(Time)
-    p_Week = Week(Date)
-
-    p_CurrentSecond = p_CurrentSecond + 31536000 / 12 * p_Month
-    p_CurrentSecond = p_CurrentSecond + p_Day * 86400
-    p_CurrentSecond = p_CurrentSecond + p_Hour * 3600
-    p_CurrentSecond = p_CurrentSecond + p_Minute * 60
-    p_CurrentSecond = p_CurrentSecond + p_Second
-
+    
+    For i = 0 To p_Month
+        p_CurrentSecond = p_CurrentSecond + 31536000 / 12
+    Next
+    For i = 0 To p_Day
+        p_CurrentSecond = p_CurrentSecond + 86400
+    Next
+    For i = 0 To p_Hour
+        p_CurrentSecond = p_CurrentSecond + 3600
+    Next
+    For i = 0 To p_Minute
+        p_CurrentSecond = p_CurrentSecond + 60
+    Next
+    p_CurrentSecond = p_CurrentSecond + p_Second 
+    p_Week = (p_CurrentSecond / 604800) + 1
+    
 End Sub

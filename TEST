@@ -1,0 +1,20 @@
+Sub TEST()
+
+    Dim Camera As AL_Camera
+    Camera.TEST
+    Dim Char As AL_Char
+    Char.TEST
+    Dim Datte As AL_Date
+    Datte.SetTime
+    Dim IndexBuffer As AL_IndexBuffer
+    IndexBuffer.TEST
+    Dim Matrix As AL_Matrix
+    Matrix.TEST
+    Dim Stringg As AL_String
+    Stringg.TEST
+    Dim VertexBuffer As AL_VertexBuffer
+    VertexBuffer.TEST
+    Dim Window As AL_Window
+    Window.TEST
+
+End Sub

@@ -41,7 +41,7 @@
 
 ' Dynamic Arraylength
 ' If new length is shorter than old length everything after shorter one will be discarded
-Private Sub LetLength(ByVal n_Length As Integer)
+Public Sub LetLength(ByVal n_Length As Integer)
     If n_Length < 0 Then
         AL_Error_Print 7, 3, n_Length
         AL_Error_Show 7, 3, n_Length

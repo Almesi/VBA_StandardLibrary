@@ -8,7 +8,7 @@
     Private p_S_Cost As Integer
     Private p_G_Cost As Integer
     Private p_W_Cost As Integer
-    Private p_Parent As AL_Node
+    Private p_Parent As New AL_Node
 '
 
 ' Get Let Set

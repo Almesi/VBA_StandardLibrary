@@ -535,7 +535,7 @@ Public Property Let Character(ByVal n_Char As String)
 End Property
 
 Public Sub TEST()
-    Dim TestChar As AL_Char
+    Dim TestChar As New AL_Char
     TestChar.Character = "J"
     MsgBox(TestChar.Character)
     TestChar.Character = "LDK"

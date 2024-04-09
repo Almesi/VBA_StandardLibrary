@@ -1,0 +1,28 @@
+' Class module: AL_IndexBuffer
+' Describes a Buffer for Indeces
+
+' Variable Declaration
+    Private p_Buffer() As Integer
+'
+
+' Get Let Set
+    Public Property Let Buffer(ByVal Index As Integer, ByVal Value As Integer)
+        If Index > UBound(p_Buffer) Then
+            ReDim Preserve p_Buffer(Index)
+            p_Buffer(Index) = Value
+        End If
+    End Property
+
+    Public Property Get Buffer(ByVal Index As Integer) As Integer
+        Location = p_Buffer(Index)
+    End Property
+'
+
+Public Sub TEST()
+
+    Dim Test As Integer
+    p_Buffer(0) = Test
+    p_Buffer(4) = Test
+    p_Buffer(2) = p_Buffer(4)
+
+End Sub

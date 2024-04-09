@@ -8,7 +8,7 @@
     Private p_WindowOpen As Boolean
     Private p_WindowPosition As Range
     Private p_Window As Range
-    Private p_Camera As AL_Camera
+    Private p_Camera As New AL_Camera
 
     ' Windowsize
     Private p_Length As Integer
@@ -23,7 +23,7 @@
     Private p_DepthBound As Single
 
     ' Center and Normals(Factor needed to multiply to get the size)
-    Private p_Center As AL_Vertex
+    Private p_Center As New AL_Vertex
     Private p_NormalLength As Single
     Private p_NormalWidth As Single
     Private p_NormalDepth As Single
@@ -31,6 +31,10 @@
     ' The objects that gets drawn to the window and the NullCell, which is used when nothing should be drawn
     Private p_ScreenObjects(1024) As AL_ScreenObject
     Private p_NullCell As AL_ScreenObject
+
+    ' These Variables are used for VertexBuffers and stuff
+    Private p_VertexBuffer As AL_VertexBuffer
+    Private p_IndexBuffer As AL_IndexBuffer
 
 ' Let Get Set
 
@@ -169,26 +173,42 @@
         Set NullCell = p_NullCell
     End Property
 
-    Public Property Let ScreenObjects(ByVal Value As AL_ScreenObject, ByVal Index As Integer)
+    Public Property Let ScreenObjects(ByVal Index As Integer, ByVal Value As AL_ScreenObject)
         Set p_ScreenObjects(Index) = Value
     End Property
     
     Public Property Get ScreenObjects(ByVal Index As Integer) As AL_ScreenObject
         Set ScreenObjects = p_ScreenObjects(Index)
     End Property
+
+    Public Property Let VertexBuffer(ByVal Value As AL_VertexBuffer)
+        Set p_VertexBuffer = Value
+    End Property
+
+    Public Property Get VertexBuffer() As AL_VertexBuffer
+        Set VertexBuffer = p_VertexBuffer
+    End Property
+
+    Public Property Let IndexBuffer(ByVal Value As AL_IndexBuffer)
+        Set p_IndexBuffer = Value
+    End Property
+
+    Public Property Get IndexBuffer() As AL_IndexBuffer
+        Set IndexBuffer = p_IndexBuffer
+    End Property
 '
 
 Private Function IsInitialized()
     If p_Initialized = False Then
-        AL_ErrorPrint 7, 5, "AL_Window"
-        AL_ErrorShow 7, 5, "AL_Window"
+        AL_Error_Print 7, 5, "AL_Window"
+        AL_Error_Show 7, 5, "AL_Window"
         End
     End If
     IsInitialized = True
 End Function
 
 Public Sub Initialize(ByVal Camera As AL_Camera, ByVal WorkbookName As String, ByVal SheetName As String, ByVal Position As String, ByVal Length As Integer, ByVal Width As Integer, ByVal Depth As Integer)
-    p_Camera = Camera
+    Set p_Camera = Camera
     Set p_WindowPosition = Workbooks(WorkbookName).Sheets(SheetName).Range(Position)
     p_Length = Length
     p_Width = Width
@@ -210,17 +230,17 @@ End Sub
 ' Sets the Normals
 Public Sub LetNormal()
     p_NormalLength = 1 / p_Center.X
-    p_NormalWidth  = 1 / p_Center.Y
-    p_NormalWidth  = 1 / p_Center.Z
+    p_NormalWidth = 1 / p_Center.Y
+    p_NormalWidth = 1 / p_Center.Z
 End Sub
 
 ' Sets the Bounds
 Public Sub LetBounds()
     p_UpperBound = p_Center.Y * NormalWidth
-    p_LowerBound = p_Center.Y * NormalWidth  * -1
-    p_LeftBound  = p_Center.X * NormalLength
+    p_LowerBound = p_Center.Y * NormalWidth * -1
+    p_LeftBound = p_Center.X * NormalLength
     p_RightBound = p_Center.X * NormalLength * -1
-    p_DepthBound = P_Center.Z
+    p_DepthBound = p_Center.Z
 End Sub
 
 ' Clears the Window with a color or standard with white
@@ -233,7 +253,7 @@ End Sub
 
 ' Draws all used Ranges in DrawRange Array
 Public Sub Draw()
-    If IsInitialized = True Then 
+    If IsInitialized = True Then
         Dim i As Integer
 
         i = 0
@@ -244,11 +264,12 @@ Public Sub Draw()
             Set p_ScreenObjects(i) = CutToBounds(p_ScreenObjects(i))
 
             ' Get Negative Offset and add it to the Center resulting in the true Cell value to offset
-            Range(p_Window.Cells                                                                                      _
-            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Vertex.Y /  p_NormalWidth)),                     _
-             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Vertex.X /  p_NormalLength))), p_Window.Cells    _
-            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Length.Y / p_NormalWidth)),                     _
-             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Length.X / p_NormalLength)))).Interior.Color = p_ScreenObjects(i).Interior.Color
+            p_ScreenObjects(i).Texture.Texture.Copy
+            Range(p_Window.Cells _
+            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Vertex.Y / p_NormalWidth), 0), _
+             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Vertex.X / p_NormalLength), 0)), p_Window.Cells _
+            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Length.Y / p_NormalWidth), 0), _
+             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Length.X / p_NormalLength), 0))).PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
             i = i + 1
             If i > 1024 Then
                 AL_Error_Print 1, 5, i
@@ -266,7 +287,7 @@ Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
         
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
-            i = i + 1
+        i = i + 1
             If i > 1024 Then
                 AL_Error_Print 1, 5, LongValue
                 AL_Error_Show 1, 5, LongValue
@@ -278,8 +299,8 @@ Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
 End Sub
 
 ' Releases all Ranges from the DrawRange
-Public Sub Release()
-    If IsInitialized = True Then 
+Public Sub ReleaseObject()
+    If IsInitialized = True Then
         Dim i As Integer
 
         i = 0
@@ -298,11 +319,11 @@ End Sub
 ' Check if Range is in Bounds of Window
 Private Function InBounds(ByVal ScreenObject As AL_ScreenObject) As Boolean
     If IsInitialized = True Then
-            If  (DepthBound >= ScreenObject.Vertex.Z Or DepthBound >= ScreenObject.Length.Z) And _
-            (UpperBound >= ScreenObject.Vertex.Y Or LowerBound =< ScreenObject.Vertex.Y) Or _
-            (LeftBound =< ScreenObject.Vertex.X Or RightBound >= ScreenObject.Vertex.X) Or _
-            (UpperBound >= ScreenObject.Length.Y Or LowerBound =< ScreenObject.Length.Y) Or _
-            (LeftBound =< ScreenObject.Length.X Or RightBound >= ScreenObject.Length.X) Then
+            If (DepthBound >= ScreenObject.Vertex.Z Or DepthBound >= ScreenObject.Length.Z) And _
+            (UpperBound >= ScreenObject.Vertex.Y Or LowerBound <= ScreenObject.Vertex.Y) Or _
+            (LeftBound <= ScreenObject.Vertex.X Or RightBound >= ScreenObject.Vertex.X) Or _
+            (UpperBound >= ScreenObject.Length.Y Or LowerBound <= ScreenObject.Length.Y) Or _
+            (LeftBound <= ScreenObject.Length.X Or RightBound >= ScreenObject.Length.X) Then
                 InBounds = False
             Else
                 InBounds = True
@@ -314,17 +335,17 @@ End Function
 Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_ScreenObject
 
     If IsInitialized = True Then
-        Dim TempObj As AL_ScreenObject
+        Dim TempObj As New AL_ScreenObject
         ' Cut Range to Window boundaries
         If InBounds(ScreenObject) = False Then
-                Dim Vertex As AL_Vertex
-                Dim Length As AL_Vertex
-                Dim CutVertex As AL_Vertex
-                Dim CutLength As AL_Vertex
+                Dim Vertex As New AL_Vertex
+                Dim Length As New AL_Vertex
+                Dim CutVertex As New AL_Vertex
+                Dim CutLength As New AL_Vertex
                 Dim CutDifference(3) As Single
         
-                Vertex.X  = ScreenObject.Vertex.X
-                Vertex.Y  = ScreenObject.Vertex.Y
+                Vertex.X = ScreenObject.Vertex.X
+                Vertex.Y = ScreenObject.Vertex.Y
                 Length.X = ScreenObject.Length.X
                 Length.Y = ScreenObject.Length.Y
         
@@ -332,14 +353,14 @@ Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_Screen
                 ' Cutdifference is the product of the factor of the cut from the borders multiplied by the maxlength, resulting in an "offset factor", which is set to a whole value (Cell value)
                 If p_UpperBound < Vertex.Y Then
                         CutVertex.Y = p_UpperBound
-                        CutDifference(0) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Vertex.Y - p_UpperBound) / (Length.Y)))
+                        CutDifference(0) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Vertex.Y - p_UpperBound) / (Length.Y)), 0)
                     Else
                         CutVertex.Y = Vertex.Y
                         CutDifference(0) = 1
                 End If
                 If p_LeftBound > Vertex.X Then
                         CutVertex.X = p_LeftBound
-                        CutDifference(1) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Abs(Vertex.Y) - Abs(p_LeftBound)) / (Length.X)))
+                        CutDifference(1) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Abs(Vertex.Y) - Abs(p_LeftBound)) / (Length.X)), 0)
                     Else
                         CutVertex.X = Vertex.X
                         CutDifference(1) = 1
@@ -347,29 +368,29 @@ Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_Screen
             
                 If p_LowerBound > Length.Y + Vertex.Y Then
                         CutLength.Y = p_LowerBound
-                        CutDifference(2) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Abs(Length.Y) - Abs(p_LowerBound)) / (Length.Y)))
+                        CutDifference(2) = WorksheetFunction.RoundUp(ScreenObject.OgLength.Y * ((Abs(Length.Y) - Abs(p_LowerBound)) / (Length.Y)), 0)
                     Else
                         CutLength.Y = Length.Y + Vertex.Y
                         CutDifference(2) = Length.Y
                 End If
                 If p_RightBound < Length.X + Vertex.X Then
                         CutLength.X = p_RightBound
-                        CutDifference(3) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Length.X - p_RightBound) / (Length.Y)))
+                        CutDifference(3) = WorksheetFunction.RoundUp(ScreenObject.OgLength.X * ((Length.X - p_RightBound) / (Length.Y)), 0)
                     Else
                         CutLength.X = Length.X + Vertex.X
                         CutDifference(3) = Length.X
                 End If
             
-                TempObj.Vertex.X     = CutVertex.X
-                TempObj.Vertex.Y     = CutVertex.Y
-                TempObj.Length.X    = CutLength.X
-                TempObj.Length.Y    = CutLength.Y
-                Set TempObj.Texture = Range(ScreenObject.Texture.Cells(CutDifference(0), CutDifference(1)), ScreenObject.Texture.Cells(CutDifference(2), CutDifference(3)))
-            Else
-                TempObj.Vertex.X     = p_NullCell.Texture.Column
-                TempObj.Vertex.Y     = p_NullCell.Texture.Row
-                TempObj.Length.X    = p_NullCell.Texture.Column
-                TempObj.Length.Y    = p_NullCell.Texture.Row
+                TempObj.Vertex.X = CutVertex.X
+                TempObj.Vertex.Y = CutVertex.Y
+                TempObj.Length.X = CutLength.X
+                TempObj.Length.Y = CutLength.Y
+                Set TempObj.Texture.Texture = ScreenObject.Texture.Texture.Range(ScreenObject.Texture.Texture.Cells(CutDifference(0), CutDifference(1)), ScreenObject.Texture.Texture.Cells(CutDifference(2), CutDifference(3)))            Else
+                
+                TempObj.Vertex.X = p_NullCell.Texture.Texture.Column
+                TempObj.Vertex.Y = p_NullCell.Texture.Texture.Row
+                TempObj.Length.X = p_NullCell.Texture.Texture.Column
+                TempObj.Length.Y = p_NullCell.Texture.Texture.Row
                 Set TempObj.Texture = p_NullCell.Texture
         End If
         CutToBounds = TempObj
@@ -394,7 +415,7 @@ Private Sub Project(ByRef ScreenObject As AL_ScreenObject)
 End Sub
 
 ' Translates, Rotates and Scales the Screenobject
-Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslateVertex As AL_Vertex = Nothing, Optional ByVal ScaleVertex As AL_Vertex = Nothing, Optional ByVal ThetaX As Single = 0 , Optional ByVal ThetaY As Single = 0, Optional ByVal ThetaZ As Single = 0)
+Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslateVertex As AL_Vertex = Nothing, Optional ByVal ScaleVertex As AL_Vertex = Nothing, Optional ByVal ThetaX As Single = 0, Optional ByVal ThetaY As Single = 0, Optional ByVal ThetaZ As Single = 0)
     If Not TranslateVertex Is Nothing Then
         Translate ScreenObject, TranslateVertex
     End If
@@ -426,14 +447,14 @@ Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Single,
     If IsInitialized = True Then
         Select Case Axis
             Case Is = "X"
-                ScreenObject.Vertex.Y = ScreenObject.Vertex.Y *  Cos(Theta) + ScreenObject.Vertex.Y  * Sin(Theta)
-                ScreenObject.Vertex.Z = ScreenObject.Vertex.Z * -Sin(Theta) + ScreenObject.Vertex.Z  * Cos(Theta)
+                ScreenObject.Vertex.Y = ScreenObject.Vertex.Y * Cos(Theta) + ScreenObject.Vertex.Y * Sin(Theta)
+                ScreenObject.Vertex.Z = ScreenObject.Vertex.Z * -Sin(Theta) + ScreenObject.Vertex.Z * Cos(Theta)
             Case Is = "Y"
-                ScreenObject.Vertex.X = ScreenObject.Vertex.X *  Cos(Theta) + ScreenObject.Vertex.X  * -Sin(Theta)
-                ScreenObject.Vertex.Z = ScreenObject.Vertex.Z *  Sin(Theta) + ScreenObject.Vertex.Z  * Cos(Theta)
+                ScreenObject.Vertex.X = ScreenObject.Vertex.X * Cos(Theta) + ScreenObject.Vertex.X * -Sin(Theta)
+                ScreenObject.Vertex.Z = ScreenObject.Vertex.Z * Sin(Theta) + ScreenObject.Vertex.Z * Cos(Theta)
             Case Is = "Z"
-                ScreenObject.Vertex.X = ScreenObject.Vertex.X *  Cos(Theta) + ScreenObject.Vertex.X  * Sin(Theta)
-                ScreenObject.Vertex.Y = ScreenObject.Vertex.Y * -Sin(Theta) + ScreenObject.Vertex.Y  * Cos(Theta)
+                ScreenObject.Vertex.X = ScreenObject.Vertex.X * Cos(Theta) + ScreenObject.Vertex.X * Sin(Theta)
+                ScreenObject.Vertex.Y = ScreenObject.Vertex.Y * -Sin(Theta) + ScreenObject.Vertex.Y * Cos(Theta)
             Case Else
                 AL_Error_Print 1, 2, Axis
                 AL_Error_Show 1, 2, Axis
@@ -452,25 +473,78 @@ Private Sub Scaling(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_Ve
     End If
 End Sub
 
-
 Public Sub TEST()
-    Dim Window As AL_Window
-    Dim ScreenObject As AL_ScreenObject
-    Dim TranslateVertex As AL_Vertex
-    Dim ScaleVertex As AL_Vertex
+    Dim TempCamera As New AL_Camera
+    Dim Texture As New AL_Texture
+    Dim TranslateVertex As New AL_Vertex
+    Dim ScaleVertex As New AL_Vertex
+    Dim ScreenObject As New AL_ScreenObject
+    Dim Window As New AL_Window
     ScreenObject.Initialize 1, 1, 1, 2, 2, 2
-    ScreenObject.Texture = ActiveSheet.Range(Range("A1"), Range("A1").Offset(1, 1))
+    Texture.Initialize "Book1", "Textures", 0, 0, 1, 1
+    TempCamera.Initialize 1, 1, 1, 1, 1, 1, 100
+    ScreenObject.Texture = Texture
     TranslateVertex.X = 1
     TranslateVertex.Y = 3
     TranslateVertex.Z = 2
     ScaleVertex.X = 1
     ScaleVertex.Y = 3
     ScaleVertex.Z = 2
-    Window.Insert(ScreenObject)
-    Window.Insert(ScreenObject)
-    Window.Release
-    Window.Insert(ScreenObject)
+    Window.Initialize TempCamera, "Book1", "Sheet1", "C4", 200, 100, 100
+    Window.Insert ScreenObject
+    Window.Insert ScreenObject
+    Window.ReleaseObject
+    Window.Insert ScreenObject
     Window.Transform Window.ScreenObjects(0), TranslateVertex, ScaleVertex, 1.5, 2, 1.3
+    Window.Clear
     Window.Draw
+End Sub
 
+Sub DrawLine(ByVal Window As Range, ByVal x0 As Integer, ByVal y0 As Integer, ByVal x1 As Integer, ByVal y1 As Integer)
+    Dim dx As Integer, dy As Integer
+    Dim sx As Integer, sy As Integer
+    Dim err As Integer, e2 As Integer
+    
+    ' Determine direction of line
+    If x0 < x1 Then
+        sx = 1
+        dx = x1 - x0
+    Else
+        sx = -1
+        dx = x0 - x1
+    End If
+    
+    If y0 < y1 Then
+        sy = 1
+        dy = y1 - y0
+    Else
+        sy = -1
+        dy = y0 - y1
+    End If
+    
+    ' Initial error
+    err = dx - dy
+    
+    Do While (x0 <> x1) Or (y0 <> y1)
+        ' Set pixel at (x0, y0)
+        ws.Cells(y0, x0).Interior.Color = RGB(0, 0, 0)
+        
+        ' Calculate error for next pixel
+        e2 = 2 * err
+        
+        ' Move along x-axis
+        If e2 > -dy Then
+            err = err - dy
+            x0 = x0 + sx
+        End If
+        
+        ' Move along y-axis
+        If e2 < dx Then
+            err = err + dx
+            y0 = y0 + sy
+        End If
+    Loop
+    
+    ' Set pixel at (x1, y1)
+    Window.Cells(y1, x1).Interior.Color = RGB(0, 0, 0)
 End Sub
