@@ -5,9 +5,10 @@
 
 ' HOW TO USE IT
     ' To Build this Library into your Project copy the code from the file "AL_BuildApplication.bas" or import it into your Project
-    ' Scroll down to the Sub "Build()" and replace the "YOUR_FILEPATH" with the filepath, where the folder "AL_CUSTOMLIBRARY" is stored
+    ' Include "Microsoft Visual Basic for Applications Extensibility 5.3" from the references to your project
+    ' Scroll up to the Sub "Build()" and replace the "YOUR_FILEPATH" with the filepath, where the folder "AL_CUSTOMLIBRARY" is stored
     ' You do not need to put in a "\" at the end: "XXX\AL_CustomLibrary" is enough
-    ' Run the Sub and after it finishes delete "AL_BuildApplication.bas" from your project, because most of these codes are already in another folder after building it and it isnt needed anymore
+    ' Run the Sub and after it finishes delete "AL_BuildApplication.bas" and "AL_CustomLibrary.bas" from your project, because most of these codes are already in another folder after building it and it isnt needed anymore
     ' You now have access to all methods in this folder
 
 ' NOTE:
