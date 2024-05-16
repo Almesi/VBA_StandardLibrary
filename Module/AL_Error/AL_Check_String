@@ -1,15 +1,48 @@
-Function AL_Check_String(ByVal Text As String, ByVal CheckType As Integer) As Boolean
+Public Function AL_Check_String(Text As String, Optional CompareText As String = Empty, Optional CompareType As String = Empty) As Boolean
 
-    Select Case CheckType
-        Case 0
-            If Text = "" Then
-                AL_Check_String = Is_Error
-                AL_Error_Print 1, 4, InstanceName
-                AL_Error_Show 1, 4, InstanceName
-                Exit Function
+    If CompareText <> Empty Then
+        Select Case CompareType
+            Case "="
+                If Text = CompareText Then
+                    AL_Error_Show AL_Error_System, 0006, Text, CompareText
+                End If
+            Case ">"
+                If Text > CompareText Then
+                    AL_Error_Show AL_Error_System, 0007, Text, CompareText
+                End If
+            Case "<"
+                If Text < CompareText Then
+                    AL_Error_Show AL_Error_System, 0008, Text, CompareText
+                End If
+            Case ">="
+                If Text >= CompareText Then
+                    AL_Error_Show AL_Error_System, 0009, Text, CompareText
+                End If
+            Case "=<"
+                If Text =< CompareText Then
+                    AL_Error_Show AL_Error_System, 0010, Text, CompareText
+                End If
+            Case "<>"
+                If Text <> CompareText Then
+                    AL_Error_Show AL_Error_System, 0011, Text, CompareText
+                End If
+            Case Empty
+                AL_Error_Show AL_Error_System, 0002, Text, CompareText
+                AL_Check_String = AL_IS_ERROR
+            Case Else
+                AL_Error_Show AL_Error_System, 0001, Text, CompareText
+                AL_Check_String = AL_IS_ERROR
+        End Select
+            If Text = Empty Then
+                AL_Error_Show AL_Error_System, 0002, Text, CompareText
+                AL_Check_String = AL_IS_ERROR
             End If
+        Else
+            If Text = Empty Then
+                AL_Error_Show AL_Error_System, 0002, Text, CompareText
+                AL_Check_String = AL_IS_ERROR
+            End If
+    End If
 
-    End Select
-    AL_Check_String = True
 
 End Function

@@ -1,0 +1,7 @@
+ComponentType = 1
+ComponentName = AL_Error
+Includes:
+HeaderData
+AL_Error_Initialize
+AL_Error_Print
+AL_Error_Show

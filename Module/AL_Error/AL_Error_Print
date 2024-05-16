@@ -1,27 +1,21 @@
-' ErrorCategory describes where the error comes from (Linker, Compiler, Module etc)
-' ErrorType describes what error it is
-' ErrorValue describes what caused the Error
-Sub AL_Error_Print(ByVal ErrorCategory As Integer, ByVal ErrorType As Integer, Optional ByVal ErrorValue1 As Variant = 0, ByVal Optional ErrorValue2 As Variant = 0)
+' Print Error to Immediate
+Public Sub AL_Error_Print(ErrorCategory As Long, ErrorIndex As Integer, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR)
 
-    AL_Error_Initialize
-    Dim ErrorCategoryString As String
-    ErrorCategoryString = AL_Error_GetCategory(ErrorCategory)
-    Do Until AL_Error_Range.Offset(AL_Error_Index, 0).Formula = ""
-        AL_Error_Index = AL_Error_Index + 1
-    Loop
-        AL_Error_Range.Offset(AL_Error_Index, 0).Formula = ErrorCategory
-        AL_Error_Range.Offset(AL_Error_Index, 1).Formula = ErrorCategoryString
-        AL_Error_Range.Offset(AL_Error_Index, 2).Formula = ErrorType
-        AL_Error_Range.Offset(AL_Error_Index, 3).Formula = AL_ErrorLib_Range.Offset(ErrorType, 3 + (ErrorCategory * 5 - 5)).Formula
-        If ErrorValue1 = 0 Then
-                AL_Error_Range.Offset(AL_Error_Index, 4).Formula = "No_Error"
-            Else
-                AL_Error_Range.Offset(AL_Error_Index, 4).Formula = ErrorValue1
-        End If
-        If ErrorValue2 = 0 Then
-                AL_Error_Range.Offset(AL_Error_Index, 5).Formula = "No_Error"
-            Else
-                AL_Error_Range.Offset(AL_Error_Index, 5).Formula = ErrorValue2
-        End If
+    Dim ErrorMessage As String
+    Dim ErrorArray() As Variant
+
+    Set ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
+    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " _
+                   "( " & "Severity: " & ErrorArray(AL_Error_Severity)       & " ) | " _
+                   "( " & "Index: "    & ErrorArray(AL_Error_Index)          & " ) | " _
+                   "( " & "Message: "  & ErrorArray(AL_Error_Message)        & " )"
+    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value1: " ErrorValue1 & " )": End If
+    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value2: " ErrorValue2 & " )": End If
+    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value3: " ErrorValue3 & " )": End If
+    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value4: " ErrorValue4 & " )": End If
+    Debug.Print ErrorMessage
+    If ErrorArray(AL_Error_Severity) >= AL_SEVERITY_BREAK Then
+        End
+    End If
 
 End Sub

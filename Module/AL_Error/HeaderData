@@ -1,0 +1,71 @@
+'''''''''''
+' Error Messages
+
+    Private AL_Error_Category_System(99, 2) As Variant
+    Private AL_Error_Category_Compiler(99, 2) As Variant
+    Private AL_Error_Category_Linker(99, 2) As Variant
+    Private AL_Error_Category_Module(99, 2) As Variant
+    Private AL_Error_Category_Class(99, 2) As Variant
+    Private AL_Error_Category_Form(99, 2) As Variant
+    Private AL_Error_Category_Workbook(99, 2) As Variant
+    Private AL_Error_Category_WorkSheet(99, 2) As Variant
+    ' Used for Enumeration of what the Array Position is used for
+        Private Enum AL_Error_Data
+            Error_Severity = 0
+            Error_Index = 1
+            Error_Message = 2
+        End Enum
+    '
+'
+'''''''''''
+
+
+'''''''''''
+'Standard Const Values
+    ' For one-time initialization
+        Private AL_Error_Initialized As Boolean
+    '
+
+    ' All available Categories
+        Private Const AL_Error_CategorySystem As String    = "System"
+        Private Const AL_Error_CategoryWorkbook As String  = "Workbook"
+        Private Const AL_Error_CategoryWorksheet As String = "Worksheet"
+        Private Const AL_Error_CategoryLinker As String    = "Linker"
+        Private Const AL_Error_CategoryCompiler As String  = "Compiler"
+        Private Const AL_Error_CategoryModule As String    = "Module"
+        Private Const AL_Error_CategoryClass As String     = "Class"
+        Private Const AL_Error_CategoryUserform As String  = "Userform"
+        Private Const AL_Error_CategoryUNKNOWN As String   = "UNKNOWN"
+        Private Enum AL_Error_Category
+            AL_Error_System = 0
+            AL_Error_Compiler = 1
+            AL_Error_Linker = 2
+            AL_Error_Module = 3
+            AL_Error_Class = 4
+            AL_Error_Form = 5
+            AL_Error_Workbook = 6
+            AL_Error_WorkSheet = 7
+        End Enum
+    '
+
+    ' Used For Public Declaration of what is an Error
+        Private Const AL_IS_ERROR As Boolean = True
+        Private Const AL_NO_ERROR As Boolean = False
+    '
+
+    ' Used as Value when no ErrorValue is passed
+        Private Const AL_EMPTY_ERROR As String = "EMPTY ERROR"
+    '
+
+    ' Defines when the program will stop all execution when an Error occurs
+        Private Const AL_SEVERITY_BREAK As Long = 100
+    '
+'
+'''''''''''
+
+
+
+
+
+
+

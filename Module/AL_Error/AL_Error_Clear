@@ -1,6 +1,0 @@
-Sub AL_Error_Clear()
-
-    AL_Error_Initialize
-    Range(AL_Error_Range, AL_Error_Range.Offset(100000 , 5)).ClearContents
-
-End Sub

@@ -1,16 +1,16 @@
-Function AL_Error_GetCategory(ByVal ErrorCategory As Integer) As String
+Private Function AL_Error_GetCategory(ByVal ErrorCategory As Long) As String
 
     Select Case ErrorCategory
-        Case AL_ErrorCategory_System: AL_Error_GetCategory = "System"
-        Case AL_ErrorCategory_Workbook: AL_Error_GetCategory = "Workbook"
-        Case AL_ErrorCategory_Worksheet: AL_Error_GetCategory = "Worksheet"
-        Case AL_ErrorCategory_Linker: AL_Error_GetCategory = "Linker"
-        Case AL_ErrorCategory_Compiler: AL_Error_GetCategory = "Compiler"
-        Case AL_ErrorCategory_Module: AL_Error_GetCategory = "Module"
-        Case AL_ErrorCategory_Class: AL_Error_GetCategory = "Class"
-        Case AL_ErrorCategory_Userform: AL_Error_GetCategory = "Userform"
+        Case AL_Error_System:    AL_Error_GetCategory = "System"
+        Case AL_Error_Compiler:  AL_Error_GetCategory = "Workbook"
+        Case AL_Error_Linker:    AL_Error_GetCategory = "Worksheet"
+        Case AL_Error_Module:    AL_Error_GetCategory = "Linker"
+        Case AL_Error_Class:     AL_Error_GetCategory = "Compiler"
+        Case AL_Error_Form:      AL_Error_GetCategory = "Module"
+        Case AL_Error_Workbook:  AL_Error_GetCategory = "Class"
+        Case AL_Error_WorkSheet: AL_Error_GetCategory = "Userform"
         Case Else
-            AL_Error_GetCategory = "UNKNOWN"
+                              AL_Error_GetCategory = "UNKNOWN"
     End Select
 
 End Function
