@@ -1,12 +1,13 @@
-' Adds Code to a given Instance
-Sub AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String)
+' Adds Code to a given Component
+Public Function AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String) As Boolean
 
-    If AL_Check_String(FilePath, 0) = Is_Error Then
-        Exit Sub
+    If AL_Error_Var(FilePath) = AL_IS_ERROR Then
+        AL_Include_AddCode = AL_IS_ERROR
+        Exit Function
     End If
-    If VBCodeModule Is Nothing Then
-        AL_Error_Print 1, 4, "AL_Include_AddCode"
-        AL_Error_Print 1, 4, "AL_Include_AddCode"
+    If AL_Error_Obj(VBCodeModule) = AL_IS_ERROR Then
+        AL_Include_AddCode = AL_IS_ERROR
+        Exit Function
     End If
     Dim FileLine As String
     Dim Index As Long
@@ -21,5 +22,6 @@ Sub AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String)
         Index = Index + 1
     Loop
     Close #FileNumber
+    AL_Include_AddCode = AL_NO_ERROR
 
-End Sub
+End Function

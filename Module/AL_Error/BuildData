@@ -1,0 +1,16 @@
+ComponentType = 1
+ComponentName = AL_Error
+Includes:
+README
+HeaderData
+AL_Error_Initialize
+AL_Error_GetCategory
+AL_Error_ComVar
+AL_Error_ComObj
+AL_Error_Var
+AL_Error_Obj
+AL_Error_Component
+AL_Error_Sheet
+AL_Error_Get
+AL_Error_Print
+AL_Error_Show

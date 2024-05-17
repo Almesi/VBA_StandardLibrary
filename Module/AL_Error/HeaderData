@@ -1,3 +1,5 @@
+Option Explicit
+
 '''''''''''
 ' Error Messages
 
@@ -51,6 +53,8 @@
     ' Used For Public Declaration of what is an Error
         Private Const AL_IS_ERROR As Boolean = True
         Private Const AL_NO_ERROR As Boolean = False
+        Private Const AL_EXIST As Boolean = True
+        Private Const AL_DOESNT_EXIST As Boolean = False
     '
 
     ' Used as Value when no ErrorValue is passed
@@ -62,10 +66,5 @@
     '
 '
 '''''''''''
-
-
-
-
-
 
 

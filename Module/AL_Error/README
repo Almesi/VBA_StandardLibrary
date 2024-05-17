@@ -1,5 +1,5 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-' This Module is the basis for all other files in this library, as it is the errorhandler for all possible errors
+' This Folder is the basis for all other files in this library, as it is the errorhandler for all possible errors
 ' It works like this:
 ' If an Error occures for the first time since execution it will initialize all errormessages
 ' Then it will get the message by defined parameters

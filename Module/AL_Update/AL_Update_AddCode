@@ -1,0 +1,34 @@
+' Adds Code to existing Component
+Public Function AL_Update_AddCode(VBCodeModule As VBIDE.CodeModule, Optional FilePath As String = Empty, Optional CodeString As String = Empty) As Boolean
+
+    ' If from String
+    If FilePath = Empty And CodeString <> Empty Then
+        VBCodeModule.InsertLines Index, CodeString
+    ' If from File
+    ElseIf FilePath <> Empty And CodeString = Empty Then
+        Dim FileLine As String
+        Dim Index As Long
+        Dim FileNumber As Integer
+    
+        Index = 1
+        FileNumber = FreeFile
+        Open FilePath For Input As #FileNumber
+        Do Until EOF(FileNumber)
+            Line Input #FileNumber, FileLine
+            VBCodeModule.InsertLines Index, FileLine
+            Index = Index + 1
+        Loop
+        Close #FileNumber
+    ' Handle wrong Function input
+    ElseIf FilePath = Empty And CodeString = Empty
+        AL_Error_ComVar AL_Error_System, 0012, "FilePath", "CodeString"
+        AL_Update_AddCode = AL_IS_ERROR
+    ' Handle wrong Function input
+    Else
+        AL_Error_ComVar AL_Error_System, 0013, "FilePath", "CodeString"
+        AL_Update_AddCode = AL_IS_ERROR
+
+    End If
+    AL_Update_AddCode = AL_NO_Error
+    
+End Function

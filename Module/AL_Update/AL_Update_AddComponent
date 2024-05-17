@@ -1,0 +1,21 @@
+' Adds New Component to Project
+Public Function AL_Update_AddComponent(VBProj As VBIDE.VBProject, ComponentType As Integer, ComponentName As String) As Boolean
+    
+    Dim VBComp As VBIDE.VBComponent
+    ' Error Handling
+        If AL_Error_Obj(VBProj) = AL_IS_ERROR Then:                                Exit Function: End If
+        If AL_Error_Var(ComponentName) = AL_IS_ERROR Then:                         Exit Function: End If
+        If AL_Check_Instance(ComponentName, True) = AL_IS_ERROR Then:              Exit Function: End If
+        If AL_Error_Component(VBProj, AL_Exist, ComponentName) = AL_IS_ERROR Then: Exit Function: End If
+    '
+    Select Case ComponentType
+        Case vbext_ct_ActiveXDesigner, vbext_ct_ClassModule, vbext_ct_Document, vbext_ct_MSForm, vbext_ct_StdModule
+            Set VBComp = vbProj.VBComponents.Add(ComponentType)
+            VBComp.Name = ComponentName 
+        Case Else
+            AL_Error_Show AL_Error_System, 1, ComponentType
+            Exit Sub
+    End Select
+    AL_Update_AddComponent = AL_NO_ERROR
+    
+End Sub

@@ -1,0 +1,23 @@
+' Used to Compares to Objects by defined operand
+Private Function AL_Error_ComObj(MainValue As Object, CompareValue As Object, CompareType As String) As Boolean
+
+    Select Case CompareType
+        Case "Is", "IS", "iS", "is", "="
+            If MainValue <> CompareValue Then
+                AL_Error_ComObj AL_Error_System, 0006, MainValue, CompareValue
+                AL_Error_ComObj = AL_IS_ERROR
+            End If
+        Case "not", "noT", "nOt", "nOT", "Not", "NoT", "NOt", "NOT", "<>"
+            If MainValue = CompareValue Then
+                AL_Error_ComObj AL_Error_System, 0011, MainValue, CompareValue
+                AL_Error_ComObj = AL_IS_ERROR
+            End If
+        Case Empty
+            AL_Error_ComObj AL_Error_System, 0002, "CompareType"
+            AL_Error_ComObj = AL_IS_ERROR
+        Case Else
+            AL_Error_ComObj AL_Error_System, 0001, "CompareType"
+            AL_Error_ComObj = AL_IS_ERROR
+    End Select
+
+End Function

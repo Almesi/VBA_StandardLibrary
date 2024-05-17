@@ -1,17 +1,16 @@
 Sub AL_Update_Create()
 
-    Dim ws As Worksheet
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
 
-    AL_UpdateInitialize
-    For Each ws In Worksheets
-        If ws.Name = "Update" Then
-                AL_Error_Print 3, 1, "Update"
-                AL_Error_Show 3, 1, "Update"
-                Exit Sub
+    Set VBProj = ThisWorkbook.VBProject
+    For Each VBComp In VBProj.VBComponents
+        If VBComp.Name = AL_Update_Component Then
+            Exit Sub
         End If
-    Next ws
-    Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
-    ws.Name = "Update"
-    AL_Update_Initialize
-
+    Next VBComp
+    If AL_Update_AddComponent(VBProj, vbext_ct_StdModule, AL_Update_Component) = AL_IS_ERROR Then
+        Exit Sub
+    End If
+    
 End Sub

@@ -1,0 +1,20 @@
+' Creates a Component (Module, Class, Userform)
+Public Function AL_Include_AddComponent(VBProj As VBIDE.VBProject, ComponentType, ComponentName As String) As VBIDE.VBComponent
+
+    Dim VBComp As VBIDE.VBComponent
+
+    Select Case ComponentType
+        Case vbext_ct_ActiveXDesigner, vbext_ct_ClassModule, vbext_ct_Document, vbext_ct_MSForm, vbext_ct_StdModule
+            If AL_Error_Component(VBProj, AL_Exist, ComponentName) = AL_IS_ERROR Then
+                AL_Error_Show AL_Error_Workbook, 0008, ComponentName
+                Exit Function
+            End If
+            Set VBComp = VBProj.VBComponents.Add(ComponentType)
+            VBComp.Name = ComponentName
+        Case Else
+            AL_Error_Show AL_Error_System, 0001, ComponentType
+            Exit Function
+    End Select
+    Set AL_Include_AddComponent = VBComp
+
+End Function

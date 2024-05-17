@@ -1,4 +1,4 @@
-Function AL_Include_CheckDependencies(ByVal FilePath As String) As Boolean
+Private Function AL_Include_CheckDependencies(FilePath As String) As Boolean
 
     If AL_Check_String(FilePath, 0) = Is_Error Then
         Exit Sub
@@ -24,8 +24,7 @@ Function AL_Include_CheckDependencies(ByVal FilePath As String) As Boolean
                 End If
         Next vbComp
         If Included = False Then
-                AL_Error_Print 2, 4, FileLine
-                AL_Error_Show 2, 4, FileLine
+                AL_Error_Show AL_Error_Workbook, 0003, FileLine
                 AL_Include_CheckDependencies = True
                 Exit Function
             Else

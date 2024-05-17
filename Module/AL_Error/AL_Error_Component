@@ -1,0 +1,55 @@
+Public Function AL_Error_Component(VBProj As VBIDE.VBProject, ComponentExistence As Boolean, Optional ComponentName As String = Empty, Optional ComponentIndex As Long = Empty) As Boolean
+
+    Dim VBComp As VBIDE.VBComponent
+
+    ' Handle VBProj
+    If VBProj Is Nothing Then
+        AL_Error_ComVar AL_Error_System, 0003, "VBProj"
+    End If
+    ' Handle Component Index
+    If ComponentName = Empty And ComponentIndex <> Empty Then
+            If ComponentExistence = AL_EXIST Then
+                If ComponentIndex =< VBProj.VBComponents.Count Then
+                    AL_Error_Show AL_Error_CategoryWorkbook, 0007, ComponentIndex
+                    AL_Error_Component = AL_IS_ERROR
+                End If
+            Else
+                If ComponentIndex > VBProj.VBComponents.Count Then
+                    AL_Error_Show AL_Error_CategoryWorkbook, 0008, ComponentIndex
+                    AL_Error_Component = AL_IS_ERROR
+                End If
+            End If
+        Next VBComp
+    ' Handle Component Name
+    ElseIf ComponentName <> Empty And ComponentIndex = Empty Then
+        For Each VBComp In VbProj.VBComponents
+            If ComponentExistence = AL_EXIST Then
+                If VBComp.Name = ComponentName Then
+                    AL_Error_Show AL_Error_CategoryWorkbook, 0007, ComponentName
+                    AL_Error_Component = AL_IS_ERROR
+                    Exit Function
+                End If
+            Else
+                If VBComp.Name = ComponentName Then
+                    AL_Error_Component = AL_NO_ERROR
+                    Exit Function
+                End If
+            End If
+        Next VBComp
+        If ComponentExistence = AL_EXIST Then
+            AL_Error_Component = AL_IS_ERROR
+            Exit Function
+        End If
+        AL_Error_Show AL_Error_CategoryWorkbook, 0008, ComponentName
+        AL_Error_Component = AL_IS_ERROR
+    ' Handle wrong Function input
+    ElseIf ComponentName = Empty And ComponentIndex = Empty
+        AL_Error_ComVar AL_Error_System, 0012, "ComponentName", "ComponentIndex"
+        AL_Error_Component = AL_IS_ERROR
+    ' Handle wrong Function input
+    Else
+        AL_Error_ComVar AL_Error_System, 0013, "ComponentName", "ComponentIndex"
+        AL_Error_Component = AL_IS_ERROR
+    End If
+
+End Function

@@ -1,64 +1,41 @@
 ' Loops through Folders (Create Module per folder)
-' Loop through Files and adds Code to Module
-Sub AL_Include_Folder(ByVal FolderPath As String)
+' Loops through Files and adds Code to Module
+Private Sub AL_Include_Folder(VBProj As VBIDE.VBProject, FolderPath As String, ComponentType As Long, ComponentName As String)
 
     Dim fso As Object
     Dim Folder As Object
     Dim SubFolder As Object
     Dim File As Object
-    Dim InstanceName As String
-    Dim VBProj As VBIDE.VBProject
     Dim VBComp As VBIDE.VBComponent
     Dim VBCodeModule As VBIDE.CodeModule
-    
-    ' Create a FileSystemObject
-    If AL_Check_String(FolderPath, 0) = Is_Error Then
-        Exit Sub
-    End If
+    Dim FileArray() As Variant
 
     Set fso = CreateObject("Scripting.FileSystemObject")
-    
-    ' Get the Folder object
     Set Folder = fso.GetFolder(FolderPath)
-    
-    ' Checks if Instance already exists
-    InstanceName = fso.GetBaseName(FolderPath)
-    Set VBProj = ThisWorkbook.VBProject
-    For Each VBComp In VBProj.VBComponents
-        If VBComp.Name = InstanceName Then
-                AL_Error_Print 2, 3, InstanceName
-                AL_Error_Show 2, 3, InstanceName
-                Exit Sub
-        End If
-    Next VBComp
-
-    ' Check if dependencies are included
-    For Each File In Folder.Files
-        If File.Path Like "*Dependencies" Then
-                If AL_Include_CheckDependencies(File.Path) = True Then
-                        Exit Sub
-                End If
-        End If
-    Next File
-
-    ' Create an Instance (Module, Class, Userform)
-    AL_Include_CreateInstance 1, InstanceName
-    
-    Set VBComp = VBProj.VBComponents(InstanceName)
+    Set FileArray = AL_GetBuildData(Folder)
+    ' Get basic information from current folder and create new Component, if it doesnt already exist
+    ComponentType = FileArray(0)
+    If ComponentName <> Replace(FileArray(1), (FolderPath & "\"), "") Then
+        ComponentName = Replace(FileArray(1), (FolderPath & "\"), "")
+        For Each VBComp in VBProj.Component
+            If VBComp.Name = ComponentName Then
+                Exit For
+            End If
+        Next
+        AL_BuildCreateVBComponent VBProj, FileArray(0), ComponentName
+    End If
+    Set VBComp = VBProj.VBComponents(FileArray(1))
     Set VBCodeModule = VBComp.CodeModule
-
-
-    ' Loop through each File in the Folder
-    For Each File In Folder.Files
-        If File.Path Like "*Dependencies" Or File.Path Like "*README" Then
-            Else
-                AL_Include_AddCode VBCodeModule, File.Path
-        End If
-    Next File
-    
-    ' Recursively loop through each SubFolder
+    ' Add code in Stackform to Component
+    For i = Ubound(FileArray) To 2 Step-1
+        AL_BuildAddCode VBCodeModule, FileArray(1)
+    Next i
+    If ComponentType = vbext_ct_MSForm Then
+        AL_Instant_Exe Folder, VBProj
+    End If
+    ' Loop through all Subfolders and Repeat
     For Each SubFolder In Folder.SubFolders
-        AL_Include SubFolder.Path
+        AL_BuildFolder SubFolder.Path, ComponentType, ComponentName
     Next SubFolder
-    
+
 End Sub
