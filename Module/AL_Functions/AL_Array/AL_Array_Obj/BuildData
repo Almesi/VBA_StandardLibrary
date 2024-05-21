@@ -1,0 +1,14 @@
+ComponentType = 1
+ComponentName = AL_Array
+Includes:
+README
+AL_Array_Delete_Obj
+AL_Array_InArray_Obj
+AL_Array_Merge_Obj
+AL_Array_Pop_Obj
+AL_Array_Push_Obj
+AL_Array_Search_Obj
+AL_Array_Shift_Obj
+AL_Array_Splice_Obj
+AL_Array_TEST_Obj
+AL_Array_Unshift_Obj

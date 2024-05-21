@@ -1,0 +1,9 @@
+Sub AL_Array_Push_Var(ByRef Array1() As Variant, PushObject As Variant)
+
+    Dim Array1Length As Long
+
+    Array1Length = UBound(Array1) + 1
+    ReDim Preserve Array1(Array1Length)
+    Array1(Array1Length) = PushObject
+
+End Sub

@@ -1,4 +1,4 @@
-Sub AL_Update_Delete(ByVal InstanceName As String, FunctionName As String)
+Sub AL_Update_Delete(InstanceName As String, FunctionName As String)
 
     Dim VBProj As VBIDE.VBProject
     Dim VBComp As VBIDE.VBComponent

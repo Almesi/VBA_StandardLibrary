@@ -38,7 +38,7 @@
 
 ' Let Get Set
 
-    Public Property Let WindowOpen(ByVal Value As Boolean)
+    Public Property Let WindowOpen(Value As Boolean)
         p_WindowOpen = Value
     End Property
 
@@ -46,7 +46,7 @@
         WindowPosition = p_WindowOpen
     End Property
 
-    Public Property Let WindowPosition(ByVal Value As Range)
+    Public Property Let WindowPosition(Value As Range)
         Set p_WindowPosition = Value
     End Property
 
@@ -54,7 +54,7 @@
         Set WindowPosition = p_WindowPosition
     End Property
 
-    Public Property Let Camera(ByVal Value As AL_Camera)
+    Public Property Let Camera(Value As AL_Camera)
         Set p_Camera = Value
     End Property
     
@@ -62,7 +62,7 @@
         Set Camera = p_Camera
     End Property
 
-    Public Property Let Length(ByVal Value As Integer)
+    Public Property Let Length(Value As Integer)
         p_Length = Value
     End Property
 
@@ -70,7 +70,7 @@
         Length = p_Length
     End Property
 
-    Public Property Let Width(ByVal Value As Integer)
+    Public Property Let Width(Value As Integer)
         p_Depth = Value
     End Property
 
@@ -78,7 +78,7 @@
         Width = p_Width
     End Property
 
-    Public Property Let Depth(ByVal Value As Integer)
+    Public Property Let Depth(Value As Integer)
         p_Depth = Value
     End Property
 
@@ -86,7 +86,7 @@
         Depth = p_Depth
     End Property
 
-    Public Property Let UpperBound(ByVal Value As Integer)
+    Public Property Let UpperBound(Value As Integer)
         p_UpperBound = Value
     End Property
 
@@ -94,7 +94,7 @@
         UpperBound = p_UpperBound
     End Property
 
-    Public Property Let LowerBound(ByVal Value As Integer)
+    Public Property Let LowerBound(Value As Integer)
         p_LowerBound = Value
     End Property
 
@@ -102,14 +102,14 @@
         LowerBound = p_LowerBound
     End Property
 
-    Public Property Let LeftBound(ByVal Value As Integer)
+    Public Property Let LeftBound(Value As Integer)
         p_LeftBound = Value
     End Property
 
     Public Property Get LeftBound() As Integer
         LeftBound = p_LeftBound
     End Property
-    Public Property Let RightBound(ByVal Value As Integer)
+    Public Property Let RightBound(Value As Integer)
         p_RightBound = Value
     End Property
 
@@ -117,7 +117,7 @@
         RightBound = p_RightBound
     End Property
 
-    Public Property Let DepthBound(ByVal Value As Integer)
+    Public Property Let DepthBound(Value As Integer)
         p_DepthBound = Value
     End Property
 
@@ -125,7 +125,7 @@
         DepthBound = p_DepthBound
     End Property
 
-    Public Property Let Center(ByVal Value As AL_Vertex)
+    Public Property Let Center(Value As AL_Vertex)
         p_Center = Value
     End Property
 
@@ -133,7 +133,7 @@
         Center = p_Center
     End Property
 
-    Public Property Let NormalLength(ByVal Value As Single)
+    Public Property Let NormalLength(Value As Single)
         p_NormalLength = Value
     End Property
 
@@ -141,7 +141,7 @@
         NormalLength = p_NormalLength
     End Property
 
-    Public Property Let NormalWidth(ByVal Value As Single)
+    Public Property Let NormalWidth(Value As Single)
         p_NormalWidth = Value
     End Property
 
@@ -149,7 +149,7 @@
         NormalWidth = p_NormalWidth
     End Property
 
-    Public Property Let NormalDepth(ByVal Value As Single)
+    Public Property Let NormalDepth(Value As Single)
         p_NormalDepth = Value
     End Property
 
@@ -157,7 +157,7 @@
         NormalDepth = p_NormalDepth
     End Property
 
-    Public Property Let Window(ByVal Value As Range)
+    Public Property Let Window(Value As Range)
         Set p_Window = Value
     End Property
 
@@ -165,7 +165,7 @@
         Set Window = p_Window
     End Property
 
-    Public Property Let NullCell(ByVal Value As Range)
+    Public Property Let NullCell(Value As Range)
         Set p_NullCell = Value
     End Property
 
@@ -173,15 +173,15 @@
         Set NullCell = p_NullCell
     End Property
 
-    Public Property Let ScreenObjects(ByVal Index As Integer, ByVal Value As AL_ScreenObject)
+    Public Property Let ScreenObjects(Index As Integer, Value As AL_ScreenObject)
         Set p_ScreenObjects(Index) = Value
     End Property
     
-    Public Property Get ScreenObjects(ByVal Index As Integer) As AL_ScreenObject
+    Public Property Get ScreenObjects(Index As Integer) As AL_ScreenObject
         Set ScreenObjects = p_ScreenObjects(Index)
     End Property
 
-    Public Property Let VertexBuffer(ByVal Value As AL_VertexBuffer)
+    Public Property Let VertexBuffer(Value As AL_VertexBuffer)
         Set p_VertexBuffer = Value
     End Property
 
@@ -189,7 +189,7 @@
         Set VertexBuffer = p_VertexBuffer
     End Property
 
-    Public Property Let IndexBuffer(ByVal Value As AL_IndexBuffer)
+    Public Property Let IndexBuffer(Value As AL_IndexBuffer)
         Set p_IndexBuffer = Value
     End Property
 
@@ -207,7 +207,7 @@ Private Function IsInitialized()
     IsInitialized = True
 End Function
 
-Public Sub Initialize(ByVal Camera As AL_Camera, ByVal WorkbookName As String, ByVal SheetName As String, ByVal Position As String, ByVal Length As Integer, ByVal Width As Integer, ByVal Depth As Integer)
+Public Sub Initialize(Camera As AL_Camera, WorkbookName As String, SheetName As String, Position As String, Length As Integer, Width As Integer, Depth As Integer)
     Set p_Camera = Camera
     Set p_WindowPosition = Workbooks(WorkbookName).Sheets(SheetName).Range(Position)
     p_Length = Length
@@ -244,7 +244,7 @@ Public Sub LetBounds()
 End Sub
 
 ' Clears the Window with a color or standard with white
-Public Sub Clear(Optional ByVal Color As Long = 16777215)
+Public Sub Clear(Optional Color As Long = 16777215)
     If IsInitialized = True Then
         Color = Int(Color)
         p_Window.Interior.Color = Color
@@ -281,7 +281,7 @@ Public Sub Draw()
 End Sub
 
 ' Inserts a Range into the DrawRange Array
-Public Sub Insert(ByVal ScreenObject As AL_ScreenObject)
+Public Sub Insert(ScreenObject As AL_ScreenObject)
     If IsInitialized = True Then
         Dim i As Integer
         
@@ -317,7 +317,7 @@ Public Sub ReleaseObject()
 End Sub
 
 ' Check if Range is in Bounds of Window
-Private Function InBounds(ByVal ScreenObject As AL_ScreenObject) As Boolean
+Private Function InBounds(ScreenObject As AL_ScreenObject) As Boolean
     If IsInitialized = True Then
             If (DepthBound >= ScreenObject.Vertex.Z Or DepthBound >= ScreenObject.Length.Z) And _
             (UpperBound >= ScreenObject.Vertex.Y Or LowerBound <= ScreenObject.Vertex.Y) Or _
@@ -332,7 +332,7 @@ Private Function InBounds(ByVal ScreenObject As AL_ScreenObject) As Boolean
 End Function
 
 ' Cut Range to Bounds of Window
-Private Function CutToBounds(ByVal ScreenObject As AL_ScreenObject) As AL_ScreenObject
+Private Function CutToBounds(ScreenObject As AL_ScreenObject) As AL_ScreenObject
 
     If IsInitialized = True Then
         Dim TempObj As New AL_ScreenObject
@@ -415,7 +415,7 @@ Private Sub Project(ByRef ScreenObject As AL_ScreenObject)
 End Sub
 
 ' Translates, Rotates and Scales the Screenobject
-Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal TranslateVertex As AL_Vertex = Nothing, Optional ByVal ScaleVertex As AL_Vertex = Nothing, Optional ByVal ThetaX As Single = 0, Optional ByVal ThetaY As Single = 0, Optional ByVal ThetaZ As Single = 0)
+Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional TranslateVertex As AL_Vertex = Nothing, Optional ScaleVertex As AL_Vertex = Nothing, Optional ThetaX As Single = 0, Optional ThetaY As Single = 0, Optional ThetaZ As Single = 0)
     If Not TranslateVertex Is Nothing Then
         Translate ScreenObject, TranslateVertex
     End If
@@ -433,7 +433,7 @@ Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional ByVal Trans
     End If
 End Sub
 
-Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_Vertex)
+Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, Vertex As AL_Vertex)
     If IsInitialized = True Then
         ScreenObject.Vertex.X = ScreenObject.Vertex.X + Vertex.X
         ScreenObject.Vertex.Y = ScreenObject.Vertex.Y + Vertex.Y
@@ -442,7 +442,7 @@ Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_
     End If
 End Sub
 
-Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Single, ByVal Axis As String)
+Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, Theta As Single, Axis As String)
 
     If IsInitialized = True Then
         Select Case Axis
@@ -464,7 +464,7 @@ Private Sub Rotate(ByRef ScreenObject As AL_ScreenObject, ByVal Theta As Single,
 
 End Sub
 
-Private Sub Scaling(ByRef ScreenObject As AL_ScreenObject, ByVal Vertex As AL_Vertex)
+Private Sub Scaling(ByRef ScreenObject As AL_ScreenObject, Vertex As AL_Vertex)
     If IsInitialized = True Then
         ScreenObject.Vertex.X = ScreenObject.Vertex.X * Vertex.X
         ScreenObject.Vertex.Y = ScreenObject.Vertex.Y * Vertex.Y
@@ -500,7 +500,7 @@ Public Sub TEST()
     Window.Draw
 End Sub
 
-Sub DrawLine(ByVal Window As Range, ByVal x0 As Integer, ByVal y0 As Integer, ByVal x1 As Integer, ByVal y1 As Integer)
+Sub DrawLine(Window As Range, x0 As Integer, y0 As Integer, x1 As Integer, y1 As Integer)
     Dim dx As Integer, dy As Integer
     Dim sx As Integer, sy As Integer
     Dim err As Integer, e2 As Integer

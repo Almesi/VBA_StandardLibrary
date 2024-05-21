@@ -1,0 +1,16 @@
+Sub AL_Array_Pop_Var(ByRef Array1() As Variant)
+
+    Dim Array1Length As Long 
+    Dim NewArray1Length As Long
+    Dim TempArray1() As Variant
+
+    Array1Length = UBound(Array1)
+    NewArray1Length = Array1Length - 1
+    ReDim TempArray1(NewArray1Length)
+    For i = 0 To NewArray1Length
+        TempArray1(i) = Array1(i)
+    Next
+    ReDim Array1(NewArray1Length)
+    Array1 = TempArray1
+
+End Sub

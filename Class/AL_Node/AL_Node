@@ -12,7 +12,7 @@
 '
 
 ' Get Let Set
-    Public Property Let X(ByVal Value As Integer)
+    Public Property Let X(Value As Integer)
         p_X = Value
     End Property
 
@@ -20,7 +20,7 @@
         X = p_X
     End Property
 
-    Public Property Let Y(ByVal Value As Integer)
+    Public Property Let Y(Value As Integer)
         p_Y = Value
     End Property
 
@@ -28,7 +28,7 @@
         Y = p_Y
     End Property
 
-    Public Property Let Z(ByVal Value As Integer)
+    Public Property Let Z(Value As Integer)
         p_Z = Value
     End Property
 
@@ -36,7 +36,7 @@
         Z = p_Z
     End Property
 
-    Public Property Let S_Cost(ByVal Value As Integer)
+    Public Property Let S_Cost(Value As Integer)
         p_S_Cost = Value
     End Property
 
@@ -44,7 +44,7 @@
         S_Cost = p_S_Cost
     End Property
 
-    Public Property Let G_Cost(ByVal Value As Integer)
+    Public Property Let G_Cost(Value As Integer)
         p_G_Cost = Value
     End Property
 
@@ -52,7 +52,7 @@
         G_Cost = p_G_Cost
     End Property
 
-    Public Property Let W_Cost(ByVal Value As Integer)
+    Public Property Let W_Cost(Value As Integer)
         p_W_Cost = Value
     End Property
 
@@ -60,7 +60,7 @@
         W_Cost = p_W_Cost
     End Property
 
-    Public Property Let Parent(ByVal Node As AL_Node)
+    Public Property Let Parent(Node As AL_Node)
         Set p_Parent = Node
     End Property
 
@@ -68,20 +68,20 @@
         Set Parent = p_Parent
     End Property
 
-    Public Property Let Point(ByVal Node As AL_Node)
+    Public Property Let Point(Node As AL_Node)
         p_X = Node.X
         p_Y = Node.Y
         p_Z = Node.Z
     End Property
 
-    Public Sub LetPoint(ByVal X As Integer, ByVal Y As Integer, ByVal Z As Integer)
+    Public Sub LetPoint(X As Integer, Y As Integer, Z As Integer)
         p_X = X
         p_Y = Y
         p_Z = Z
     End Sub
 '
 
-Public Function IsNode(ByVal Node As AL_Node) As Boolean
+Public Function IsNode(Node As AL_Node) As Boolean
     If Node.X = p_X And Node.Y = p_Y And Node.Z = p_Z Then
             IsNode = True
         Else
@@ -89,7 +89,7 @@ Public Function IsNode(ByVal Node As AL_Node) As Boolean
     End If
 End Function
 
-Public Sub CalculateDistance(ByVal ReferenceNode As AL_Node, ByVal StartNode As AL_Node, ByVal GoalNode As AL_Node)
+Public Sub CalculateDistance(ReferenceNode As AL_Node, StartNode As AL_Node, GoalNode As AL_Node)
     If ReferenceNode Is Nothing Then
         AL_Error_Print 7, 2, "ReferenceNode"
         AL_PrintShow 7, 2, "ReferenceNode"

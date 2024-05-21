@@ -1,4 +1,4 @@
-Sub AL_General_TransposeRange(ByVal InputRange As Range)
+Sub AL_General_TransposeRange(InputRange As Range)
     Dim TransposedRange As Range
     Dim i As Long
     Dim j As Long

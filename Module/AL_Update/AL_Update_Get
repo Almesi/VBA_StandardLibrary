@@ -1,4 +1,4 @@
-Function AL_Update_Get(ByVal UpdateName As String) As Boolean
+Function AL_Update_Get(UpdateName As String) As Boolean
 
     Dim i As Integer
 

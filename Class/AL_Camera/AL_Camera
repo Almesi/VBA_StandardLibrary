@@ -9,7 +9,7 @@
 '
 
 ' Get Let Set
-    Public Property Let Location(ByVal Value As AL_Vertex)
+    Public Property Let Location(Value As AL_Vertex)
         p_Location = Value
     End Property
 
@@ -17,7 +17,7 @@
         Location = p_Location
     End Property
 
-    Public Property Let Direction(ByVal Value As AL_Vertex)
+    Public Property Let Direction(Value As AL_Vertex)
         p_Direction = Value
     End Property
 
@@ -25,7 +25,7 @@
         Direction = p_Direction
     End Property
 
-    Public Property Let ScreenDistance(ByVal Value As Single)
+    Public Property Let ScreenDistance(Value As Single)
         p_ScreenDistance = Value
     End Property
 
@@ -43,7 +43,7 @@ Private Function IsInitialized()
     IsInitialized = True
 End Function
 
-Public Sub Initialize(ByVal Location_X As Single, ByVal Location_Y As Single, ByVal Location_Z As Single, ByVal Direction_X As Single, ByVal Direction_Y As Single, ByVal Direction_Z As Single, ByVal ScreenDistance As Single)
+Public Sub Initialize(Location_X As Single, Location_Y As Single, Location_Z As Single, Direction_X As Single, Direction_Y As Single, Direction_Z As Single, ScreenDistance As Single)
     If p_Initialized = False Then
         p_Location.X  = Location_X
         p_Location.Y  = Location_Y

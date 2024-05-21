@@ -21,16 +21,16 @@
         m_Matrix = p_Matrix
     End Property
 
-    Public Property Get MatrixPoint(ByVal Row As Integer, ByVal Column As Integer) As Integer
+    Public Property Get MatrixPoint(Row As Integer, Column As Integer) As Integer
         MatrixPoint = p_Array(Row, Column)
     End Property
 
-    Public Property Let MatrixPoint(ByVal Row As Integer, ByVal Column As Integer, ByVal Value As Variant)
+    Public Property Let MatrixPoint(Row As Integer, Column As Integer, Value As Variant)
         p_Array(Row, Column) = Value
     End Property
 '
 
-Public Sub Initialize(ByVal Row As Integer, ByVal Column As Integer, ByVal DataType As String)
+Public Sub Initialize(Row As Integer, Column As Integer, DataType As String)
 
     If p_IsInitialized = False
         p_IsInitialized = True
@@ -55,7 +55,7 @@ Public Sub Initialize(ByVal Row As Integer, ByVal Column As Integer, ByVal DataT
 
 End Sub
 
-Public Function Multiply(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, ByVal DataType As String) As AL_Matrix
+Public Function Multiply(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix, DataType As String) As AL_Matrix
 
     Dim Matrix3 As New AL_Matrix
     Dim i As Integer, j As Integer, k As Integer
@@ -81,7 +81,7 @@ Public Sub Inverse()
     
 End Function
 
-Public Function Divide(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, ByVal DataType As String) As AL_Matrix
+Public Function Divide(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix, DataType As String) As AL_Matrix
 
     Dim Matrix3 As New AL_Matrix
     Dim i As Integer, j As Integer, k As Integer
@@ -98,7 +98,7 @@ Public Function Divide(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, B
 
 End Function
 
-Public Function Add(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, ByVal DataType As String) As AL_Matrix
+Public Function Add(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix, DataType As String) As AL_Matrix
 
     If Matrix1.Row = Matrix2.Row And Matrix1.Column = Matrix2.Column Then
         Dim Matrix3 As New AL_Matrix
@@ -114,7 +114,7 @@ Public Function Add(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, ByVa
 
 End Function
 
-Public Function Subtract(ByVal Matrix1 As AL_Matrix, ByVal Matrix2 As AL_Matrix, ByVal DataType As String) As AL_Matrix
+Public Function Subtract(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix, DataType As String) As AL_Matrix
 
     If Matrix1.Row = Matrix2.Row And Matrix1.Column = Matrix2.Column Then
         Dim Matrix3 As New AL_Matrix

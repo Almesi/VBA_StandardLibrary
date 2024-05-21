@@ -1,0 +1,6 @@
+ComponentType = 1
+ComponentName = AL_Swap
+Includes:
+README
+AL_Swap_Var
+AL_Swap_Obj

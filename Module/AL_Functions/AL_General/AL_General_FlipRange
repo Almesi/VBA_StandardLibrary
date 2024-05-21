@@ -1,4 +1,4 @@
-Sub AL_General_FlipRange(ByVal InputRange As Range, Optional ByVal FlipDirection As Boolean = False)
+Sub AL_General_FlipRange(InputRange As Range, Optional FlipDirection As Boolean = False)
 
     Dim FlippedRange As Range
     Dim LastColumn As Long

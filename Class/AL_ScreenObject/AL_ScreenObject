@@ -23,7 +23,7 @@
 '
 
 'Get Let Set 
-    Public Property Let Vertex(ByVal Value As AL_Vertex)
+    Public Property Let Vertex(Value As AL_Vertex)
         Set p_Vertex = Value
     End Property
 
@@ -31,7 +31,7 @@
         Set Vertex = p_Vertex
     End Property
 
-    Public Property Let Length(ByVal Value As AL_Vertex)
+    Public Property Let Length(Value As AL_Vertex)
         Set p_Length = Value
     End Property
 
@@ -39,7 +39,7 @@
         Set Length = p_Length
     End Property
 
-    Public Property Let Texture(ByVal Value As AL_Texture)
+    Public Property Let Texture(Value As AL_Texture)
         Set p_Texture = Value
     End Property
 
@@ -64,7 +64,7 @@ Private Function IsInitialized()
     IsInitialized = True
 End Function
 
-Public Sub Initialize(ByVal Vertex_X As Single, ByVal Vertex_Y As Single, ByVal Vertex_Z As Single, ByVal Length_X As Single, ByVal Length_Y As Single, ByVal Length_Z As Single)
+Public Sub Initialize(Vertex_X As Single, Vertex_Y As Single, Vertex_Z As Single, Length_X As Single, Length_Y As Single, Length_Z As Single)
     If p_Initialized = False Then
         p_Vertex.X  = Vertex_X
         p_Vertex.Y  = Vertex_Y

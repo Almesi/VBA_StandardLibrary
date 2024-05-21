@@ -9,7 +9,7 @@
 '
 
 ' Get Let Set
-    Public Property Let X(ByVal Value As Single)
+    Public Property Let X(Value As Single)
         p_X = Value
     End Property
 
@@ -17,7 +17,7 @@
         X = p_X
     End Property
 
-    Public Property Let Y(ByVal Value As Single)
+    Public Property Let Y(Value As Single)
         p_Y = Value
     End Property
 
@@ -25,7 +25,7 @@
         Y = p_Y
     End Property
 
-    Public Property Let Z(ByVal Value As Single)
+    Public Property Let Z(Value As Single)
         p_Z = Value
     End Property
 
@@ -33,7 +33,7 @@
         Z = p_Z
     End Property
 
-    Public Property Let W(ByVal Value As Single)
+    Public Property Let W(Value As Single)
         p_W = Value
     End Property
 
@@ -42,7 +42,7 @@
     End Property
 '
 
-Public Function IsVertex(ByVal Vertex As AL_Vertex) As Boolean
+Public Function IsVertex(Vertex As AL_Vertex) As Boolean
     If Vertex.X = p_X And Vertex.Y = p_Y And Vertex.Z = p_Z And Vertex.W = p_W Then
             IsVertex = True
         Else

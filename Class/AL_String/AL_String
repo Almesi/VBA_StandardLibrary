@@ -12,7 +12,7 @@
 
 'Get Set Let
     ' Get and Set Char
-    Public Property Let CharString(ByVal Text As String)
+    Public Property Let CharString(Text As String)
         Dim i As Integer
 
         LetLength(Len(Text))
@@ -30,7 +30,7 @@
      End Property
 
     ' Get and Let Length
-    Public Property Let Length(ByVal n_Length As Integer)
+    Public Property Let Length(n_Length As Integer)
         LetLength(n_Length)
     End Property
 
@@ -41,7 +41,7 @@
 
 ' Dynamic Arraylength
 ' If new length is shorter than old length everything after shorter one will be discarded
-Public Sub LetLength(ByVal n_Length As Integer)
+Public Sub LetLength(n_Length As Integer)
     If n_Length < 0 Then
         AL_Error_Print 7, 3, n_Length
         AL_Error_Show 7, 3, n_Length

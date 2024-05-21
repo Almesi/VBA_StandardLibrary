@@ -1,4 +1,4 @@
-Sub AL_SortQuickInteger(ByRef Array1() As Integer, ByVal Low As Integer, ByVal High As Integer)
+Sub AL_SortQuickInteger(ByRef Array1() As Integer, Low As Integer, High As Integer)
 
     If Low < High Then
         Dim Pivot As Integer
@@ -10,7 +10,7 @@ Sub AL_SortQuickInteger(ByRef Array1() As Integer, ByVal Low As Integer, ByVal H
 
 End Sub
 
-Function AL_Partition(ByRef Array1() As Integer, ByVal Low As Integer, ByVal High As Integer) As Integer
+Function AL_Partition(ByRef Array1() As Integer, Low As Integer, High As Integer) As Integer
 
     Dim Pivot As Integer
     Dim i As Integer

@@ -1,0 +1,10 @@
+Function AL_Array_Search_Obj(ByRef Array1() As Object, SearchValue As Object) As Long
+
+    For i = 0 To UBound(Array1)
+        If Array1(i) Is SearchValue Then
+            AL_Array_1SearchObject = i
+            Exit Function
+        End If
+    Next
+
+End Function

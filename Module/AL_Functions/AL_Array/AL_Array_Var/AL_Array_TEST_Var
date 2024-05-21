@@ -1,0 +1,29 @@
+Sub AL_Array_TEST_Var()
+
+    Dim Array1() As Variant
+    Dim Test_Variant() As Variant
+    Dim Test2_Variant() As Variant
+    Dim i As Long
+
+    ReDim Array1(6)
+    ReDim Test_Variant(6)
+    Array1(0) = Test_Variant(0)
+    Array1(0) = Test_Variant(1)
+    Array1(0) = Test_Variant(2)
+    Array1(0) = Test_Variant(3)
+    Array1(0) = Test_Variant(4)
+    Array1(0) = Test_Variant(5)
+    Array1(0) = Test_Variant(6)
+
+    AL_Array_Delete_Variant Array1, 3
+    If AL_Array_InArray_Variant(Array1, Test_Variant(3)) = False Then
+        AL_Array_Splice_Variant Array1, Test_Variant(3), 3 
+    End If
+    AL_Array_Pop_Variant Array1
+    AL_Array_Push_Variant Array1, Test_Variant(6)
+    AL_Array_Shift_Variant Array1
+    AL_Array_Unshift_Variant Array1, Test_Variant(6)
+    i = AL_Array_Search_Variant(Array1, Test_Variant(3))
+    Test2_Variant = AL_Array_Merge_Variant(Array1, Test_Variant)
+
+End Sub

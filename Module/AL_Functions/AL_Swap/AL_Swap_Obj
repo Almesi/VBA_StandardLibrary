@@ -1,0 +1,9 @@
+' Swap any 2 Variables who could equal Objects
+Sub AL_Swap_Obj(ByRef Object1 As Object, ByRef Object2 As Object)
+
+    Dim Temp As Object
+    Set Temp = Object1
+    Set Object1 = Object2
+    Set Object2 = Temp
+
+End Sub

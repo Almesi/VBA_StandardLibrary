@@ -1,4 +1,4 @@
-Sub AL_SortMergeLong(ByRef Array1() As Long, ByVal LowestIndex As Long, ByVal HighestIndex As Long)
+Sub AL_SortMergeLong(ByRef Array1() As Long, LowestIndex As Long, HighestIndex As Long)
 
     ' Check if there are at least two elements in the array to sort
     If LowestIndex < HighestIndex Then
@@ -14,7 +14,7 @@ Sub AL_SortMergeLong(ByRef Array1() As Long, ByVal LowestIndex As Long, ByVal Hi
     End If
 End Sub
 
-Sub AL_MergeLong(ByRef Array1() As Long, ByVal LowestIndex As Long, ByVal ArrayMid As Long, ByVal HighestIndex As Long)
+Sub AL_MergeLong(ByRef Array1() As Long, LowestIndex As Long, ArrayMid As Long, HighestIndex As Long)
 
     ' Calculate the sizes of the left and right subarrays
     Dim LeftSize As Long

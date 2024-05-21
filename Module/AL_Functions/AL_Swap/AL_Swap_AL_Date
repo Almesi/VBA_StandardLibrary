@@ -1,8 +1,0 @@
-Sub AL_Swap_AL_Date(ByRef AL_Date1 As AL_Date, ByRef AL_Date2 As AL_Date)
-
-    Dim Temp As AL_Date
-    Temp = AL_Date1
-    AL_Date1 = AL_Date2
-    AL_Date2 = Temp
-
-End Sub

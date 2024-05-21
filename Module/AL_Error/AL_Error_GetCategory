@@ -1,4 +1,4 @@
-Private Function AL_Error_GetCategory(ByVal ErrorCategory As Long) As String
+Private Function AL_Error_GetCategory(ErrorCategory As Long) As String
 
     Select Case ErrorCategory
         Case AL_Error_System:    AL_Error_GetCategory = "System"

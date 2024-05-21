@@ -1,8 +1,0 @@
-Sub AL_Swap_AL_Node(ByRef AL_Node1 As AL_Node, ByRef AL_Node2 As AL_Node)
-
-    Dim Temp As AL_Node
-    Temp = AL_Node1
-    AL_Node1 = AL_Node2
-    AL_Node2 = Temp
-
-End Sub

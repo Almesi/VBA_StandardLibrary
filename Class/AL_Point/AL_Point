@@ -9,7 +9,7 @@
 '
 
 ' Get Let Set
-    Public Property Let X(ByVal Value As Integer)
+    Public Property Let X(Value As Integer)
         p_X = Value
     End Property
 
@@ -17,7 +17,7 @@
         X = p_X
     End Property
 
-    Public Property Let Y(ByVal Value As Integer)
+    Public Property Let Y(Value As Integer)
         p_Y = Value
     End Property
 
@@ -25,7 +25,7 @@
         Y = p_Y
     End Property
 
-    Public Property Let Z(ByVal Value As Integer)
+    Public Property Let Z(Value As Integer)
         p_Z = Value
     End Property
 
@@ -33,7 +33,7 @@
         Z = p_Z
     End Property
 
-    Public Property Let W(ByVal Value As Integer)
+    Public Property Let W(Value As Integer)
         p_W = Value
     End Property
 
@@ -42,7 +42,7 @@
     End Property
 '
 
-Public Function IsPoint(ByVal Point As AL_Point) As Boolean
+Public Function IsPoint(Point As AL_Point) As Boolean
     If Point.X = p_X And Point.Y = p_Y And Point.Z = p_Z And Point.W = p_W Then
             IsPoint = True
         Else

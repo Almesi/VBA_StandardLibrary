@@ -1,0 +1,26 @@
+Sub AL_Array_Delete_Var(ByRef Array1() As Variant, DeleteIndex As Long)
+
+    Dim TempArray() As Variant
+    Dim Array1Length As Long
+    Dim j As Long
+    
+    Array1Length = UBound(Array1)
+    ReDim TempArray(Array1Length)
+    j = 0
+    TempArray = Array1
+    ReDim Array1(Array1Length - 1)
+    If Array1Length = DeleteIndex Then
+        For i = 0 To Array1Length - 1
+            Array1(i) = TempArray(i)
+        Next
+        Else
+            For i = 0 To Array1Length
+                If i = DeleteIndex Then
+                    i = i + 1
+                End If
+                Array1(j) = TempArray(i)
+                j = j + 1
+            Next
+    End If
+
+End Sub

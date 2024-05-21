@@ -1,8 +1,0 @@
-Sub AL_Swap_String(ByRef String1 As String, ByRef String2 As String)
-
-    Dim Temp As String
-    Temp = String1
-    String1 = String2
-    String2 = Temp
-
-End Sub

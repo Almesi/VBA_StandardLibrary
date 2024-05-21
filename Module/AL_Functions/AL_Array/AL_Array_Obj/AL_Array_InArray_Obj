@@ -1,0 +1,10 @@
+Function AL_Array_InArray_Obj(ByRef Array1() As Object, SearchValue As Object) As Boolean
+
+    For i = 0 To UBound(Array1)
+        If Array1(i) Is SearchValue Then
+            AL_Array_1InArray1Object = True
+            Exit Function
+        End If
+    Next
+
+End Function

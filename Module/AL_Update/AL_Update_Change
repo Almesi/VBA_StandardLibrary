@@ -1,4 +1,4 @@
-Sub AL_Update_Change(ByVal InstanceName As String, ByVal OldProcedure As String, ByVal NewProcedureFilePath As String)
+Sub AL_Update_Change(InstanceName As String, OldProcedure As String, NewProcedureFilePath As String)
 
     If AL_Check_String(InstanceName, 0) = No_Error And AL_Check_String(OldProcedure, 0) = No_Error And AL_Check_String(NewProcedureFilePath, 0) = No_Error Then
         If AL_Check_Instance(InstanceName, False) = No_Error Then 

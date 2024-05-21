@@ -269,7 +269,7 @@ Public Property Get Character() As String
     End Select
 End Property
 
-Public Property Let Character(ByVal n_Char As String)
+Public Property Let Character(n_Char As String)
     Select Case n_Char
         'Case "NUL": p_Char = 0
         'Case "SOH": p_Char = 1

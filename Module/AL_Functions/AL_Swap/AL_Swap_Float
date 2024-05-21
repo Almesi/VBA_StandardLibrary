@@ -1,8 +1,0 @@
-Sub AL_Swap_Single(ByRef Single1 As Single, ByRef Single2 As Single)
-
-    Dim Temp As Single
-    Temp = Single1
-    Single1 = Single2
-    Single2 = Temp
-
-End Sub

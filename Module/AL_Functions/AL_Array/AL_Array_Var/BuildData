@@ -1,0 +1,14 @@
+ComponentType = 1
+ComponentName = AL_Array
+Includes:
+README
+AL_Array_Delete_Var
+AL_Array_InArray_Var
+AL_Array_Merge_Var
+AL_Array_Pop_Var
+AL_Array_Push_Var
+AL_Array_Search_Var
+AL_Array_Shift_Var
+AL_Array_Splice_Var
+AL_Array_TEST_Var
+AL_Array_Unshift_Var

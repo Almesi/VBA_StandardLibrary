@@ -1,4 +1,4 @@
-Sub AL_SortQuickLong(ByRef Array1() As Long, ByVal Low As Long, ByVal High As Long)
+Sub AL_SortQuickLong(ByRef Array1() As Long, Low As Long, High As Long)
 
     If Low < High Then
         Dim Pivot As Long
@@ -10,7 +10,7 @@ Sub AL_SortQuickLong(ByRef Array1() As Long, ByVal Low As Long, ByVal High As Lo
 
 End Sub
 
-Function AL_Partition(ByRef Array1() As Long, ByVal Low As Long, ByVal High As Long) As Long
+Function AL_Partition(ByRef Array1() As Long, Low As Long, High As Long) As Long
 
     Dim Pivot As Long
     Dim i As Long
