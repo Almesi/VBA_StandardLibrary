@@ -180,7 +180,7 @@ Public Sub Scaling(ByRef GoalTexture As Range)
 
 End Sub
 
-Public Sub AssignColor(ByRef GoalRange As Range, SourceRange As Range, FirstRow Integer, FirstColumn As Integer, LastRow Integer, LastColumn As Integer)
+Public Sub AssignColor(ByRef GoalRange As Range, SourceRange As Range, FirstRow As Integer, FirstColumn As Integer, LastRow Integer, LastColumn As Integer)
     Dim i As Integer, j As Integer, ii As Integer, jj As Integer
     ii = 1
     For i = FirstRow To LastRow

@@ -15,7 +15,7 @@
     Private p_Length As New AL_Vertex
     
     ' Range of Texture of upper Vertexs
-    Private p_Texture As New AL_Texture
+    Private p_Texture As Range
 '
 
 'Get Let Set 
@@ -35,11 +35,11 @@
         Set Length = p_Length
     End Property
 
-    Public Property Let Texture(Value As AL_Texture)
+    Public Property Let Texture(Value As Range)
         Set p_Texture = Value
     End Property
 
-    Public Property Get Texture() As AL_Texture
+    Public Property Get Texture() As Range
         Set Texture = p_Texture
     End Property
 
@@ -53,9 +53,7 @@
 '
 Private Function IsInitialized()
     If p_Initialized = False Then
-        AL_Error_Print 7, 5, "AL_ScreenObject"
-        AL_Error_Show 7, 5, "AL_ScreenObject"
-        End
+        AL_Error_Show AL_Error_Class, 4, "AL_ScreenObject"
     End If
     IsInitialized = True
 End Function
