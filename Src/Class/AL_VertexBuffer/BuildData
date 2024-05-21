@@ -1,0 +1,6 @@
+ComponentType = 2
+ComponentName = AL_VertexBuffer
+Includes:
+README
+HeaderData
+AL_VertexBuffer

@@ -1,0 +1,6 @@
+ComponentType = 2
+ComponentName = AL_Window
+Includes:
+README
+HeaderData
+AL_Window

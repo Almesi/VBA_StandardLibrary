@@ -1,0 +1,6 @@
+ComponentType = 2
+ComponentName = AL_Vertex
+Includes:
+README
+HeaderData
+AL_Vertex

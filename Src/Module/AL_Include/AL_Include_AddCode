@@ -1,0 +1,27 @@
+' Adds Code to a given Component
+Public Function AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String) As Boolean
+
+    If AL_Error_Var(FilePath) = AL_IS_ERROR Then
+        AL_Include_AddCode = AL_IS_ERROR
+        Exit Function
+    End If
+    If AL_Error_Obj(VBCodeModule) = AL_IS_ERROR Then
+        AL_Include_AddCode = AL_IS_ERROR
+        Exit Function
+    End If
+    Dim FileLine As String
+    Dim Index As Long
+    Dim FileNumber As Integer
+
+    Index = 1
+    FileNumber = FreeFile
+    Open FilePath For Input As #FileNumber
+    Do Until EOF(FileNumber)
+        Line Input #FileNumber, FileLine
+        VBCodeModule.InsertLines Index, FileLine
+        Index = Index + 1
+    Loop
+    Close #FileNumber
+    AL_Include_AddCode = AL_NO_ERROR
+
+End Function

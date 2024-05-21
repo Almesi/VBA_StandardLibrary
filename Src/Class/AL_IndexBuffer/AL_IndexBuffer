@@ -1,0 +1,16 @@
+' Variable Declaration
+    Private p_Buffer() As Integer
+'
+
+' Get Let Set
+    Public Property Let Buffer(Index As Integer, Value As Integer)
+        If Index > UBound(p_Buffer) Then
+            ReDim Preserve p_Buffer(Index)
+            p_Buffer(Index) = Value
+        End If
+    End Property
+
+    Public Property Get Buffer(Index As Integer) As Integer
+        Location = p_Buffer(Index)
+    End Property
+'

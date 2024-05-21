@@ -1,0 +1,30 @@
+' Variable Declaration
+    Private p_Key() As String
+'
+
+'Get Let Set 
+    Public Property Get Key(Index As Integer) As String
+        Key(Index) = p_Key
+    End Property
+'
+
+Public Property Let SetKey(KeyValue As String)
+
+    Dim Index As Integer: Index = UBound(p_Key) + 1
+    ReDim Preserve p_Key(Index)
+    p_Key(Index) = KeyValue
+
+End Sub
+
+Public Function GetIndex(KeyValue As String) As Integer
+
+    Dim i As Integer
+    For i = 0 To UBound(p_Key)
+        If p_Key(i) = KeyValue Then
+            GetIndex = i
+            Exit Function
+        End If
+    Next i
+    GetIndex = Empty
+
+End Function

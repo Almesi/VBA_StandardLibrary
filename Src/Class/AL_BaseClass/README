@@ -1,0 +1,4 @@
+' This Class holds several usual propertynames
+' By itself it doesnt do anything
+' Used for implemention in other classes
+' One way to do inheritance

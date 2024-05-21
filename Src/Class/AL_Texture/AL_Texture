@@ -1,0 +1,194 @@
+' Variable Declaration
+    
+    Private p_Initialized As Boolean
+
+    ' Whole Value as Offset of upper Left corner of the Texture Collection Sheet
+    Private p_LastRow As Long
+    Private p_LastColumn As Long
+
+    Private p_SheetRow As Long
+    Private p_SheetColumn As Long
+
+    ' OriginalTexture is the upper one, which shall not be changed
+    ' Texture is the one used for rotation etc.
+    Private p_OriginalTexture As Range
+    Private p_Texture As Range
+'
+
+'Get Let Set 
+    Public Property Let LastRow(Value As Long)
+        p_LastRow = Value
+    End Property
+
+    Public Property Get LastRow() As Long
+        LastRow = p_LastRow
+    End Property
+
+    Public Property Let LastColumn(Value As Long)
+        p_LastColumn = Value
+    End Property
+
+    Public Property Get LastColumn() As Long
+        LastColumn = p_LastColumn
+    End Property
+
+    Public Property Let SheetRow(Value As Long)
+        p_SheetRow = Value
+    End Property
+
+    Public Property Get SheetRow() As Long
+        SheetRow = p_SheetRow
+    End Property
+
+    Public Property Let SheetColumn(Value As Long)
+        p_SheetColumn = Value
+    End Property
+
+    Public Property Get SheetColumn() As Long
+        SheetColumn = p_SheetColumn
+    End Property
+
+    Public Property Let Texture(Value As Range)
+        Set p_Texture = Value
+    End Property
+
+    Public Property Get Texture() As Range
+        Set Texture = p_Texture
+    End Property 
+'
+
+Private Function IsInitialized()
+    If p_Initialized = False Then
+        AL_Error_Show AL_Error_Class, 4, "AL_Texture"
+    End If
+    IsInitialized = True
+End Function
+
+Public Sub Initialize(WorkbookName As String, SheetName As String, n_SheetRow As Long, n_SheetColumn As Long, n_LastRow As Long, n_LastColumn As Long)
+    Dim TextureSheet As Range
+    p_SheetRow = n_SheetRow
+    p_SheetColumn = n_SheetColumn
+    p_LastRow = n_LastRow
+    p_LastColumn = n_LastColumn
+    Set TextureSheet = Workbooks(WorkbookName).Sheets(SheetName).Range("A1")
+    Set p_OriginalTexture = Range(TextureSheet.Offset(p_SheetRow, p_SheetColumn), TextureSheet.Offset(p_SheetRow + p_LastRow, p_SheetColumn + p_LastColumn))
+    Set p_Texture = p_OriginalTexture.Offset(p_LastRow + 1, 0)
+    AssignColor p_Texture, p_OriginalTexture, p_SheetRow, p_SheetColumn, p_LastRow, p_LastColumn
+    p_Initialized = True
+End Sub
+
+Public Sub LetTexture()
+    If IsInitialized = True Then
+        Set p_Texture = p_OriginalTexture.Offset(p_LastRow + 1, 0)
+        AssignColor p_Texture, p_OriginalTexture, p_SheetRow, p_SheetColumn, p_LastRow, p_LastColumn
+    End If
+End Sub
+
+Public Sub Cut(StartRowFactor As Single, StartColumnFactor As Single, LastRowFactor As Single, LastColumnFactor As Single)
+    If IsInitialized = True Then
+        Dim StartRow As Integer
+        Dim StartColumn As Integer
+        Dim LastRow As Integer
+        Dim LastColumn As Integer
+        StartRow = Int((p_OriginalTexture.Rows.Count) * StartRowFactor)
+        StartColumn = Int((p_OriginalTexture.Columns.Count) * StartColumnFactor)
+        LastRow = Int((p_OriginalTexture.Rows.Count) * LastRowFactor)
+        LastColumn = Int((p_OriginalTexture.Columns.Count) * LastRowFactor)
+        AssignColor p_Texture, p_OriginalTexture, StartRow, StartColumn, LastRow, LastColumn
+    End If
+End Sub
+
+' Counter Clockwise rotation of the texture
+Public Sub Rotate(Theta As Single)
+    If IsInitialized = True Then
+        Dim X As Integer
+        Dim Y As Integer
+        Dim Center(1) As Integer
+        Set p_Texture = p_OriginalTexture
+        For i = 1 To p_OriginalTexture.Rows.Count
+            For j = 1 To p_OriginalTexture.Columns.Count
+                Center(0) = Int((p_OriginalTexture.Rows.Count/2) + 0.5)
+                Center(1) = Int((p_OriginalTexture.Columns.Count/2) + 0.5)
+                Y = ((i - Center(0)) / (Center(0) - 1))
+                X = ((j - Center(1)) / (Center(1) - 1))
+                If (p_OriginalTexture.Rows.Count Mod 2) = 0 Then
+                        Y = Y - (1 / Center(0))
+                        Y = Int((Y *  Cos(Theta) + Y * Sin(Theta)) * (Center(0) - 1) + Center(0) + 1)
+                    Else
+                        Y = Int((Y *  Cos(Theta) + Y * Sin(Theta)) * (Center(0) - 1) + Center(0))
+                End If
+                If (p_OriginalTexture.Columns.Count Mod 2) = 0 Then
+                        X = X - (1 / Center(1))
+                        X = Int((X * -Sin(Theta) + X * Cos(Theta)) * (Center(1) - 1) + Center(1) + 1)
+                    Else
+                        X = Int((X * -Sin(Theta) + X * Cos(Theta)) * (Center(1) - 1) + Center(1))
+                End If
+                p_Texture.Cells(i, j).Interior.Color = p_OriginalTexture.Cells(Y, X).Interior.Color
+            Next
+        Next
+    End If
+
+End Sub
+
+Public Sub Scaling(ByRef GoalTexture As Range)
+
+    Dim RowFactor As Single
+    Dim ColumnFactor As Single
+
+    RowFactor = p_OriginalTexture.Rows.Count / GoalTexture.Rows.Count
+    ColumnFactor = p_OriginalTexture.Columns.Count / GoalTexture.Columns.Count
+    Select Case RowFactor
+        Case Is < 1
+            For i = 1 To GoalTexture.Rows.Count
+                For j = 1 To GoalTexture.Columns.Count
+                    GoalTexture.Cells(i, j).Interior.Color = p_OriginalTexture.Cells(Int(i * RowFactor), j).Interior.Color
+                Next
+            Next
+        Case Is = 1
+            For i = 1 To p_OriginalTexture.Rows.Count
+                For j = 1 To p_OriginalTexture.Columns.Count
+                    GoalTexture.Cells(i, j).Interior.Color = p_OriginalTexture.Cells(i, j).Interior.Color
+                Next
+            Next
+        Case Is < 1            
+            For i = 1 To p_OriginalTexture.Rows.Count
+                For j = 1 To p_OriginalTexture.Columns.Count
+                    GoalTexture.Cells(Int(i * RowFactor), j).Interior.Color = p_OriginalTexture.Cells(i, j).Interior.Color
+                Next
+            Next
+    End Select
+    Select Case ColumnFactor
+        Case Is < 1
+            For i = 1 To GoalTexture.Rows.Count
+                For j = 1 To GoalTexture.Columns.Count
+                    GoalTexture.Cells(i, j).Interior.Color = p_OriginalTexture.Cells(i, Int(j * ColumnFactor)).Interior.Color
+                Next
+            Next
+        Case Is = 1
+            For i = 1 To p_OriginalTexture.Rows.Count
+                For j = 1 To p_OriginalTexture.Columns.Count
+                    GoalTexture.Cells(i, j).Interior.Color = p_OriginalTexture.Cells(i, j).Interior.Color
+                Next
+            Next
+        Case Is < 1            
+            For i = 1 To p_OriginalTexture.Rows.Count
+                For j = 1 To p_OriginalTexture.Columns.Count
+                    GoalTexture.Cells(i, Int(j * ColumnFactor)).Interior.Color = p_OriginalTexture.Cells(i, j).Interior.Color
+                Next
+            Next
+    End Select
+
+End Sub
+
+Public Sub AssignColor(ByRef GoalRange As Range, SourceRange As Range, FirstRow Integer, FirstColumn As Integer, LastRow Integer, LastColumn As Integer)
+    Dim i As Integer, j As Integer, ii As Integer, jj As Integer
+    ii = 1
+    For i = FirstRow To LastRow
+        jj = 1
+        For j = FirstColumn To LastColumn
+            GoalRange.Cells(ii, jj).Interior.Color = SourceRange.Cells(i, j).Interior.Color
+            jj = jj + 1
+        Next
+        ii = ii + 1
+    Next
+End Sub

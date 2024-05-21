@@ -1,0 +1,2 @@
+' Describes a Vertex in 3D-Space with the Range-Length for a Window with Texture in form of AL_Texture
+' Only use should be to put it to screen, nothing else

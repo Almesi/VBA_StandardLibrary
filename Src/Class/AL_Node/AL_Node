@@ -1,0 +1,149 @@
+' Variable Declaration
+    Private p_X As Integer
+    Private p_Y As Integer
+    Private p_Z As Integer
+    Private p_S_Cost As Integer
+    Private p_G_Cost As Integer
+    Private p_W_Cost As Integer
+    Private p_Parent As New AL_Node
+'
+
+' Get Let Set
+    Public Property Let X(Value As Integer)
+        p_X = Value
+    End Property
+
+    Public Property Get X() As Integer
+        X = p_X
+    End Property
+
+    Public Property Let Y(Value As Integer)
+        p_Y = Value
+    End Property
+
+    Public Property Get Y() As Integer
+        Y = p_Y
+    End Property
+
+    Public Property Let Z(Value As Integer)
+        p_Z = Value
+    End Property
+
+    Public Property Get Z() As Integer
+        Z = p_Z
+    End Property
+
+    Public Property Let S_Cost(Value As Integer)
+        p_S_Cost = Value
+    End Property
+
+    Public Property Get S_Cost() As Integer
+        S_Cost = p_S_Cost
+    End Property
+
+    Public Property Let G_Cost(Value As Integer)
+        p_G_Cost = Value
+    End Property
+
+    Public Property Get G_Cost() As Integer
+        G_Cost = p_G_Cost
+    End Property
+
+    Public Property Let W_Cost(Value As Integer)
+        p_W_Cost = Value
+    End Property
+
+    Public Property Get W_Cost() As Integer
+        W_Cost = p_W_Cost
+    End Property
+
+    Public Property Let Parent(Node As AL_Node)
+        Set p_Parent = Node
+    End Property
+
+    Public Property Get Parent() As AL_Node
+        Set Parent = p_Parent
+    End Property
+
+    Public Property Let Point(Node As AL_Node)
+        p_X = Node.X
+        p_Y = Node.Y
+        p_Z = Node.Z
+    End Property
+
+    Public Sub LetPoint(X As Integer, Y As Integer, Z As Integer)
+        p_X = X
+        p_Y = Y
+        p_Z = Z
+    End Sub
+'
+
+Public Function IsNode(Node As AL_Node) As Boolean
+    If Node.X = p_X And Node.Y = p_Y And Node.Z = p_Z Then
+            IsNode = True
+        Else
+            IsNode = False
+    End If
+End Function
+
+Public Sub CalculateDistance(ReferenceNode As AL_Node, StartNode As AL_Node, GoalNode As AL_Node)
+
+    Dim dx as Integer, dy As Integer, dz As Integer, sd As Integer, md As Integer, bd As Integer
+
+    dx = AL_Math_Difference(StartNode.X, ReferenceNode.X)
+    dy = AL_Math_Difference(StartNode.Y, ReferenceNode.Y)
+    dz = AL_Math_Difference(StartNode.Z, ReferenceNode.Z)
+    
+    ' Looks for the biggest, middle and smallest in difference
+    If dx > dy Then
+            If dx > dz Then
+                    bd = dx
+                    md = dz
+                    sd = dy
+                else
+                    bd = dz
+                    md = dx
+                    sd = dy
+            End If
+        Else
+            If dy > dz Then
+                    bd = dy
+                    md = dz
+                    sd = dx
+                else
+                    bd = dz
+                    md = dy
+                    sd = dx
+            End If
+    End If
+    p_S_Cost = (sd) * 17 + (md - sd) * 14 + (bd - md) * 10
+
+    dx = AL_Math_Difference(GoalNode.X, ReferenceNode.X)
+    dy = AL_Math_Difference(GoalNode.Y, ReferenceNode.Y)
+    dz = AL_Math_Difference(GoalNode.Z, ReferenceNode.Z)
+    
+    ' Looks for the biggest, middle and smallest in difference
+    If dx > dy Then
+            If dx > dz Then
+                    bd = dx
+                    md = dz
+                    sd = dy
+                else
+                    bd = dz
+                    md = dx
+                    sd = dy
+            End If
+        Else
+            If dy > dz Then
+                    bd = dy
+                    md = dz
+                    sd = dx
+                else
+                    bd = dz
+                    md = dy
+                    sd = dx
+            End If
+    End If
+    p_G_Cost = (sd) * 17 + (md - sd) * 14 + (bd - md) * 10
+    p_W_Cost = p_S_Cost + p_G_Cost
+End Sub

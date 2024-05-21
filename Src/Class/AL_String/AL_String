@@ -1,0 +1,75 @@
+' Variable Declaration
+    ' Array of AL_Char
+    Private p_String() As New AL_Char
+    
+    ' Describes the Length of the Array
+    Private p_Length As Integer
+'
+
+'Get Set Let
+    ' Get and Set Char
+    Public Property Let CharString(Text As String)
+        Dim i As Integer
+
+        LetLength(Len(Text))
+        For i = 0 To p_Length - 1
+            p_String(i).Character = Mid(Text, i + 1, 1)
+        Next i
+    End Property
+
+    Public Property Get CharString() As String
+        Dim i As Integer
+        
+        For i = 0 To p_Length - 1
+            CharString = CharString & p_String(i).Character
+        Next i
+     End Property
+
+    ' Get and Let Length
+    Public Property Let Length(n_Length As Integer)
+        LetLength(n_Length)
+    End Property
+
+    Public Property Get Length() As Integer
+        Length = p_Length
+    End Property
+'
+
+' Dynamic Arraylength
+' If new length is shorter than old length everything after shorter one will be discarded
+Public Sub LetLength(n_Length As Integer)
+    If n_Length < 0 Then
+        AL_Error_Print 7, 3, n_Length
+        AL_Error_Show 7, 3, n_Length
+        End 
+    End If
+
+    Dim i As Integer
+    If p_Length > n_Length Then
+            p_length = n_Length
+            Dim Temp() As New AL_Char
+            ReDim Temp(p_Length)
+            For i = 0 To n_Length - 1
+                Temp(i).Character = p_String(i).Character
+            Next i
+            ReDim p_String(p_Length)
+            For i = 0 To n_Length - 1
+                p_String(i).Character = Temp(i).Character
+            Next i
+        Else
+            p_Length = n_Length
+            ReDim Preserve p_String(p_Length)
+    End If
+End Sub
+
+Public Sub TEST()
+    Dim TestString As AL_String
+    Dim TestString2 As AL_String
+    TestString.CharString = "DDLSDIVDK"
+    MsgBox(TestString.CharString)
+    MsgBox(TestString.Length)
+    TestString2.LetLength = 18
+    MsgBox(TestString2.Length)
+    TestString2.CharString = TestString.CharString
+    TestString2.CharString = "DD"
+End Sub

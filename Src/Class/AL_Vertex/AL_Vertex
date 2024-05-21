@@ -1,0 +1,48 @@
+' Variable Declaration
+    Private p_X As Single
+    Private p_Y As Single
+    Private p_Z As Single
+    Private p_W As Single
+'
+
+' Get Let Set
+    Public Property Let X(Value As Single)
+        p_X = Value
+    End Property
+
+    Public Property Get X() As Single
+        X = p_X
+    End Property
+
+    Public Property Let Y(Value As Single)
+        p_Y = Value
+    End Property
+
+    Public Property Get Y() As Single
+        Y = p_Y
+    End Property
+
+    Public Property Let Z(Value As Single)
+        p_Z = Value
+    End Property
+
+    Public Property Get Z() As Single
+        Z = p_Z
+    End Property
+
+    Public Property Let W(Value As Single)
+        p_W = Value
+    End Property
+
+    Public Property Get W() As Single
+        W = p_W
+    End Property
+'
+
+Public Function IsVertex(Vertex As AL_Vertex) As Boolean
+    If Vertex.X = p_X And Vertex.Y = p_Y And Vertex.Z = p_Z And Vertex.W = p_W Then
+            IsVertex = True
+        Else
+            IsVertex = False
+    End If
+End Function

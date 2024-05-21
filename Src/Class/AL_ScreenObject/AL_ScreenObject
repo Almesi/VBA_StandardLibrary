@@ -1,0 +1,79 @@
+' Variable Declaration
+    ' Sets to Const
+    Private p_Initialized As Boolean
+    
+    ' Whole Value as Vertex of upper Left corner
+    Private p_og_Vertex As New AL_Vertex
+    
+    ' Single Value and variable
+    Private p_Vertex As New AL_Vertex
+    
+    ' Whole Value for Number of Cells in Length to Down Right Corner
+    Private p_og_Length As New AL_Vertex
+    
+    ' Single Value and variable
+    Private p_Length As New AL_Vertex
+    
+    ' Range of Texture of upper Vertexs
+    Private p_Texture As New AL_Texture
+'
+
+'Get Let Set 
+    Public Property Let Vertex(Value As AL_Vertex)
+        Set p_Vertex = Value
+    End Property
+
+    Public Property Get Vertex() As AL_Vertex
+        Set Vertex = p_Vertex
+    End Property
+
+    Public Property Let Length(Value As AL_Vertex)
+        Set p_Length = Value
+    End Property
+
+    Public Property Get Length() As AL_Vertex
+        Set Length = p_Length
+    End Property
+
+    Public Property Let Texture(Value As AL_Texture)
+        Set p_Texture = Value
+    End Property
+
+    Public Property Get Texture() As AL_Texture
+        Set Texture = p_Texture
+    End Property
+
+    Public Property Get OgVertex() As AL_Vertex
+        Set OgVertex = p_og_Vertex
+    End Property
+
+    Public Property Get OgLength() As AL_Vertex
+        Set OgLength = p_og_Length
+    End Property
+'
+Private Function IsInitialized()
+    If p_Initialized = False Then
+        AL_Error_Print 7, 5, "AL_ScreenObject"
+        AL_Error_Show 7, 5, "AL_ScreenObject"
+        End
+    End If
+    IsInitialized = True
+End Function
+
+Public Sub Initialize(Vertex_X As Single, Vertex_Y As Single, Vertex_Z As Single, Length_X As Single, Length_Y As Single, Length_Z As Single)
+    If p_Initialized = False Then
+        p_Vertex.X  = Vertex_X
+        p_Vertex.Y  = Vertex_Y
+        p_Vertex.Z  = Vertex_Z
+        p_Length.X = Length_X
+        p_Length.Y = Length_Y
+        p_Length.Z = Length_Z
+        p_og_Vertex.X  = Vertex_X
+        p_og_Vertex.Y  = Vertex_Y
+        p_og_Vertex.Z  = Vertex_Z
+        p_og_Length.X = Length_X
+        p_og_Length.Y = Length_Y
+        p_og_Length.Z = Length_Z
+        p_Initialized = True
+    End If
+End Sub
