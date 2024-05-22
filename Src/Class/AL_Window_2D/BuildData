@@ -1,6 +1,6 @@
 ComponentType = 2
-ComponentName = AL_Window
+ComponentName = AL_Window_2D
 Includes:
 README
 HeaderData
-AL_Window
+AL_Window_2D

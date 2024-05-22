@@ -3,12 +3,12 @@ Private Function AL_Error_ComObj(MainValue As Object, CompareValue As Object, Co
 
     Select Case CompareType
         Case "Is", "IS", "iS", "is", "="
-            If MainValue <> CompareValue Then
+            If MainValue Is CompareValue Then
                 AL_Error_ComObj AL_Error_System, 0006, MainValue, CompareValue
                 AL_Error_ComObj = AL_IS_ERROR
             End If
         Case "not", "noT", "nOt", "nOT", "Not", "NoT", "NOt", "NOT", "<>"
-            If MainValue = CompareValue Then
+            If Not MainValue Is CompareValue Then
                 AL_Error_ComObj AL_Error_System, 0011, MainValue, CompareValue
                 AL_Error_ComObj = AL_IS_ERROR
             End If

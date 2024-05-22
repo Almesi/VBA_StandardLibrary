@@ -10,8 +10,9 @@
     Private p_SheetColumn As Long
 
     ' OriginalTexture is the upper one, which shall not be changed
-    ' Texture is the one used for rotation etc.
     Private p_OriginalTexture As Range
+    
+    ' Texture is the one used for rotation etc.
     Private p_Texture As Range
 '
 

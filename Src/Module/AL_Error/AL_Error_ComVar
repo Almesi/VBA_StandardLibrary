@@ -3,32 +3,32 @@ Private Function AL_Error_ComVar(MainValue As Variant, CompareValue As Variant, 
 
     Select Case CompareType
         Case "="
-            If MainValue <> CompareValue Then
+            If MainValue = CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0006, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If
         Case ">"
-            If MainValue =< CompareValue Then
+            If MainValue > CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0007, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If
         Case "<"
-            If MainValue >= CompareValue Then
+            If MainValue < CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0008, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If
         Case ">="
-            If MainValue < CompareValue Then
+            If MainValue >= CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0009, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If
         Case "=<"
-            If MainValue > CompareValue Then
+            If MainValue =< CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0010, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If
         Case "<>"
-            If MainValue = CompareValue Then
+            If MainValue <> CompareValue Then
                 AL_Error_ComVar AL_Error_System, 0011, MainValue, CompareValue
                 AL_Error_ComVar = AL_IS_ERROR
             End If

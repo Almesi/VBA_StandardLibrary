@@ -197,7 +197,7 @@
 
 Private Function IsInitialized()
     If p_Initialized = False Then
-        AL_Error_Show AL_Error_Class, 4, "AL_Window"
+        AL_Error_Show AL_Error_Class, 4, "AL_Window_2D"
     End If
     IsInitialized = True
 End Function
@@ -246,35 +246,20 @@ Public Sub Clear(Optional Color As Long = 16777215)
     End If
 End Sub
 
-' Draws all used Ranges in DrawRange Array
-Public Sub Draw()
-    Application.ScreenUpdating = False
+' Releases all Ranges from the DrawRange
+Public Sub Release()
     If IsInitialized = True Then
         Dim i As Integer
 
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
-
-            ' Cut to Window or NullCenter and then Draw
-            Transform p_ScreenObjects(i)
-            Set p_ScreenObjects(i) = CutToBounds(p_ScreenObjects(i))
-
-            ' Get Negative Offset and add it to the Center resulting in the true Cell value to offset
-            p_ScreenObjects(i).Texture.Texture.Copy
-            Range(p_Window.Cells _
-            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Vertex.Y / p_NormalWidth), 0), _
-             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Vertex.X / p_NormalLength), 0)), p_Window.Cells _
-            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Length.Y / p_NormalWidth), 0), _
-             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Length.X / p_NormalLength), 0))).PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+            Set p_ScreenObjects(i) = Nothing
             i = i + 1
-            If i > 1024 Then
-                AL_Error_Print 1, 5, i
-                AL_Error_Show 1, 5, i
-                End
+            If AL_Error_Var(i, 1024, ">") = AL_IS_ERROR Then
+                Exit Sub
             End If
         Loop
     End If
-    Application.ScreenUpdating = True
 End Sub
 
 ' Inserts a Range into the DrawRange Array
@@ -285,7 +270,7 @@ Public Sub Insert(ScreenObject As AL_ScreenObject)
         i = 0
         Do Until p_ScreenObjects(i) Is Nothing
         i = i + 1
-            If AL_Error_Var(i, 1024, "<") = AL_IS_ERROR Then
+            If AL_Error_Var(i, 1024, ">") = AL_IS_ERROR Then
                 Exit Sub
             End If
         Loop
@@ -293,33 +278,56 @@ Public Sub Insert(ScreenObject As AL_ScreenObject)
     End If
 End Sub
 
-' Releases all Ranges from the DrawRange
-Public Sub ReleaseObject()
+' Draws all used Ranges in DrawRange Array
+Public Sub Draw(Optional Color As Long = 16777215)
+    Application.ScreenUpdating = False
     If IsInitialized = True Then
         Dim i As Integer
 
         i = 0
+        Clear Color
         Do Until p_ScreenObjects(i) Is Nothing
-            Set p_ScreenObjects(i) = Nothing
+
+            ' Cut to Window or NullCenter and then Draw
+            Transform p_ScreenObjects(i)
+            Set p_ScreenObjects(i) = CutToBounds(p_ScreenObjects(i))
+
+            ' Get Negative Offset and add it to the Center resulting in the true Cell value to offset
+            p_ScreenObjects(i).Texture.Copy
+            Range(p_Window.Cells _
+            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Vertex.Y / p_NormalWidth), 0), _
+             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Vertex.X / p_NormalLength), 0)), p_Window.Cells _
+            (WorksheetFunction.RoundUp(Center.Y + (p_ScreenObjects(i).Length.Y / p_NormalWidth), 0), _
+             WorksheetFunction.RoundUp(Center.X + (p_ScreenObjects(i).Length.X / p_NormalLength), 0))).PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
             i = i + 1
-            If AL_Error_Var(i, 1024, "<") = AL_IS_ERROR Then
+            If AL_Error_Var(i, 1024, ">") = AL_IS_ERROR Then
                 Exit Sub
             End If
         Loop
     End If
+    Application.ScreenUpdating = True
 End Sub
 
 ' Check if Range is in Bounds of Window
 Private Function InBounds(ScreenObject As AL_ScreenObject) As Boolean
     If IsInitialized = True Then
-            If (DepthBound >= ScreenObject.Vertex.Z Or DepthBound >= ScreenObject.Length.Z) And _
-            (UpperBound >= ScreenObject.Vertex.Y Or LowerBound <= ScreenObject.Vertex.Y) Or _
-            (LeftBound <= ScreenObject.Vertex.X Or RightBound >= ScreenObject.Vertex.X) Or _
-            (UpperBound >= ScreenObject.Length.Y Or LowerBound <= ScreenObject.Length.Y) Or _
-            (LeftBound <= ScreenObject.Length.X Or RightBound >= ScreenObject.Length.X) Then
-                InBounds = False
-            Else
+        If (DepthBound >= ScreenObject.Vertex.Z Or DepthBound >= ScreenObject.Length.Z) Then
+            If (UpperBound >= ScreenObject.Vertex.Y Or LowerBound <= ScreenObject.Vertex.Y) Then
                 InBounds = True
+                Exit Function
+            End If
+            If (LeftBound <= ScreenObject.Vertex.X Or RightBound >= ScreenObject.Vertex.X) Then
+                InBounds = True
+                Exit Function
+            End If
+            If (UpperBound >= ScreenObject.Length.Y Or LowerBound <= ScreenObject.Length.Y) Then
+                InBounds = True
+                Exit Function
+            End If
+            If (LeftBound <= ScreenObject.Length.X Or RightBound >= ScreenObject.Length.X) Then
+                InBounds = True
+                Exit Function
+            End If
         End If
     End If
 End Function
@@ -330,7 +338,7 @@ Private Function CutToBounds(ScreenObject As AL_ScreenObject) As AL_ScreenObject
     If IsInitialized = True Then
         Dim TempObj As New AL_ScreenObject
         ' Cut Range to Window boundaries
-        If InBounds(ScreenObject) = False Then
+        If InBounds(ScreenObject) = True Then
                 Dim Vertex As New AL_Vertex
                 Dim Length As New AL_Vertex
                 Dim CutVertex As New AL_Vertex
@@ -424,6 +432,7 @@ Public Sub Transform(ByRef ScreenObject As AL_ScreenObject, Optional TranslateVe
     If Not ScaleVertex Is Nothing Then
         Scaling ScreenObject, ScaleVertex
     End If
+    
 End Sub
 
 Private Sub Translate(ByRef ScreenObject As AL_ScreenObject, Vertex As AL_Vertex)
@@ -472,7 +481,7 @@ Public Sub TEST()
     Dim TranslateVertex As New AL_Vertex
     Dim ScaleVertex As New AL_Vertex
     Dim ScreenObject As New AL_ScreenObject
-    Dim Window As New AL_Window
+    Dim Window As New AL_Window_2D
     ScreenObject.Initialize 1, 1, 1, 2, 2, 2
     Texture.Initialize "Book1", "Textures", 0, 0, 1, 1
     TempCamera.Initialize 1, 1, 1, 1, 1, 1, 100
@@ -540,4 +549,5 @@ Sub DrawLine(Window As Range, x0 As Integer, y0 As Integer, x1 As Integer, y1 As
     
     ' Set pixel at (x1, y1)
     Window.Cells(y1, x1).Interior.Color = RGB(0, 0, 0)
+
 End Sub
