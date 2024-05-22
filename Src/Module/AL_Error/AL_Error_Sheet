@@ -41,7 +41,7 @@ Public Function AL_Error_Sheet(WB As Workbook, SheetExistence As Boolean, Option
         AL_Error_Show AL_Error_CategoryWorkbook, 0008, SheetName
         AL_Error_Sheet = AL_IS_ERROR
     ' Handle wrong Function input
-    ElseIf SheetName = Empty And SheetIndex = Empty
+    ElseIf SheetName = Empty And SheetIndex = Empty Then
         AL_Error_ComVar AL_Error_System, 0012, "SheetName", "SheetIndex"
         AL_Error_Sheet = AL_IS_ERROR
     ' Handle wrong Function input

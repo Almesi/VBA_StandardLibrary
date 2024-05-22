@@ -43,7 +43,7 @@ Public Function AL_Error_Component(VBProj As VBIDE.VBProject, ComponentExistence
         AL_Error_Show AL_Error_CategoryWorkbook, 0008, ComponentName
         AL_Error_Component = AL_IS_ERROR
     ' Handle wrong Function input
-    ElseIf ComponentName = Empty And ComponentIndex = Empty
+    ElseIf ComponentName = Empty And ComponentIndex = Empty Then
         AL_Error_ComVar AL_Error_System, 0012, "ComponentName", "ComponentIndex"
         AL_Error_Component = AL_IS_ERROR
     ' Handle wrong Function input

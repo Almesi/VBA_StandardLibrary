@@ -386,7 +386,7 @@ Private Function CutToBounds(ScreenObject As AL_ScreenObject) As AL_ScreenObject
                 TempObj.Vertex.Y = CutVertex.Y
                 TempObj.Length.X = CutLength.X
                 TempObj.Length.Y = CutLength.Y
-                Set TempObj.Texture.Texture = ScreenObject.Texture.Texture.Range(ScreenObject.Texture.Texture.Cells(CutDifference(0), CutDifference(1)), ScreenObject.Texture.Texture.Cells(CutDifference(2), CutDifference(3)))            Else
+                Set TempObj.Texture.Texture = ScreenObject.Texture.Texture.Range(ScreenObject.Texture.Texture.Cells(CutDifference(0), CutDifference(1)), ScreenObject.Texture.Texture.Cells(CutDifference(2), CutDifference(3)))
                 
                 TempObj.Vertex.X = p_NullCell.Texture.Texture.Column
                 TempObj.Vertex.Y = p_NullCell.Texture.Texture.Row

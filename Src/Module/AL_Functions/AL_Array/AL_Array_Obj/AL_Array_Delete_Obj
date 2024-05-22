@@ -1,6 +1,6 @@
 Sub AL_Array_Delete_Obj(ByRef Array1() As Object, DeleteIndex As Long)
 
-    Dim TempArray() As New Object
+    Dim TempArray() As Object
     Dim Array1Length As Long
     Dim j As Long
     

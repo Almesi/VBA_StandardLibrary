@@ -1,11 +1,12 @@
 ComponentType = 1
-ComponentName = AL_Error
+ComponentName = AL_Update
 Includes:
 README
 HeaderData
-AL_Error_Add
-AL_Error_Change
-AL_Error_Create
-AL_Error_Delete
-AL_Error_Get
-AL_Error_Initialize
+AL_Update_AddCode
+AL_Update_AddComponent
+AL_Update_Change
+AL_Update_Create
+AL_Update_Delete
+AL_Update_Get
+AL_Update_Initialize

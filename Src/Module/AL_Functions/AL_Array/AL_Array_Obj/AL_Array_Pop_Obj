@@ -2,7 +2,7 @@ Sub AL_Array_Pop_Obj(ByRef Array1() As Object)
 
     Dim Array1Length As Long 
     Dim NewArray1Length As Long
-    Dim TempArray1() As New Object
+    Dim TempArray1() As Object
 
     Array1Length = UBound(Array1)
     NewArray1Length = Array1Length - 1

@@ -1,52 +1,53 @@
-Sub InstantData(VBProj As VBIDE.VBProj)
+Public Sub InstantData()
 
-    Dim VBComp As VBID.VBComponent
+    Dim VBProj As VBIDE.VBProject
+    Dim VBComp As VBIDE.VBComponent
 
+    Set VBProj = ThisWorkbook.VBProject
     Set VBComp = VBProj.VBComponents("AL_Form_Std")
     ' UserForm
         ' Appearance
-            VBComp.Designer.Name                  = "AL_Form_Std"
-            VBComp.Designer.BackColor             = &H8000000F&
-            VBComp.Designer.BorderColor           = &H80000012&
-            VBComp.Designer.BorderStyle           = 0
-            VBComp.Designer.Caption               = UserForm1
-            VBComp.Designer.ForeColor             = &H80000012&
-            VBComp.Designer.SpecialEffect         = 0
-        ' Behaviour                        
-            VBComp.Designer.Cycle                 = 0
-            VBComp.Designer.Enabled               = True
-            VBComp.Designer.RightToLeft           = False
-            VBComp.Designer.ShowModal             = True
-        ' Font                             
-            VBComp.Designer.Font                  = Tahoma
-        ' Misc                             
-            VBComp.Designer.Name                  = UserForm1
-            VBComp.Designer.DrawBuffer            = 32000
-            VBComp.Designer.HelpContextID         = 0
-            VBComp.Designer.MouseIcon             = (None)
-            VBComp.Designer.MousePointer          = 0
-            VBComp.Designer.Tag                   = 
-            VBComp.Designer.WhatsThisButton       = False
-            VBComp.Designer.WhatsThisHelp         = False
-            VBComp.Designer.Zoom                  = 100
-        ' Picture                          
-            VBComp.Designer.Picture               = (None)
-            VBComp.Designer.PictureAlignment      = 2
-            VBComp.Designer.PictureSizeMode       = 0
-            VBComp.Designer.PictureTiling         = False
-        ' Position                         
-            VBComp.Designer.Height                = 180
-            VBComp.Designer.Left                  = 0
-            VBComp.Designer.StartUpPosition       = 1
-            VBComp.Designer.Top                   = 0
-            VBComp.Designer.Width                 = 240
-        ' Scrolling                        
+            VBComp.Name = "AL_Form_Std"
+            VBComp.Designer.BackColor = &H8000000F
+            VBComp.Designer.BorderColor = &H80000012
+            VBComp.Designer.BorderStyle = 0
+            VBComp.Designer.Caption = "AL_Form_Std"
+            VBComp.Designer.ForeColor = &H80000012
+            VBComp.Designer.SpecialEffect = 0
+        ' Behaviour
+            VBComp.Designer.Cycle = 0
+            VBComp.Designer.Enabled = True
+            VBComp.Properties("RightToLeft").Value = False
+            VBComp.Properties("ShowModal").Value = True
+        ' Font
+            VBComp.Designer.Font.Name = Tahoma
+        ' Misc
+            VBComp.Designer.DrawBuffer = 32000
+            VBComp.Properties("HelpContextID").Value = 0
+            VBComp.Designer.MouseIcon = Nothing
+            VBComp.Designer.MousePointer = 0
+            VBComp.Properties("Tag").Value = 0
+            VBComp.Properties("WhatsThisButton").Value = False
+            VBComp.Properties("WhatsThisHelp").Value = False
+            VBComp.Designer.Zoom = 100
+        ' Picture
+            VBComp.Designer.Picture = Nothing
+            VBComp.Designer.PictureAlignment = 2
+            VBComp.Designer.PictureSizeMode = 0
+            VBComp.Designer.PictureTiling = False
+        ' Position
+            VBComp.Properties("Height").Value = 180
+            VBComp.Properties("Left").Value = 0
+            VBComp.Properties("StartUpPosition").Value = 1
+            VBComp.Properties("Top").Value = 0
+            VBComp.Properties("Width").Value = 240
+        ' Scrolling
             VBComp.Designer.KeepScrollBarsVisible = 3
-            VBComp.Designer.ScrollBars            = 0
-            VBComp.Designer.ScrollHeight          = 0
-            VBComp.Designer.ScrollLeft            = 0
-            VBComp.Designer.ScrollTop             = 0
-            VBComp.Designer.ScrollWidth           = 0
+            VBComp.Designer.ScrollBars = 0
+            VBComp.Designer.ScrollHeight = 0
+            VBComp.Designer.ScrollLeft = 0
+            VBComp.Designer.ScrollTop = 0
+            VBComp.Designer.ScrollWidth = 0
     '
 
 End Sub

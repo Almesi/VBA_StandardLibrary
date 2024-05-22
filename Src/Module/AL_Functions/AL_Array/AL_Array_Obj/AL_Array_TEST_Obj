@@ -1,8 +1,8 @@
 Sub AL_Array_TEST_Obj()
 
-    Dim Array1() As New Object
-    Dim Test_Object() As New Object
-    Dim Test2_Object() As New Object
+    Dim Array1() As Object
+    Dim Test_Object() As Object
+    Dim Test2_Object() As Object
     Dim i As Long
 
     ReDim Array1(6)

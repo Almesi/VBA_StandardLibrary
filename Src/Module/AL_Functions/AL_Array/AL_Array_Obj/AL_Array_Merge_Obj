@@ -2,7 +2,7 @@ Function AL_Array_Merge_Obj(ByRef Array1() As Object, ByRef Array2() As Object) 
 
     Dim Array1Length As Long
     Dim Array2Length As Long
-    Dim TempArray() As New Object
+    Dim TempArray() As Object
 
     Array1Length = UBound(Array1)
     Array2Length = UBound(Array2)

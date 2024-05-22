@@ -2,4 +2,5 @@ ComponentType = 1
 ComponentName = AL_Pathfind
 Includes:
 README
+HeaderData
 AL_Pathfind_AStar

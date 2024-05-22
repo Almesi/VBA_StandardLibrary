@@ -1,4 +1,4 @@
-' These are custom classes, which have a specific, generic or similar use as other classes
-' For example the AL_Char tries to describe a Char and uses the Byte-datatype to transform the numeric value into an ASCII character
-' AL_Point tries to describes a Point in 3D space
-' AL_Window tries to describe a Window, which works as a Built-In Monitor for 3D and 2D-Worlds
+' This Class holds several usual propertynames
+' By itself it doesnt do anything
+' Used for implemention in other classes
+' One way to do inheritance

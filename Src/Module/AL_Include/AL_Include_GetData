@@ -17,7 +17,7 @@ Private Function AL_Include_GetData(Folder As Object) As Variant()
             Open File.Path For Input As #FileNumber
             ' Get Base Information
             Line Input #FileNumber, FileLine
-            FileArray(i) = CLong(Replace(FileLine, AL_Include_ComponentType, ""))
+            FileArray(i) = CLng(Replace(FileLine, AL_Include_ComponentType, ""))
             Select Case FileArray(i)
                 Case vbext_ct_ActiveXDesigner
                 Case vbext_ct_StdModule, vbext_ct_ClassModule, vbext_ct_Document, vbext_ct_MSForm

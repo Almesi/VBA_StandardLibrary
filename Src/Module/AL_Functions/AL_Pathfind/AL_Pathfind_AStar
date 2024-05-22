@@ -90,8 +90,8 @@ NodeUnavailable:
         If OpenNodesIndex < 0 Then
             Exit Function
         End If
-        AL_Array-Delete_Obj OpenNodes, CurrentNodeIndex
-        AL_Array-Push_Obj ClosedNodes, CurrentNode
+        AL_Array_Delete_Obj OpenNodes, CurrentNodeIndex
+        AL_Array_Push_Obj ClosedNodes, CurrentNode
         ClosedNodesIndex = ClosedNodesIndex + 1
         
         ' Find cheapest Node
