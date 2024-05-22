@@ -1,0 +1,4 @@
+
+
+Private Data As Variant
+Private NextNode As AL_LinkedNode

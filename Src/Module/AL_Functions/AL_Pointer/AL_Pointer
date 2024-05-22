@@ -1,0 +1,104 @@
+Private Declare PtrSafe Sub MoveMemory Lib "kernel32.dll" Alias "RtlMoveMemory" _
+(ByVal Destination As LongPtr, ByVal Source As LongPtr, ByVal Length As Long)
+
+Public Function AL_Address(Variable As Variant) As LongPtr
+
+    AL_Address = VarPtr(Variable)
+
+End Function
+
+Public Function AL_DeRef(Pointer As LongPtr, Variable As Variant) As Variant
+    Select Case VarType(Variable)
+        Case vbInteger:  AL_DeRef = AL_DeRef_Integer(Pointer)
+        Case vbLong:     AL_DeRef = AL_DeRef_Long(Pointer)
+        Case vbSingle:   AL_DeRef = AL_DeRef_Single(Pointer)
+        Case vbDouble:   AL_DeRef = AL_DeRef_Double(Pointer)
+        Case vbCurrency: AL_DeRef = AL_DeRef_Currency(Pointer)
+        Case vbDate:     AL_DeRef = AL_DeRef_Date(Pointer)
+        Case vbString:   AL_DeRef = AL_DeRef_String(Pointer)
+        Case vbObject:   AL_DeRef = AL_DeRef_Object(Pointer)
+        Case vbBoolean:  AL_DeRef = AL_DeRef_Boolean(Pointer)
+        Case vbByte:     AL_DeRef = AL_DeRef_Byte(Pointer)
+        Case vbLongLong: AL_DeRef = AL_DeRef_LongLong(Pointer)
+    End Select
+End Function
+
+' All Type Dereferences
+    Private Function AL_DeRef_Integer(Pointer As LongPtr) As Integer
+
+        Dim Temp As Integer
+        MoveMemory VarPtr(AL_DeRef_Integer), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Long(Pointer As LongPtr) As Long
+
+        Dim Temp As Long
+        MoveMemory VarPtr(AL_DeRef_Long), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Single(Pointer As LongPtr) As Single
+
+        Dim Temp As Single
+        MoveMemory VarPtr(AL_DeRef_Single), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Double(Pointer As LongPtr) As Double
+
+        Dim Temp As Double
+        MoveMemory VarPtr(AL_DeRef_Double), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Currency(Pointer As LongPtr) As Currency
+
+        Dim Temp As Currency
+        MoveMemory VarPtr(AL_DeRef_Currency), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Date(Pointer As LongPtr) As Date
+
+        Dim Temp As Date
+        MoveMemory VarPtr(AL_DeRef_Date), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_String(Pointer As LongPtr) As String
+
+        Dim Temp As String
+        MoveMemory VarPtr(AL_DeRef_String), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Object(Pointer As LongPtr) As Object
+
+        Dim Temp As Object
+        MoveMemory VarPtr(AL_DeRef_Object), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Boolean(Pointer As LongPtr) As Boolean
+
+        Dim Temp As Boolean
+        MoveMemory VarPtr(AL_DeRef_Boolean), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_Byte(Pointer As LongPtr) As Byte
+
+        Dim Temp As Byte
+        MoveMemory VarPtr(AL_DeRef_Byte), Pointer, Len(Temp)
+
+    End Function
+    Private Function AL_DeRef_LongLong(Pointer As LongPtr) As LongLong
+
+        Dim Temp As LongLong
+        MoveMemory VarPtr(AL_DeRef_LongLong), Pointer, Len(Temp)
+
+    End Function
+'
+
+Sub Test()
+
+    Dim a As Long, b As Long, c As Long
+    a = 1: b = 2: c = 0
+    c = AL_DeRef(AL_Address(a), a)
+    Debug.Print a
+    Debug.Print b
+    Debug.Print c
+
+End Sub
