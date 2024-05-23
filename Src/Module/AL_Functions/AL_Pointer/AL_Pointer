@@ -1,12 +1,6 @@
 Private Declare PtrSafe Sub MoveMemory Lib "kernel32.dll" Alias "RtlMoveMemory" _
 (ByVal Destination As LongPtr, ByVal Source As LongPtr, ByVal Length As Long)
 
-Public Function AL_Address(Variable As Variant) As LongPtr
-
-    AL_Address = VarPtr(Variable)
-
-End Function
-
 Public Function AL_DeRef(Pointer As LongPtr, Variable As Variant) As Variant
     Select Case VarType(Variable)
         Case vbInteger:  AL_DeRef = AL_DeRef_Integer(Pointer)
@@ -91,14 +85,3 @@ End Function
 
     End Function
 '
-
-Sub Test()
-
-    Dim a As Long, b As Long, c As Long
-    a = 1: b = 2: c = 0
-    c = AL_DeRef(AL_Address(a), a)
-    Debug.Print a
-    Debug.Print b
-    Debug.Print c
-
-End Sub
