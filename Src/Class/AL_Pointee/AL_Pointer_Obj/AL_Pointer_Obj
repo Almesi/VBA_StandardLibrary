@@ -1,0 +1,22 @@
+Private Declare PtrSafe Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" _
+(ByVal Destination As LongPtr, ByVal Source As LongPtr, ByVal Length As Long)
+
+Private p_ByteLength As Long
+Private p_Address As LongPtr
+
+Public Property Get ByteLength() As Long
+    ByteLength = p_ByteLength
+End Property
+
+Public Property Get Address() As LongPtr
+    Address = p_Address
+End Property
+
+Public Property Get DeRef() As Obj
+    CopyMemory VarPtr(DeRef), p_Address, p_ByteLength
+End Property
+
+Public Property Let Assign(Object As Obj)
+    p_ByteLength = Len(Object)
+    p_Address = VarPtr(Object)
+End Property

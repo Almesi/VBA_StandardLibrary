@@ -1,4 +1,56 @@
+Private Head As AL_LLNode
+Private Nth As Object
+Private NullPtr As AL_Pointer_Obj
 
+Public Property Let Push(NewValue As Variant)
 
-Private Data As Variant
-Private NextNode As AL_LinkedNode
+    Dim NewNode As AL_LLNode: Set NewNode = New AL_LLNode
+    NewNode.Value = NewValue
+    If Head Is Nothing Then
+            Set Head = NewNode
+            Exit Property
+        Else
+            Dim Last As AL_LLNode
+            Set Last = Head
+            Do Until Last.NextNode Is Nothing
+                Set Last = Last.NextNode
+            Loop
+            Set Last.NextNode = NewNode
+    End If
+
+End Property
+
+Public Sub Pop()
+
+    Dim Temp As AL_LLNode: Set Temp = Head
+    Dim CurrentPtr As LongPtr: CurrentPtr = Head ' Try to traverse linked list via pointers
+    Do Until Temp.NextNode Is Nothing
+        Set Temp = Temp.NextNode
+    Loop
+    Temp = NullPtr.DeRef
+
+End Sub
+
+Public Function GetArray() As Variant()
+    Dim TempArray() As Variant
+    Dim Temp As AL_LLNode: Set Temp = Head
+    Dim i As Long: i = 0
+    Do Until Temp.NextNode Is Nothing
+        ReDim Preserve TempArray(i)
+        TempArray(i) = Temp.Value
+        Set Temp = Temp.NextNode
+        i = i + 1
+    Loop
+    GetArray = TempArray
+
+End Function
+
+' initialize the class
+Private Sub Class_Initialize()
+    NullPtr.Assign(Nth)
+End Sub
+
+' destroy the class
+Private Sub Class_Terminate()
+    Set head = Nothing
+End Sub

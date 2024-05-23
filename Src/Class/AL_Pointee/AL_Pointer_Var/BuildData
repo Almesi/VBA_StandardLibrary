@@ -1,6 +1,6 @@
 ComponentType = 1
-ComponentName = AL_Pointer
+ComponentName = AL_Pointer_Var
 Includes:
 README
 HeaderData
-AL_Pointer
+AL_Pointer_Var
