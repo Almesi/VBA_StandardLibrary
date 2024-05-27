@@ -1,4 +1,3 @@
-"C:\Users\deallulic\Desktop\AL_StdLib-main\Src"
 ' The Functions here are meant to be used when building all files in a given Folder, nowhere else
 ' The Functions used in this File are implemented in another way with more security
 ' Name Module where this code is run to "AL_BuildModule" and replace "YOUR-FILEPATH" with your filepath
