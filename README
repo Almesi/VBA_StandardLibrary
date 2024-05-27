@@ -4,7 +4,7 @@
 
 
 ' HOW TO USE IT
-    ' To Build this Library into your Project copy the code from the file "AL_Module.bas" or import it into your Project
+    ' To Build this Library into your Project copy the code from the file "AL_BuildModule.bas" or import it into your Project
     ' Include "Microsoft Visual Basic for Applications Extensibility 5.3" from the references to your project
     ' Scroll up to the Sub "AL_BuildApplication()" and replace the "YOUR_FILEPATH" with the filepath, where the folder "AL_StdLib" is stored
     ' You do not need to put in a "\" at the end: "XXX\AL_StdLib" is enough
