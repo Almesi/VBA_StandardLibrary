@@ -1,6 +1,0 @@
-Option Explicit
-
-Private Const AL_Update_Component As String = "AL_Update_Log"
-
-
-

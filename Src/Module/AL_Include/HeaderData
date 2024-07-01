@@ -1,6 +1,0 @@
-Option Explicit
-
-Private Const AL_Include_BuildData As String = "BuildData"
-Private Const AL_Include_ComponentType As String = "ComponentType = "
-Private Const AL_Include_ComponentName As String = "ComponentName = "
-Private Const AL_Include_Includes As String = "Includes:"
