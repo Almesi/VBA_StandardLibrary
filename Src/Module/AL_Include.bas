@@ -1,3 +1,5 @@
+Attribute VB_Name = "AL_Include"
+
 ' Adds Code to a given Component
 Public Function AL_Include_AddCode(VBCodeModule As VBIDE.CodeModule, FilePath As String) As Boolean
 

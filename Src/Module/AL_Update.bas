@@ -1,3 +1,6 @@
+Attribute VB_Name = "AL_Update"
+
+
 Public AL_UpdateInitialization As Boolean
 Public AL_Update_Sheet As Worksheet
 Public AL_Update_Range As Range

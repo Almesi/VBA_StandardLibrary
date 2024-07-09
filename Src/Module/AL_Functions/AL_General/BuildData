@@ -1,6 +1,0 @@
-ComponentType = 1
-ComponentName = AL_General
-Includes:
-README
-AL_General_FlipRange
-AL_General_TransPoseRange

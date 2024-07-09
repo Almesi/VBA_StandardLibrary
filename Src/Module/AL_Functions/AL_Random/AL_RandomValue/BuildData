@@ -1,5 +1,0 @@
-ComponentType = 1
-ComponentName = AL_Random
-Includes:
-README
-AL_RandomValue_Get

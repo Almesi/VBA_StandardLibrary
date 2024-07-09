@@ -1,3 +1,5 @@
+Attribute VB_Name = "AL_Array"
+
 ' Delete a certain Element in the Array and switch all higher numbers one down
 Public Sub AL_Array_Delete(ByRef Arr() As Variant, DeleteIndex As Long)
 

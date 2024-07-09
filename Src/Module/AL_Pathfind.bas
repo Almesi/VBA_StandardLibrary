@@ -1,3 +1,5 @@
+Attribute VB_Name = "AL_Pathfind"
+
 Function AL_Pathfind_AStar(StartNode As AL_Node, GoalNode As AL_Node, ByRef ImpassableNodes() As AL_Node, MaxZ As Integer, MinZ As Integer, MaxY As Integer, MinY As Integer, MaxX As Integer, MinX As Integer) As AL_Node()
 
     Dim OpenNodes() As New AL_Node

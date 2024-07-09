@@ -1,9 +1,0 @@
-' Swap any 2 Variables who could equal Variants
-Sub AL_Swap_Var(ByRef Variable1 As Variant, ByRef Variable2 As Variant)
-
-    Dim Temp As Variant
-    Temp = Variable1
-    Variable1 = Variable2
-    Variable2 = Temp
-
-End Sub

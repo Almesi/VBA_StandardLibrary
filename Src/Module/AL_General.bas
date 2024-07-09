@@ -1,3 +1,15 @@
+Attribute VB_Name = "AL_General"
+
+' Swap any 2 Variables
+Sub AL_Swap(ByRef Variable1 As Variant, ByRef Variable2 As Variant)
+
+    Dim Temp As Variant
+    Temp = Variable1
+    Variable1 = Variable2
+    Variable2 = Temp
+
+End Sub
+
 Sub AL_General_FlipRange(InputRange As Range, Optional FlipDirection As Boolean = False)
 
     Dim FlippedRange As Range
@@ -22,4 +34,19 @@ Sub AL_General_FlipRange(InputRange As Range, Optional FlipDirection As Boolean 
             Next
     End If
     
+End Sub
+
+Sub AL_General_TransposeRange(InputRange As Range)
+    
+    Dim TransposedRange As Range
+    Dim i As Long
+    Dim j As Long
+
+    Set TransposedRange = Range(ActiveCell, ActiveCell.Offset(InputRange.Columns.Count - InputRange.Column, InputRange.Rows.Count - InputRange.Row))
+    For i = 1 To InputRange.Rows.Count
+        For j = 1 To InputRange.Columns.Count
+            TransposedRange.Cells(j, i).Formula = InputRange.Cells(i, j).Formula
+        Next j
+    Next i
+
 End Sub
