@@ -1,56 +1,67 @@
 ' Variable Declaration
     Private p_Row As Integer
     Private p_Column As Integer
-    Private p_Array() As Variant
+    Private p_Matrix() As Variant
     Private p_IsInitialized As Boolean
 '
 
 ' Let Get Set
     Public Property Get Row() As Integer
-        m_Row = p_Row
+        Row = p_Row
     End Property
 
     Public Property Get Column() As Integer
-        m_Column = p_Column
+        Column = p_Column
     End Property
 
     Public Property Get Matrix() As AL_Matrix
-        m_Matrix = p_Matrix
+        Matrix = p_Matrix
     End Property
 
-    Public Property Get MatrixPoint(Row As Integer, Column As Integer) As Integer
-        MatrixPoint = p_Array(Row, Column)
+    Public Property Get Point(Row As Integer, Column As Integer) As As Variant
+        Point = p_Matrix(Row, Column)
     End Property
 
-    Public Property Let MatrixPoint(Row As Integer, Column As Integer, Value As Variant)
-        p_Array(Row, Column) = Value
+    Public Property Let Point(Row As Integer, Column As Integer, Value As Variant)
+        p_Matrix(Row, Column) = Value
     End Property
 '
 
-Public Sub Initialize(Row As Integer, Column As Integer)
+Public Sub Create(Row As Integer, Column As Integer)
 
     If p_IsInitialized = False Then
         p_Row = Row
         p_Column = Column
-        ReDim p_Array(Row, Column) As Variant
+        ReDim p_Matrix(Row, Column) As Variant
         p_IsInitialized = True
     End If
 
 End Sub
 
-Public Function Multiply(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix) As AL_Matrix
+Public Sub CreateFromArray(Arr() As Variant)
 
-    Dim Matrix3 As New AL_Matrix
+    If p_IsInitialized = False Then
+        p_Row = UBound(Arr, 1)
+        p_Column = UBound(Arr, 2)
+        p_Matrix = Arr
+        p_IsInitialized = True
+    End If
+
+End Sub
+
+Public Function Multiply(Matr As AL_Matrix, Matr2 As AL_Matrix) As AL_Matrix
+
+    Dim Matr3 As New AL_Matrix
     Dim i As Integer, j As Integer, k As Integer
-    Matrix3.Initialize Matrix1.Row, Matrix2.Column, DataType
-    For i = 0 To Matrix3.Row
-        For j = 0 To Matrix3.Column
-            For k = 0 To Matrix2.Row
-                Matrix3.MatrixPoint(i, j) = Matrix3.MatrixPoint(i, j) + (Matrix1.MatrixPoint(i, k) * Matrix2.MatrixPoint(k, j))
+    Matr3.Create Matr.Row, Matr2.Column
+    For i = 0 To Matr3.Row
+        For j = 0 To Matr3.Column
+            For k = 0 To Matr2.Row
+                Matr3.MatrixPoint(i, j) = Matr3.MatrixPoint(i, j) + (Matr.MatrixPoint(i, k) * Matr2.MatrixPoint(k, j))
             Next
         Next
     Next
-    Set Multiply = Matrix3
+    Set Multiply = Matr3
 
 End Function
 
@@ -59,57 +70,49 @@ Public Sub Inverse()
     Dim i As Integer, j As Integer
     For i = 0 To p_Row
         For j = 0 To p_Column
-            p_Array(i, j).MatrixPoint = 1 / p_Array(i, j).MatrixPoint
+            p_Matrix(i, j).MatrixPoint = 1 / p_Matrix(i, j).MatrixPoint
         Next
     Next
     
 End Function
 
-Public Function Divide(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix) As AL_Matrix
+Public Function Divide(Matr As AL_Matrix, Matr2 As AL_Matrix) As AL_Matrix
 
-    Dim Matrix3 As New AL_Matrix
-    Dim i As Integer, j As Integer, k As Integer
-    Matrix3.Initialize Matrix1.Row, Matrix2.Column, DataType
-    Matrix2.Inverse
-    For i = 0 To Matrix3.Row
-        For j = 0 To Matrix3.Column
-            For k = 0 To Matrix2.Row
-                Matrix3.MatrixPoint(i, j) = Matrix3.MatrixPoint(i, j) + (Matrix1.MatrixPoint(i, k) * Matrix2.MatrixPoint(k, j))
-            Next
-        Next
-    Next
-    Set Multiply = Matrix3
+    Dim Temp As New AL_Matrix
+    Set Temp = Matr2
+    Temp.Inverse
+    Set Divide = Matr.Multiply(Matr, Temp)
 
 End Function
 
-Public Function Add(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix) As AL_Matrix
+Public Function Add(Matr As AL_Matrix, Matr2 As AL_Matrix) As AL_Matrix
 
-    If Matrix1.Row = Matrix2.Row And Matrix1.Column = Matrix2.Column Then
-        Dim Matrix3 As New AL_Matrix
-        Dim i As Integer, j As Integer
-        Matrix3.Initialize Matrix1.Row, Matrix1.Column, DataType
-        For i = 0 To Matrix1.Row
-            For j = 0 To Matrix1.Column
-                Matrix3.MatrixPoint(i, j) = Matrix1.MatrixPoint(i, j) + Matrix2.MatrixPoint(i, j)
+    Dim i As Integer, j As Integer
+    Dim Matr3 As New AL_Matrix
+    If Matr.Row = Matr2.Row And Matr.Column = Matr2.Column Then
+        Matr3.Create Matr.Row, Matr.Column
+        For i = 0 To Matr.Row
+            For j = 0 To Matr.Column
+                Matr3.MatrixPoint(i, j) = Matr.MatrixPoint(i, j) + Matr2.MatrixPoint(i, j)
             Next
         Next
-        Set Multiply = Matrix3
+        Set Add = Matr3
     End If
 
 End Function
 
-Public Function Subtract(Matrix1 As AL_Matrix, Matrix2 As AL_Matrix) As AL_Matrix
+Public Function Subtract(Matr As AL_Matrix, Matr2 As AL_Matrix) As AL_Matrix
 
-    If Matrix1.Row = Matrix2.Row And Matrix1.Column = Matrix2.Column Then
-        Dim Matrix3 As New AL_Matrix
-        Dim i As Integer, j As Integer
-        Matrix3.Initialize Matrix1.Row, Matrix1.Column, DataType
-        For i = 0 To Matrix1.Row
-            For j = 0 To Matrix1.Column
-                Matrix3.MatrixPoint(i, j) = Matrix1.MatrixPoint(i, j) - Matrix2.MatrixPoint(i, j)
+    Dim i As Integer, j As Integer
+    Dim Matr3 As New AL_Matrix
+    If Matr.Row = Matr2.Row And Matr.Column = Matr2.Column Then
+        Matr3.Create Matr.Row, Matr.Column
+        For i = 0 To Matr.Row
+            For j = 0 To Matr.Column
+                Matr3.MatrixPoint(i, j) = Matr.MatrixPoint(i, j) - Matr2.MatrixPoint(i, j)
             Next
         Next
-        Set Multiply = Matrix3
+        Set Subtract = Matr3
     End If
 
 End Function

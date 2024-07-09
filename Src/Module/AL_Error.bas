@@ -1,127 +1,139 @@
-Private AL_ErrorCatalog(7, 1, 99) As Variant
-Public Const IS_ERROR As Boolean = True 
+Attribute VB_Name = "AL_Error"
 
-' Used to Compares to Objects by defined operand
-Private Function AL_Error_ComObj(MainValue As Object, CompareValue As Object, CompareType As String) As Boolean
+' Array of all Errormessages
+    ' First Dimension is Category
+    ' Second Dimension is Severity/Message
+    ' Third Dimension is Index
+Private AL_Error_Catalog(7, 1, 99) As Variant
 
-    Select Case CompareType
-        Case "Is", "IS", "iS", "is", "="
-            If MainValue Is CompareValue Then
-                AL_Error_ComObj AL_Error_System, 0006, MainValue, CompareValue
-                AL_Error_ComObj = AL_IS_ERROR
-            End If
-        Case "not", "noT", "nOt", "nOT", "Not", "NoT", "NOt", "NOT", "<>"
-            If Not MainValue Is CompareValue Then
-                AL_Error_ComObj AL_Error_System, 0011, MainValue, CompareValue
-                AL_Error_ComObj = AL_IS_ERROR
-            End If
-        Case Empty
-            AL_Error_ComObj AL_Error_System, 0002, "CompareType"
-            AL_Error_ComObj = AL_IS_ERROR
-        Case Else
-            AL_Error_ComObj AL_Error_System, 0001, "CompareType"
-            AL_Error_ComObj = AL_IS_ERROR
-    End Select
+' Used to determine, if it is an error
+Public Const IS_ERROR As Boolean = True
 
-End Function
+' Used once to initialize all Errormessages
+Private AL_Error_Initialized As Boolean
 
-Public Function AL_Error_Component(VBProj As VBIDE.VBProject, ComponentExistence As Boolean, Optional ComponentName As String = Empty, Optional ComponentIndex As Long = Empty) As Boolean
-    
-    Dim VBComp As VBIDE.VBComponent
+' Stops process if this value is lower than the error severity
+Private Const AL_SEVERITY_BREAK As Long = 1000
 
-    ' Handle VBProj
-    If VBProj Is Nothing Then
-        AL_Error_ComVar AL_Error_System, 0003, "VBProj"
-    End If
-    ' Handle Component Index
-    If ComponentName = Empty And ComponentIndex <> Empty Then
-            If ComponentExistence = AL_EXIST Then
-                If ComponentIndex =< VBProj.VBComponents.Count Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0007, ComponentIndex
-                    AL_Error_Component = AL_IS_ERROR
-                End If
-            Else
-                If ComponentIndex > VBProj.VBComponents.Count Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0008, ComponentIndex
-                    AL_Error_Component = AL_IS_ERROR
-                End If
-            End If
-        Next VBComp
-    ' Handle Component Name
-    ElseIf ComponentName <> Empty And ComponentIndex = Empty Then
-        For Each VBComp In VbProj.VBComponents
-            If ComponentExistence = AL_EXIST Then
-                If VBComp.Name = ComponentName Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0007, ComponentName
-                    AL_Error_Component = AL_IS_ERROR
-                    Exit Function
-                End If
-            Else
-                If VBComp.Name = ComponentName Then
-                    AL_Error_Component = AL_NO_ERROR
-                    Exit Function
-                End If
-            End If
-        Next VBComp
-        If ComponentExistence = AL_EXIST Then
-            AL_Error_Component = AL_IS_ERROR
-            Exit Function
-        End If
-        AL_Error_Show AL_Error_CategoryWorkbook, 0008, ComponentName
-        AL_Error_Component = AL_IS_ERROR
-    ' Handle wrong Function input
-    ElseIf ComponentName = Empty And ComponentIndex = Empty Then
-        AL_Error_ComVar AL_Error_System, 0012, "ComponentName", "ComponentIndex"
-        AL_Error_Component = AL_IS_ERROR
-    ' Handle wrong Function input
+' Runs a Question and handles Error accordingly. Should be below AL_SEVERITY_BREAK
+Private Const AL_ERROR_QUESTION As Long = 1
+
+' Standard Value if no ErrorValue is passed
+Private Const AL_EMPTY_ERROR As Variant = Empty
+
+
+
+Public Function AL_Error_Handle(ErrorCategory As Long, ErrorIndex As Long, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR) As Boolean
+
+    Dim ErrorMessage As String
+    Dim ErrorArray() As Variant
+
+    ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
+    If ErrorArray(0) = AL_ERROR_QUESTION Then
+        AL_Error_Handle = AL_Error_Ask(ErrorCategory, ErrorIndex, ErrorValue1, ErrorValue2, ErrorValue3, ErrorValue4)
     Else
-        AL_Error_ComVar AL_Error_System, 0013, "ComponentName", "ComponentIndex"
-        AL_Error_Component = AL_IS_ERROR
+        AL_Error_Show  ErrorCategory, ErrorIndex, ErrorValue1, ErrorValue2, ErrorValue3, ErrorValue4
+        AL_Error_Handle = AL_IS_ERROR
+    End If
+    AL_Error_Print ErrorCategory, ErrorIndex, ErrorValue1, ErrorValue2, ErrorValue3, ErrorValue4 
+    If ErrorArray(AL_Error_Severity) >= AL_SEVERITY_BREAK Then
+        End
     End If
 
 End Function
 
-' Used to Compares to Variant Values by defined operand
-Private Function AL_Error_ComVar(MainValue As Variant, CompareValue As Variant, CompareType As String) As Boolean
+Public Function AL_Error_Number(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty) As Boolean
 
-    Select Case CompareType
-        Case "="
-            If MainValue = CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0006, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case ">"
-            If MainValue > CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0007, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case "<"
-            If MainValue < CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0008, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case ">="
-            If MainValue >= CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0009, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case "=<"
-            If MainValue =< CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0010, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case "<>"
-            If MainValue <> CompareValue Then
-                AL_Error_ComVar AL_Error_System, 0011, MainValue, CompareValue
-                AL_Error_ComVar = AL_IS_ERROR
-            End If
-        Case Empty
-            AL_Error_ComVar AL_Error_System, 0002, "CompareType"
-            AL_Error_ComVar = AL_IS_ERROR
-        Case Else
-            AL_Error_ComVar AL_Error_System, 0001, "CompareType"
-            AL_Error_ComVar = AL_IS_ERROR
-    End Select
+    If Operator <> Empty Then
+        Select Case UCase(Operator)
+            Case "=", "IS"
+                If FirstValue =  SecondValue Then AL_Error_Number = AL_Error_Handle(0, 6, FirstValue, SecondValue):  Exit Function
+            Case "<>", "NOT"
+                If FirstValue <> SecondValue Then AL_Error_Number = AL_Error_Handle(0, 15, FirstValue, SecondValue): Exit Function
+            Case "<"
+                If FirstValue <  SecondValue Then AL_Error_Number = AL_Error_Handle(0, 9, FirstValue, SecondValue):  Exit Function
+            Case ">"
+                If FirstValue >  SecondValue Then AL_Error_Number = AL_Error_Handle(0, 10, FirstValue, SecondValue): Exit Function
+            Case "=<", "<="
+                If FirstValue =< SecondValue Then AL_Error_Number = AL_Error_Handle(0, 7, FirstValue, SecondValue):  Exit Function
+            Case ">=", "=>"
+                If FirstValue >= SecondValue Then AL_Error_Number = AL_Error_Handle(0, 8, FirstValue, SecondValue):  Exit Function
+            Case Else
+        End Select
+    End If
+    If MinValue <> Empty Then
+        If FirstValue < MinValue             Then AL_Error_Number = AL_Error_Handle(0, 9, FirstValue, MinValue):     Exit Function
+    End If
+    If MaxValue <> Empty Then
+        If FirstValue > MaxValue             Then AL_Error_Number = AL_Error_Handle(0, 10, FirstValue, MaxValue):    Exit Function
+    End If
+    If FirstValue = Empty                    Then AL_Error_Number = AL_Error_Handle(0, 2, FirstValue):               Exit Function
+
+End Function
+
+    ' Print Error to Immediate
+Private Sub AL_Error_Print(ErrorCategory As Long, ErrorIndex As Long, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR)
+
+    Dim ErrorMessage As String
+    Dim ErrorArray() As Variant
+
+    AL_Error_Initialize
+    ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
+    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " & Chr(13) & _
+                   "( " & "Severity: " & ErrorArray(0)                       & " ) | " & Chr(13) & _
+                   "( " & "Index: "    & ErrorArray(1)                       & " ) | " & Chr(13) & _
+                   "( " & "Message: "  & ErrorArray(2)                       & " ) | " & Chr(13)
+    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value1: " & ErrorValue1 & " ) | " & Chr(13)
+    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value2: " & ErrorValue2 & " ) | " & Chr(13)
+    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value3: " & ErrorValue3 & " ) | " & Chr(13)
+    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value4: " & ErrorValue4 & " ) | " & Chr(13)
+    ErrorMessage = ErrorMessage & "-----------------------------------------------------------------------------------------"
+    Debug.Print ErrorMessage
+
+End Sub
+
+
+' Print Error as MessageBox
+Private Sub AL_Error_Show(ErrorCategory As Long, ErrorIndex As Long, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR)
+
+    Dim ErrorMessage As String
+    Dim ErrorArray() As Variant
+    ' For the msgbox to run, has no other use
+    Dim Temp As Variant
+
+    AL_Error_Initialize
+    ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
+    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " & Chr(13) & _
+                   "( " & "Severity: " & ErrorArray(0)                       & " ) | " & Chr(13) & _
+                   "( " & "Index: "    & ErrorArray(1)                       & " ) | " & Chr(13) & _
+                   "( " & "Message: "  & ErrorArray(2)                       & " ) | " & Chr(13)
+    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value1: " & ErrorValue1 & " ) | " & Chr(13)
+    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value2: " & ErrorValue2 & " ) | " & Chr(13)
+    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value3: " & ErrorValue3 & " ) | " & Chr(13)
+    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value4: " & ErrorValue4 & " ) | " & Chr(13)
+    ErrorMessage = ErrorMessage & "-----------------------------------------------------------------------------------------"
+    Temp = MsgBox(ErrorMessage, vbExclamation, "ERROR")
+
+End Sub
+
+
+Private Function AL_Error_Ask(ErrorCategory As Long, ErrorIndex As Long, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR) As Boolean
+
+    Dim ErrorMessage As String
+    Dim ErrorArray() As Variant
+
+    AL_Error_Initialize
+    ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
+    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " & Chr(13) & _
+                   "( " & "Severity: " & ErrorArray(0)                       & " ) | " & Chr(13) & _
+                   "( " & "Index: "    & ErrorArray(1)                       & " ) | " & Chr(13) & _
+                   "( " & "Message: "  & ErrorArray(2)                       & " ) | " & Chr(13)
+    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value1: " & ErrorValue1 & " ) | " & Chr(13)
+    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value2: " & ErrorValue2 & " ) | " & Chr(13)
+    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value3: " & ErrorValue3 & " ) | " & Chr(13)
+    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & "( " & "Value4: " & ErrorValue4 & " ) | " & Chr(13)
+    ErrorMessage = ErrorMessage & "-----------------------------------------------------------------------------------------"
+    AL_Error_Ask = MsgBox(ErrorMessage, vbYesNo, "Question")
 
 End Function
 
@@ -129,16 +141,16 @@ Private Function AL_Error_Get(ErrorCategory As Long, ErrorIndex As Long) As Vari
     
     Dim Temp(2) As Variant
     Select Case ErrorCategory
-        Case Error_System:    Temp(Error_Severity) = AL_Error_Category_System(ErrorIndex, Error_Severity):    Temp(Error_Index) = AL_Error_Category_System(ErrorIndex, Error_Index):    Temp(Error_Message) = AL_Error_Category_System(ErrorIndex, Error_Message)
-        Case Error_Compiler:  Temp(Error_Severity) = AL_Error_Category_Compiler(ErrorIndex, Error_Severity):  Temp(Error_Index) = AL_Error_Category_Compiler(ErrorIndex, Error_Index):  Temp(Error_Message) = AL_Error_Category_Compiler(ErrorIndex, Error_Message)
-        Case Error_Linker:    Temp(Error_Severity) = AL_Error_Category_Linker(ErrorIndex, Error_Severity):    Temp(Error_Index) = AL_Error_Category_Linker(ErrorIndex, Error_Index):    Temp(Error_Message) = AL_Error_Category_Linker(ErrorIndex, Error_Message)
-        Case Error_Module:    Temp(Error_Severity) = AL_Error_Category_Module(ErrorIndex, Error_Severity):    Temp(Error_Index) = AL_Error_Category_Module(ErrorIndex, Error_Index):    Temp(Error_Message) = AL_Error_Category_Module(ErrorIndex, Error_Message)
-        Case Error_Class:     Temp(Error_Severity) = AL_Error_Category_Class(ErrorIndex, Error_Severity):     Temp(Error_Index) = AL_Error_Category_Class(ErrorIndex, Error_Index):     Temp(Error_Message) = AL_Error_Category_Class(ErrorIndex, Error_Message)
-        Case Error_Form:      Temp(Error_Severity) = AL_Error_Category_Form(ErrorIndex, Error_Severity):      Temp(Error_Index) = AL_Error_Category_Form(ErrorIndex, Error_Index):      Temp(Error_Message) = AL_Error_Category_Form(ErrorIndex, Error_Message)
-        Case Error_Workbook:  Temp(Error_Severity) = AL_Error_Category_Workbook(ErrorIndex, Error_Severity):  Temp(Error_Index) = AL_Error_Category_Workbook(ErrorIndex, Error_Index):  Temp(Error_Message) = AL_Error_Category_Workbook(ErrorIndex, Error_Message)
-        Case Error_WorkSheet: Temp(Error_Severity) = AL_Error_Category_WorkSheet(ErrorIndex, Error_Severity): Temp(Error_Index) = AL_Error_Category_WorkSheet(ErrorIndex, Error_Index): Temp(Error_Message) = AL_Error_Category_WorkSheet(ErrorIndex, Error_Message)
+        Case Error_System:    Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Compiler:  Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Linker:    Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Module:    Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Class:     Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Form:      Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_Workbook:  Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
+        Case Error_WorkSheet: Temp(0) = AL_Error_Catalog(ErrorCategory, 0, ErrorIndex): Temp(1) = ErrorIndex: Temp(2) = AL_Error_Catalog(ErrorCategory, 1, ErrorIndex)
         Case Else
-                              Temp(Error_Severity) = 0: Temp(Error_Index) = 0: Temp(Error_Message) = "ErrorCategory not defined"
+                              Temp(0) = 0: Temp(1) = 0: Temp(2) = "ErrorCategory not defined"
     End Select
     AL_Error_Get = Temp
 
@@ -147,189 +159,17 @@ End Function
 Private Function AL_Error_GetCategory(ErrorCategory As Long) As String
 
     Select Case ErrorCategory
-        Case AL_Error_System:    AL_Error_GetCategory = "System"
-        Case AL_Error_Compiler:  AL_Error_GetCategory = "Workbook"
-        Case AL_Error_Linker:    AL_Error_GetCategory = "Worksheet"
-        Case AL_Error_Module:    AL_Error_GetCategory = "Linker"
-        Case AL_Error_Class:     AL_Error_GetCategory = "Compiler"
-        Case AL_Error_Form:      AL_Error_GetCategory = "Module"
-        Case AL_Error_Workbook:  AL_Error_GetCategory = "Class"
-        Case AL_Error_WorkSheet: AL_Error_GetCategory = "Userform"
+        Case 0: AL_Error_GetCategory = "System"
+        Case 1: AL_Error_GetCategory = "Workbook"
+        Case 2: AL_Error_GetCategory = "Worksheet"
+        Case 3: AL_Error_GetCategory = "Linker"
+        Case 4: AL_Error_GetCategory = "Compiler"
+        Case 5: AL_Error_GetCategory = "Module"
+        Case 6: AL_Error_GetCategory = "Class"
+        Case 7: AL_Error_GetCategory = "Userform"
         Case Else
-                              AL_Error_GetCategory = "UNKNOWN"
+                AL_Error_GetCategory = "UNKNOWN"
     End Select
-
-End Function
-
-' Check if Variant has a defined Error
-' Either Comparing to CompareObject, or Min-Max
-Function AL_Error_Obj(MainObject As Object, Optional CompareObject As Object = Nothing, Optional CompareType As Object = Nothing) As Boolean
-
-    ' Handle MainObject
-    If MainObject = Nothing Then
-        AL_Error_ComVar AL_Error_System, 0003, "MainObject"
-        AL_Error_Obj = AL_IS_ERROR
-    End If
-    ' Handle CompareObject
-    If CompareObject <> Nothing And (MinValue = Nothing And MaxValue = Nothing) Then
-        If AL_Error_ComVar(MainObject, CompareObject, CompareType) = AL_IS_ERROR Then
-            AL_Error_Obj = AL_IS_ERROR
-        End If
-    End If
-    ' Handle MinValue
-    If MinValue <> Nothing And CompareObject = Nothing Then
-        If AL_Error_ComVar(MainObject, MinValue, CompareType) = AL_IS_ERROR Then
-            AL_Error_Obj = AL_IS_ERROR
-        End If
-    End If
-    ' Handle MaxValue
-    If MaxValue <> Nothing And CompareObject = Nothing Then
-        If AL_Error_ComVar(MainObject, MaxValue, CompareType) = AL_IS_ERROR Then
-            AL_Error_Obj = AL_IS_ERROR
-        End If
-    End If
-    ' Handle in bounds
-    If MinValue <> Nothing And MaxValue <> Nothing And CompareObject = Nothing Then
-        If AL_Error_ComVar(MainObject, MinValue, ">") = AL_IS_ERROR Or  AL_Error_ComVar(MainObject, MinValue, "<") = AL_IS_ERROR Then
-            AL_Error_Obj = AL_IS_ERROR
-        End If
-    End If
-
-End Function
-
-' Print Error to Immediate
-Public Sub AL_Error_Print(ErrorCategory As Long, ErrorIndex As Integer, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR)
-
-    Dim ErrorMessage As String
-    Dim ErrorArray() As Variant
-
-    Set ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
-    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " & _
-                   "( " & "Severity: " & ErrorArray(AL_Error_Severity)       & " ) | " & _
-                   "( " & "Index: "    & ErrorArray(AL_Error_Index)          & " ) | " & _
-                   "( " & "Message: "  & ErrorArray(AL_Error_Message)        & " )"
-    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value1: " & ErrorValue1 & " )": End If
-    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value2: " & ErrorValue2 & " )": End If
-    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value3: " & ErrorValue3 & " )": End If
-    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value4: " & ErrorValue4 & " )": End If
-    Debug.Print ErrorMessage
-    If ErrorArray(AL_Error_Severity) >= AL_SEVERITY_BREAK Then
-        End
-    End If
-
-End Sub
-
-Public Function AL_Error_Sheet(WB As Workbook, SheetExistence As Boolean, Optional SheetName As String = Empty, Optional SheetIndex As Long = Empty) As Boolean
-
-    ' Handle WB
-    If WB Is Nothing Then
-        AL_Error_ComVar AL_Error_System, 0003, "WB"
-    End If
-    ' Handle Sheet Index
-    If SheetName = Empty And SheetIndex <> Empty Then
-            If SheetExistence = AL_EXIST Then
-                If SheetIndex =< WB.VBSheets.Count Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0000, SheetIndex
-                    AL_Error_Sheet = AL_IS_ERROR
-                End If
-            Else
-                If SheetIndex > WB.VBSheets.Count Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0001, SheetIndex
-                    AL_Error_Sheet = AL_IS_ERROR
-                End If
-            End If
-        Next VBComp
-    ' Handle Sheet Name
-    ElseIf SheetName <> Empty And SheetIndex = Empty Then
-        For Each VBComp In WB.VBSheets
-            If SheetExistence = AL_EXIST Then
-                If VBComp.Name = SheetName Then
-                    AL_Error_Show AL_Error_CategoryWorkbook, 0007, SheetName
-                    AL_Error_Sheet = AL_IS_ERROR
-                    Exit Function
-                End If
-            Else
-                If VBComp.Name = SheetName Then
-                    AL_Error_Sheet = AL_NO_ERROR
-                    Exit Function
-                End If
-            End If
-        Next VBComp
-        If SheetExistence = AL_EXIST Then
-            AL_Error_Sheet = True
-            Exit Function
-        End If
-        AL_Error_Show AL_Error_CategoryWorkbook, 0008, SheetName
-        AL_Error_Sheet = AL_IS_ERROR
-    ' Handle wrong Function input
-    ElseIf SheetName = Empty And SheetIndex = Empty Then
-        AL_Error_ComVar AL_Error_System, 0012, "SheetName", "SheetIndex"
-        AL_Error_Sheet = AL_IS_ERROR
-    ' Handle wrong Function input
-    Else
-        AL_Error_ComVar AL_Error_System, 0013, "SheetName", "SheetIndex"
-        AL_Error_Sheet = AL_IS_ERROR
-    End If
-
-End Function
-
-' Print Error as MessageBox
-Public Sub AL_Error_Show(ErrorCategory As Long, ErrorIndex As Integer, Optional ErrorValue1 As Variant = AL_EMPTY_ERROR, Optional ErrorValue2 As Variant = AL_EMPTY_ERROR, Optional ErrorValue3 As Variant = AL_EMPTY_ERROR, Optional ErrorValue4 As Variant = AL_EMPTY_ERROR)
-
-    Dim ErrorMessage As String
-    Dim ErrorArray() As Variant
-
-    AL_Error_Initialize
-    Set ErrorArray = AL_Error_Get(ErrorCategory, ErrorIndex)
-    ErrorMessage = "( " & "Category: " & AL_Error_GetCategory(ErrorCategory) & " ) | " & _
-                   "( " & "Severity: " & ErrorArray(AL_Error_Severity)       & " ) | " & _
-                   "( " & "Index: "    & ErrorArray(AL_Error_Index)          & " ) | " & _
-                   "( " & "Message: "  & ErrorArray(AL_Error_Message)        & " )"
-    If ErrorValue1 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value1: " & ErrorValue1 & " )": End If
-    If ErrorValue2 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value2: " & ErrorValue2 & " )": End If
-    If ErrorValue3 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value3: " & ErrorValue3 & " )": End If
-    If ErrorValue4 <> AL_EMPTY_ERROR Then: ErrorMessage = ErrorMessage & " | ( " & "Value4: " & ErrorValue4 & " )": End If
-    MsgBox(ErrorMessage, vbExclamation, "ERROR")
-    AL_Error_Print ErrorCategory, ErrorIndex, ErrorValue1, ErrorValue2, ErrorValue3, ErrorValue4
-    If ErrorArray(AL_Error_Severity) >= AL_SEVERITY_BREAK Then
-        End
-    End If
-
-End Sub
-
-' Check if Variant has a defined Error
-' Either Comparing to CompareValue, or Min-Max
-Function AL_Error_Var(MainValue As Variant, Optional CompareValue As Variant = Empty, Optional CompareType As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty) As Boolean
-
-    ' Handle MainValue
-    If MainValue = Empty Then
-        AL_Error_ComVar AL_Error_System, 0002, "MainValue"
-        AL_Error_Var = AL_IS_ERROR
-    End If
-    ' Handle CompareValue
-    If CompareValue <> Empty And (MinValue = Empty And MaxValue = Empty) Then
-        If AL_Error_ComVar(MainValue, CompareValue, CompareType) = AL_IS_ERROR Then
-            AL_Error_Var = AL_IS_ERROR
-        End If
-    End If
-    ' Handle MinValue
-    If MinValue <> Empty And CompareValue = Empty Then
-        If AL_Error_ComVar(MainValue, MinValue, CompareType) = AL_IS_ERROR Then
-            AL_Error_Var = AL_IS_ERROR
-        End If
-    End If
-    ' Handle MaxValue
-    If MaxValue <> Empty And CompareValue = Empty Then
-        If AL_Error_ComVar(MainValue, MaxValue, CompareType) = AL_IS_ERROR Then
-            AL_Error_Var = AL_IS_ERROR
-        End If
-    End If
-    ' Handle in bounds
-    If MinValue <> Empty And MaxValue <> Empty And CompareValue = Empty Then
-        If AL_Error_ComVar(MainValue, MinValue, ">") = AL_IS_ERROR Or  AL_Error_ComVar(MainValue, MinValue, "<") = AL_IS_ERROR Then
-            AL_Error_Var = AL_IS_ERROR
-        End If
-    End If
 
 End Function
 
@@ -347,13 +187,13 @@ Private Sub AL_Error_Initialize()
         AL_Error_Catalog(0000, 0000, 0006) = 0000: AL_Error_Catalog(0000, 0001, 0006) = "Value1 doesnt equal Value2"
         AL_Error_Catalog(0000, 0000, 0007) = 0000: AL_Error_Catalog(0000, 0001, 0007) = "Value1 is smaller than or equal to Value2"
         AL_Error_Catalog(0000, 0000, 0008) = 0000: AL_Error_Catalog(0000, 0001, 0008) = "Value1 is bigger than or equal to Value2"
-        AL_Error_Catalog(0000, 0000, 0009) = 0000: AL_Error_Catalog(0000, 0001, 0009) = "Value1 is smaller Value2"
-        AL_Error_Catalog(0000, 0000, 0010) = 0000: AL_Error_Catalog(0000, 0001, 0010) = "Value1 is bigger Value2"
+        AL_Error_Catalog(0000, 0000, 0009) = 0000: AL_Error_Catalog(0000, 0001, 0009) = "Value1 is smaller than Value2"
+        AL_Error_Catalog(0000, 0000, 0010) = 0000: AL_Error_Catalog(0000, 0001, 0010) = "Value1 is bigger than Value2"
         AL_Error_Catalog(0000, 0000, 0011) = 0000: AL_Error_Catalog(0000, 0001, 0011) = "Value1 is Value2"
         AL_Error_Catalog(0000, 0000, 0012) = 0000: AL_Error_Catalog(0000, 0001, 0012) = "Several Values are Empty"
         AL_Error_Catalog(0000, 0000, 0013) = 0000: AL_Error_Catalog(0000, 0001, 0013) = "To many Values arent Empty"
         AL_Error_Catalog(0000, 0000, 0014) = 0000: AL_Error_Catalog(0000, 0001, 0014) = "Value Is Something"
-        AL_Error_Catalog(0000, 0000, 0015) = 0000: AL_Error_Catalog(0000, 0001, 0015) = "PLACEHOLDER"
+        AL_Error_Catalog(0000, 0000, 0015) = 0000: AL_Error_Catalog(0000, 0001, 0015) = "Value1 equals Value2"
         AL_Error_Catalog(0000, 0000, 0016) = 0000: AL_Error_Catalog(0000, 0001, 0016) = "PLACEHOLDER"
         AL_Error_Catalog(0000, 0000, 0017) = 0000: AL_Error_Catalog(0000, 0001, 0017) = "PLACEHOLDER"
         AL_Error_Catalog(0000, 0000, 0018) = 0000: AL_Error_Catalog(0000, 0001, 0018) = "PLACEHOLDER"

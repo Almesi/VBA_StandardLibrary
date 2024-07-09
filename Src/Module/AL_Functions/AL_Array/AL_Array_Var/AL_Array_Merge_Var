@@ -1,5 +1,5 @@
 Function AL_Array_Merge_Var(ByRef Array1() As Variant, ByRef Array2() As Variant) As Variant()
-
+    
     Dim Array1Length As Long
     Dim Array2Length As Long
     Dim TempArray() As Variant
