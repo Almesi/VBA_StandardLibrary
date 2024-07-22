@@ -84,7 +84,7 @@ With stdError it would be reduced to:
 ```vb
 Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
 
-    If Console.Number(Value, "=", MaxValue) = Console.IS_ERROR Then
+    If Console.Number(Value, "=", MaxValue) <> Console.IS_ERROR Then
         CheckUserInput = True
     End If
 
