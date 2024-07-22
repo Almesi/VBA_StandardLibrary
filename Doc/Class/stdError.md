@@ -129,7 +129,7 @@ As of now there are the following special commands
         This will print a text explaining the functionalities of the console  
 
 ### Extra Information
-    The console works with special modes:
+The console works with special modes:
 ```vb
      Private Enum WorkModeEnum
         Logging = 0
