@@ -309,3 +309,48 @@ UserLog is for running procedures and extras
     Private Sub ProtInit()
 '
 ```
+
+
+### Examples
+
+Basic Errorhandling
+```vb
+    Sub Test()
+
+        Dim x As Variant
+        Dim y As Variant
+
+        x = 3
+        y = 6
+        If Console.Number(x, "<", y) = Console.IS_ERROR Then
+            MsgBox("HI")
+        End If
+
+    End Sub
+```
+
+Example for other Console
+```vb
+    Sub Test2()
+
+        Dim x As Variant
+        Dim y As Variant
+        PreDec_Answers = Array("y", "n", "m")
+        PreDec_Messages = Array("Your Answer is y", "Your Answer is n,", "Your Answer is m")
+        Console.Show
+        a = CDbl(Console.GetUserInput("Please input a Number for Variable a ", "Double"))
+        b = CDbl(Console.GetUserInput("Please input a Number for Variable b ", "Double"))
+
+        If Console.Number(a, "<>", b) = Console.IS_ERROR Then
+        End If
+        If Console.CheckPredeclaredAnswer("Do you want to add 2 to the variable a?", PreDec_Answers, PreDec_Messages) = "y" Then
+            a = a + 2
+            Console.PrintEnter "a is: " & a
+        End If
+
+    End Sub
+
+    Sub Say(Text As Variant)
+        MsgBox(Text)
+    End Sub
+```
