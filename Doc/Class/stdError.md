@@ -95,39 +95,39 @@ End Function
 
 
 ## Console
-    Another big part is the console
-    Its used to log errors, print success or failure, ask the user for input, decide process with yes/no questions and run procedures (macros) and extras
+Another big part is the console
+Its used to log errors, print success or failure, ask the user for input, decide process with yes/no questions and run procedures (macros) and extras
 
 
 ### Preparation
-    To Prepare the console you have to do the following:
-    Go to stdError and search for the function `LogMode`, there you have to write the number of corresponding to `LogModeEnum`
-    Run `Console.Show`
-        This will initialize the console
-    
-    Now the Console can be used in process
+To Prepare the console you have to do the following:
+Go to stdError and search for the function `LogMode`, there you have to write the number of corresponding to `LogModeEnum`
+Run `Console.Show`
+    This will initialize the console
+
+Now the Console can be used in process
 
 #### 1. Log Errors
-    When you use any Errorhandling function of stdError and the Console is activated then the error will be printed to the console
+When you use any Errorhandling function of stdError and the Console is activated then the error will be printed to the console
 
 #### 2. User Input
-    There are 2 main User-interactions-
-        One is a message, followed by predeclared answers like yes/no,maybe or anything the programmer would like to use
-            VBA will continue to run until you write any of the available answers, else it will print, that your value is not allowed
-            If the input is allowed a user defined message may be shown
-        The second one is a message, where it will ask you for a value of the user.
-            This might be combined with further errorhandling like checking if the input is of the right datatype, a wrong input will be shown accordingly
+There are 2 main User-interactions-
+    One is a message, followed by predeclared answers like yes/no,maybe or anything the programmer would like to use
+        VBA will continue to run until you write any of the available answers, else it will print, that your value is not allowed
+        If the input is allowed a user defined message may be shown
+    The second one is a message, where it will ask you for a value of the user.
+        This might be combined with further errorhandling like checking if the input is of the right datatype, a wrong input will be shown accordingly
 
 #### 3. Running macros
-    This tool is strictly defined:
-        Write a Variable name
-        Enter |; |, as the seperator of arguments
-        Up to 29 additional arguments are allowed (1st argument is ProcedureName, all following arguments are arguments for said procedure)
+This tool is strictly defined:
+    Write a Variable name
+    Enter |; |, as the seperator of arguments
+    Up to 29 additional arguments are allowed (1st argument is ProcedureName, all following arguments are arguments for said procedure)
 
 #### 4. Extras
-    As of now there are the following special commands
-        Help
-            This will print a text explaining the functionalities of the console
+As of now there are the following special commands
+    Help
+        This will print a text explaining the functionalities of the console
 
 ### Extra Information
     The console works with special modes:
@@ -139,10 +139,10 @@ End Function
         UserLog = 3
     End Enum
 ```
-    Logging is the basic one, where the console only recieves information
-    UserInputt is variable input of the user
-    PreDeclaredAnswer is for predeclared answers (duh)
-    UserLog is for running procedures and extras
+Logging is the basic one, where the console only recieves information
+UserInputt is variable input of the user
+PreDeclaredAnswer is for predeclared answers (duh)
+UserLog is for running procedures and extras
 
 
 ## Console Functions explained
