@@ -4,11 +4,11 @@
 
 ### What is stdError?
 
-The main philosophy of stdError is for the creator of vba projects, who dont want to be bothered with errorhandling.\
-Creating a thorough errorhandling system can be tedious. Not having one results in redundant errorhandling of the same type of errors.\
+The main philosophy of stdError is for the creator of vba projects, who dont want to be bothered with errorhandling.  
+Creating a thorough errorhandling system can be tedious. Not having one results in redundant errorhandling of the same type of errors.  
 
-It is NOT a tool for programming per se- but more used for end-user input (like the customer)\
-Because of that it doesnt stop execution at the line of error, but rather logs it in the desired location\
+It is NOT a tool for programming per se- but more used for end-user input (like the customer)  
+Because of that it doesnt stop execution at the line of error, but rather logs it in the desired location  
 
 
 
@@ -20,37 +20,37 @@ Because of that it doesnt stop execution at the line of error, but rather logs i
 
 
 #### 1. Question:
-An Error might be wrong input of the programmer, like passing the wrong datatype.\
-Another Error might be a too high/low Value of the user.\
-3rd Type would be errors, which might result in critical code.\
+An Error might be wrong input of the programmer, like passing the wrong datatype.  
+Another Error might be a too high/low Value of the user.  
+3rd Type would be errors, which might result in critical code.  
 
-For these kinds of errors there are several different topics:\
-    It needs to be shown to the current user\
-    It needs to be logged somewhere for later\
-    It needs to be fixed by the current user\
+For these kinds of errors there are several different topics:  
+    It needs to be shown to the current user  
+    It needs to be logged somewhere for later  
+    It needs to be fixed by the current user  
 
 #### 2. Question:
-There are different tastes to this.\
-I tried covering all of them:\
-One Method is the "standard" one MsgBox and Debug.Print. No further loss of time, because they are directly tied and well established in VBA.\
-    Problem is logging. You cant look into it once the code is run\
-Another Method i would call the "c++" method, where programmers prefer the command prompt\
-    For that reason stdError includes the console, a tool for run-time manipulation. Further down the line i will explain it further\
-    Problem is the same as the previous method\
-Third method is printing it to a file/directly into a ms-tool like word/excel/outlook\
-    Through this way you can look into the errors even after everything is run and closed\
+There are different tastes to this.  
+I tried covering all of them:  
+One Method is the "standard" one MsgBox and Debug.Print. No further loss of time, because they are directly tied and well established in VBA.  
+    Problem is logging. You cant look into it once the code is run  
+Another Method i would call the "c++" method, where programmers prefer the command prompt  
+    For that reason stdError includes the console, a tool for run-time manipulation. Further down the line i will explain it further  
+    Problem is the same as the previous method  
+Third method is printing it to a file/directly into a ms-tool like word/excel/outlook  
+    Through this way you can look into the errors even after everything is run and closed  
 
 #### 3. Question:
 This is a programmer specific tool
-You can manually set the highest value, which is considered a non-critical error (Const Variable "SEVERITY_BREAK").\
-    All errors are considered "maximum error without being severe" unless set otherwise in the Variable "ErrorCatalog"\
-One critical error might for example be deleting the whole database\
-Either way, once a critical error is detected all code execution will be immediatly dropped\
+You can manually set the highest value, which is considered a non-critical error (Const Variable "SEVERITY_BREAK").  
+    All errors are considered "maximum error without being severe" unless set otherwise in the Variable "ErrorCatalog"  
+One critical error might for example be deleting the whole database  
+Either way, once a critical error is detected all code execution will be immediatly dropped  
     
 
 ### Example
-To show how to use stdError consider Errorhandling without it:\
-THIS IS AN OVER-EXAGGGERATION\
+To show how to use stdError consider Errorhandling without it:  
+THIS IS AN OVER-EXAGGGERATION  
 
 ```vb
 Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
@@ -78,8 +78,8 @@ Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
 End Function
 ```
 
-You would need to this this kind of stuff to every single error.\
-With stdError it would be reduced to:\
+You would need to this this kind of stuff to every single error.  
+With stdError it would be reduced to:  
 
 ```vb
 Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
@@ -94,39 +94,39 @@ End Function
 
 
 ## Console
-Another big part is the console\
-Its used to log errors, print success or failure, ask the user for input, decide process with yes/no questions and run procedures (macros) and extras\
+Another big part is the console  
+Its used to log errors, print success or failure, ask the user for input, decide process with yes/no questions and run procedures (macros) and extras  
 
 
 ### Preparation
-To Prepare the console you have to do the following:\
-Go to stdError and search for the function `LogMode`, there you have to write the number of corresponding to `LogModeEnum`\
-Run `Console.Show`\
-    This will initialize the console\
+To Prepare the console you have to do the following:  
+Go to stdError and search for the function `LogMode`, there you have to write the number of corresponding to `LogModeEnum`  
+Run `Console.Show`  
+    This will initialize the console  
 
-Now the Console can be used in process\
+Now the Console can be used in process  
 
 #### 1. Log Errors
-When you use any Errorhandling function of stdError and the Console is activated then the error will be printed to the console\
+When you use any Errorhandling function of stdError and the Console is activated then the error will be printed to the console  
 
 #### 2. User Input
-There are 2 main User-interactions-\
-    One is a message, followed by predeclared answers like yes/no,maybe or anything the programmer would like to use\
-        VBA will continue to run until you write any of the available answers, else it will print, that your value is not allowed\
-        If the input is allowed a user defined message may be shown\
-    The second one is a message, where it will ask you for a value of the user.\
-        This might be combined with further errorhandling like checking if the input is of the right datatype, a wrong input will be shown accordingly\
+There are 2 main User-interactions-  
+    One is a message, followed by predeclared answers like yes/no,maybe or anything the programmer would like to use  
+        VBA will continue to run until you write any of the available answers, else it will print, that your value is not allowed  
+        If the input is allowed a user defined message may be shown  
+    The second one is a message, where it will ask you for a value of the user.  
+        This might be combined with further errorhandling like checking if the input is of the right datatype, a wrong input will be shown accordingly  
 
 #### 3. Running macros
-This tool is strictly defined:\
-    Write a Variable name\
-    Enter |; |, as the seperator of arguments\
-    Up to 29 additional arguments are allowed (1st argument is ProcedureName, all following arguments are arguments for said procedure)\
+This tool is strictly defined:  
+    Write a Variable name  
+    Enter |; |, as the seperator of arguments  
+    Up to 29 additional arguments are allowed (1st argument is ProcedureName, all following arguments are arguments for said procedure)  
 
 #### 4. Extras
-As of now there are the following special commands\
-    Help\
-        This will print a text explaining the functionalities of the console\
+As of now there are the following special commands  
+    Help  
+        This will print a text explaining the functionalities of the console  
 
 ### Extra Information
     The console works with special modes:
@@ -138,10 +138,10 @@ As of now there are the following special commands\
         UserLog = 3
     End Enum
 ```
-Logging is the basic one, where the console only recieves information\
-UserInputt is variable input of the user\
-PreDeclaredAnswer is for predeclared answers (duh)\
-UserLog is for running procedures and extras\
+Logging is the basic one, where the console only recieves information  
+UserInputt is variable input of the user  
+PreDeclaredAnswer is for predeclared answers (duh)  
+UserLog is for running procedures and extras  
 
 
 ## Console Functions explained
