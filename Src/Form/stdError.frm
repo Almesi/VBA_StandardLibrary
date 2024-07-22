@@ -430,7 +430,7 @@ Option Explicit
                     If Not FirstValue IS SecondValue Then Object = Handle(0, 06, "FirstValue", "SecondValue"): Exit Function
             End Select
         End If
-        If FirstValue Is Nothing                      Then Object = Handle(0, 03, "FirstValue"):               Exit Function
+        If FirstValue Is Nothing                     Then Object = Handle(0, 03, "FirstValue"):                Exit Function
 
     End Function
 
@@ -594,6 +594,7 @@ Option Explicit
 
     End Function
 
+    ' Check if passed Variable is InputType according to ShouldBe
     Public Function DataType(Value As Variant, InputType As String, Optional ShouldBe As Boolean = True) As Boolean
         
         Dim Inputt As Boolean
