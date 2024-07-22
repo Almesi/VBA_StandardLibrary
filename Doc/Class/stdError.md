@@ -13,45 +13,44 @@ Because of that it doesnt stop execution at the line of error, but rather logs i
 
 
 ### stdError consists of 3 main questions
-
-    1. What is the Error?
-    2. Where do i want to show the Error?
-    3. How do i handle wrong input?
+1. What is the Error?
+2. Where do i want to show the Error?
+3. How do i handle wrong input?
 
 
 
 #### 1. Question:
-    An Error might be wrong input of the programmer, like passing the wrong datatype.
-    Another Error might be a too high/low Value of the user.
-    3rd Type would be errors, which might result in critical code.
+An Error might be wrong input of the programmer, like passing the wrong datatype.
+Another Error might be a too high/low Value of the user.
+3rd Type would be errors, which might result in critical code.
 
-    For these kinds of errors there are several different topics:
-        It needs to be shown to the current user
-        It needs to be logged somewhere for later
-        It needs to be fixed by the current user
+For these kinds of errors there are several different topics:
+    It needs to be shown to the current user
+    It needs to be logged somewhere for later
+    It needs to be fixed by the current user
 
 #### 2. Question:
-    There are different tastes to this.
-    I tried covering all of them:
-    One Method is the "standard" one MsgBox and Debug.Print. No further loss of time, because they are directly tied and well established in VBA.
-        Problem is logging. You cant look into it once the code is run
-    Another Method i would call the "c++" method, where programmers prefer the command prompt
-        For that reason stdError includes the console, a tool for run-time manipulation. Further down the line i will explain it further
-        Problem is the same as the previous method
-    Third method is printing it to a file/directly into a ms-tool like word/excel/outlook
-        Through this way you can look into the errors even after everything is run and closed
+There are different tastes to this.
+I tried covering all of them:
+One Method is the "standard" one MsgBox and Debug.Print. No further loss of time, because they are directly tied and well established in VBA.
+    Problem is logging. You cant look into it once the code is run
+Another Method i would call the "c++" method, where programmers prefer the command prompt
+    For that reason stdError includes the console, a tool for run-time manipulation. Further down the line i will explain it further
+    Problem is the same as the previous method
+Third method is printing it to a file/directly into a ms-tool like word/excel/outlook
+    Through this way you can look into the errors even after everything is run and closed
 
 #### 3. Question:
-    This is a programmer specific tool
-    You can manually set the highest value, which is considered a non-critical error (Const Variable "SEVERITY_BREAK").
-        All errors are considered "maximum error without being severe" unless set otherwise in the Variable "ErrorCatalog"
-    One critical error might for example be deleting the whole database
-    Either way, once a critical error is detected all code execution will be immediatly dropped
+This is a programmer specific tool
+You can manually set the highest value, which is considered a non-critical error (Const Variable "SEVERITY_BREAK").
+    All errors are considered "maximum error without being severe" unless set otherwise in the Variable "ErrorCatalog"
+One critical error might for example be deleting the whole database
+Either way, once a critical error is detected all code execution will be immediatly dropped
     
 
 ### Example
-    To show how to use stdError consider Errorhandling without it:
-    THIS IS AN OVER-EXAGGGERATION
+To show how to use stdError consider Errorhandling without it:
+THIS IS AN OVER-EXAGGGERATION
 
 ```vb
 Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
@@ -79,8 +78,8 @@ Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
 End Function
 ```
 
-    You would need to this this kind of stuff to every single error.
-    With stdError it would be reduced to:
+You would need to this this kind of stuff to every single error.
+With stdError it would be reduced to:
 
 ```vb
 Function CheckUserInput(Value As Variant, MaxValue As Double) As Boolean
