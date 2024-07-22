@@ -618,9 +618,9 @@ Option Explicit
             Exit Function
         Else
             If Inputt = True Then
-                DataType = Handle(0, 28, Value, InputType)
-            Else
                 DataType = Handle(0, 27, Value, InputType)
+            Else
+                DataType = Handle(0, 28, Value, InputType)
             End If
         End If        
         Exit Function
