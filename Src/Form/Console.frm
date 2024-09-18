@@ -50,6 +50,8 @@ Option Explicit
 
     ' Dependant on sancarn´s stdLambda class
     Private Const stdLambda_Active    As Boolean = True
+    Private       LambdaArray         As Variant          ' Defined as (3, n), where (0,n) is lambda-name, (1,n) is equation, (2,n) is bUsePerformanceCache, (3,n) is bSandboxExtras OR Array of stdLambda´s
+    Private       LambdaIndex         As Long
 
     'Intellisense Colors
     Private in_Basic       As Long
@@ -205,10 +207,15 @@ Option Explicit
         ScrollHeight = 5000
         ScrollWidth = 3000
         ReDim ConsoleVariables(1, 0)
+        ReDim LambdaArray(1, 0)
+        LambdaIndex = 0
         ' Dependenant on Microsoft Visual Studio Extensebility 5.3
         If Intellisense_Active = True Then
             GetAllProcedures
         End If
+    End Sub
+
+    Private Sub UserForm_Terminate()
     End Sub
 
     ' Just doing &H00FFFFFF will (for some reason) become a negative number, so to secure a positive number this is done
@@ -322,7 +329,7 @@ Option Explicit
             Case WorkModeEnum.UserInputt, WorkModeEnum.PredeclaredAnswer
                 UserInput = Replace(Line, vbCrLf, "")
             Case WorkModeEnum.UserLog
-
+                ConsoleText.Text = Mid(ConsoleText.Text, 1, Len(ConsoleText.Text) - 3)
             Case WorkModeEnum.MultilineMode
                 If Mid(Line, Len(Line), 1) <> "_" Then
                     Dim Temp(2) As String '0 is final string, 1 fusion of final string with current string, 2 is current string
@@ -355,9 +362,9 @@ Option Explicit
         Dim Temp As Variant
         Temp = HandleSpecial(Arguments)
         Select Case Temp
-            Case 1: HandleCode = "Success": LastError = 1: Exit Function
-            Case 2: HandleCode = "": Exit Function
-            Case 3: 
+            Case "Success": LastError = 1: Exit Function
+            Case " "      : LastError = 1: Exit Function
+            Case "ELSE"
                 If IsDate(Arguments(0)) Then
                     HandleCode = CDate(Arguments(0))
                 ElseIf IsNumeric(Arguments(0)) Then
@@ -373,6 +380,8 @@ Option Explicit
                     Next
                     If Found <> True Then HandleCode = RunApplication(Arguments)
                 End If
+            Case Else
+                HandleCode = Temp
         End Select
         If HandleCode = Empty Then
             HandleCode = "Success"
@@ -431,12 +440,17 @@ Option Explicit
 
     Private Function HandleSpecial(Arguments() As Variant) As Variant
         Select Case True
-            Case UCase(CStr(Arguments(0))) Like "HELP"      : HandleSpecial = 1: HandleHelp
-            Case UCase(CStr(Arguments(0))) Like "CLEAR"     : HandleSpecial = 2: HandleClear
-            Case UCase(CStr(Arguments(0))) Like "MULTILINE" : HandleSpecial = 2: Workmode = WorkModeEnum.MultilineMode
-            Case UCase(CStr(Arguments(0))) Like "INFO"      : HandleSpecial = 1: HandleLastError
-            Case UCase(CStr(Arguments(0))) Like "[?]*"      : HandleSpecial = 4
-            Case Else                                       : HandleSpecial = 3
+            Case UCase(CStr(Arguments(0))) Like "HELP"      : HandleSpecial = "Success" : HandleHelp
+            Case UCase(CStr(Arguments(0))) Like "CLEAR"     : HandleSpecial = " "       : HandleClear
+            Case UCase(CStr(Arguments(0))) Like "MULTILINE" : HandleSpecial = " "       : Workmode = WorkModeEnum.MultilineMode
+            Case UCase(CStr(Arguments(0))) Like "INFO"      : HandleSpecial = "Success" : HandleLastError
+            Case UCase(CStr(Arguments(0))) Like "[?]*"
+                If stdLambda_Active = True Then
+                    HandleSpecial = HandleLambda(Arguments)
+                Else
+                    HandleSpecial = "stdLambda is deactivated"
+                End If
+            Case Else                                       : HandleSpecial = "ELSE"
         End Select
     End Function
 
@@ -504,6 +518,8 @@ Option Explicit
             Message = "PrintConsole or PrintEnter didnt recieve equal or more elements than the text passed"                 & vbcrlf & _
                       "To ensure this not happening pass 0 elements for in_basic, 1 to paint all chars to that color,"       & vbcrlf & _
                       "or if you want all individually then pass equal or more elements through the optional color argument"
+        Case 5
+            Message = "You didnt pass enough arguments, stdLambda requieres at least 2 arguments"
         End Select
         PrintEnter Message, Color
     End Sub
@@ -589,30 +605,33 @@ Option Explicit
         Dim CurrentLine  As String: CurrentLine = GetLine(ConsoleText.Text, UBound(Temp))
         ScrollTop = UBound(Temp) * 10 * ListFactor - FactorHeight - 100
         ScrollLeft = Len(CurrentLine) * 10
-        IntellisenseList.Top = ScrollTop + (FactorWidth * ListOffset) + 100
-        IntellisenseList.Left = ScrollLeft
-        IntellisenseList.Visible = True
+        If Intellisense_Active = True Then
+            IntellisenseList.Top = ScrollTop + (FactorWidth * ListOffset) + 100
+            IntellisenseList.Left = ScrollLeft
+            IntellisenseList.Visible = True
+        End If
     End Sub
 
     Private Sub ColorWord()
 
-        Dim Temp As String
-        Dim Para_Counter As Long
-        Dim Color As Long
         Dim Lines() As String
+        Dim CurrentLine As String
+        Dim Tempp As Long
+        Dim CurrentLinePoint As Long
+        Dim j As Long
+        Dim i As Long
         Dim Words() As String
         Dim CurrentWord As String
         Dim PreviousWord As String
         Dim Is_String As Boolean
-        Dim CurrentLine As String
-        Dim CurrentLinePoint As Long
-        Dim Tempp As Long
-        Dim i As Long, j As Long
-
-        CurrentLine = GetLine(ConsoleText.Text, CurrentLineIndex)
-        Lines = Split(ConsoleText.Text, vbCrLf)
+        Dim Temp As String
+        Dim Para_Counter As Long
+        Dim Color As Long
+        
+        Lines            = Split(ConsoleText.Text, vbCrLf)
+        CurrentLine      = GetLine(ConsoleText.Text, CurrentLineIndex)
+        Tempp            = InStr(1, Lines(Ubound(Lines)), Recognizer)
         CurrentLinePoint = Len(ConsoleText.Text) - Len(Lines(Ubound(Lines))) - 4
-        Tempp = InStr(1, Lines(Ubound(Lines)), Recognizer)
         If Tempp <> 0 Then CurrentLinePoint = CurrentLinePoint + Tempp + Len(Recognizer)
         Words = Split(CurrentLine, " ")
 
@@ -629,7 +648,7 @@ Option Explicit
                     Color = in_Statement
                 Case "DIM", "PUBLIC", "PRIVATE", "GLOBAL", "TRUE", "FALSE", "FUNCTION", "SUB", "REDIM", "PRESERVE"
                     Color = in_Keyword
-                Case "+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "<>", "NOT", "AND", "OR", "XOR", "!=", "++", "||", "&", "&&", "=>", "=<", "<=", ">="
+                Case "+", "[*]", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "<>", "NOT", "AND", "OR", "XOR", "!=", "++", "||", "&", "&&", "=>", "=<", "<=", ">=", "[?]"
                     Color = in_Operator
                 Case Else
                     If Ucase(PreviousWord) = "AS" Then
@@ -637,11 +656,17 @@ Option Explicit
                     ElseIf Words(i) Like "*(*)" Then
                         Temp = Mid(Words(i), 1, InStr(1, Words(i), "(") - 1)
                         ConsoleText.SelLength = Len(Temp)
-                        Color = in_Procedure
-                    ElseIf InArray(Words(i), VariableArray) Then
-                        Color = in_Variable
+                        Color = in_Procedure                        
                     Else
-                        Color = in_Basic
+                        If Intellisense_Active = True Then
+                            If InArray(Words(i), VariableArray) Then
+                                Color = in_Variable
+                            Else
+                                Color = in_Basic
+                            End If
+                        Else
+                            Color = in_Basic
+                        End If
                     End If
             End Select
             ConsoleText.SelColor = Color
@@ -663,7 +688,7 @@ Option Explicit
                         If Para_Counter Mod 2 = 0 Then Color = Color + &H00333300
                         ConsoleText.SelColor = Color
                         Para_Counter = Para_Counter - 1
-                    Case "+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|"
+                    Case "+", "[*]", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "[?]"
                         Color = in_Operator
                     Case Chr(34)
                         Color = in_String
@@ -685,14 +710,14 @@ Option Explicit
 
     Private Function GetStartText() As String
         GetStartText =                   _
-        "VBA Console [Version 1.0]" & Chr(13) & Chr(10) & _
-        "No Rights reserved"        & Chr(13) & Chr(10) & _
-        Chr(13) & Chr(10)                               & _
+        "VBA Console [Version 1.0]" & vbcrlf & _
+        "No Rights reserved"        & vbcrlf & _
+        vbcrlf                               & _
         PrintStarter
     End Function
 
     Private Function HandleClear()
-        ConsoleText.Text = "_"
+        ConsoleText.Text = ""
         ConsoleText.SelStart = 0
         ConsoleText.SelLength = Len(ConsoleText.Text)
         ConsoleText.SelColor = in_Basic
@@ -708,8 +733,8 @@ Option Explicit
         Message = _
         "--------------------------------------------------"                                           & vbcrlf & _
         "This Console can do the following:"                                                           & vbcrlf & _
-        "1. It can be used as a form to showw messages, ask questions to the user or get a user input" & vbcrlf & _
-        "2. It can be used to showw and log errors and handle them by user input"                      & vbcrlf & _
+        "1. It can be used as a form to show messages, ask questions to the user or get a user input"  & vbcrlf & _
+        "2. It can be used to show and log errors and handle them by user input"                       & vbcrlf & _
         "3. It can run Procedures with up to 29 arguments"                                             & vbcrlf & _
         ""                                                                                             & vbcrlf & _
         "HOW TO USE IT:"                                                                               & vbcrlf & _
@@ -723,7 +748,7 @@ Option Explicit
         "       Use CheckPredeclaredAnswer"                                                            & vbcrlf & _
         "           Param1 = Message to be showwn"                                                     & vbcrlf & _
         "           Param2 = Array of Values, which are acceptable answers"                            & vbcrlf & _
-        "           Param3 = Array of Messages, which showw a text according to answer in Param2"      & vbcrlf & _
+        "           Param3 = Array of Messages, which show a text according to answer in Param2"       & vbcrlf & _
         "       The Function will loop until one of the acceptable answers is typed"                   & vbcrlf & _
         "--------------------------------------------------"                                           & vbcrlf
         PrintEnter Message, Color
@@ -734,12 +759,13 @@ Option Explicit
         
         Dim ReturnArray() As Long
         Dim Lines() As String
-        Dim CurrentValue As Long: CurrentValue = 0
-        Dim Found As Long: Found = 0
-        Dim Saved As Long: Saved = -1
-        Dim j As Long: j = 0
-        Dim i As Long: i = StartIndex
         Dim EndLine As Long
+        Dim CurrentValue As Long : CurrentValue = 0
+        Dim Found As Long        : Found = 0
+        Dim Saved As Long        : Saved = -1
+        Dim j As Long            : j = 0
+        Dim i As Long            : i = StartIndex
+        
         If EndIndex = 0 Then EndIndex = Len(Text)
         If BreakText <> Empty Then
             Lines = Split(Text, BreakText)
@@ -813,7 +839,7 @@ Option Explicit
                     For i = 1 To CodeMod.CountOfLines
                         CurrentRow = CodeMod.Lines(i, 1)
                         If UCase(CurrentRow) Like "*PUBLIC *" And InStr(1, CurrentRow, "'") = 0  And Not UCase(CurrentRow) Like "*" & Chr(34) & "*PUBLIC*" & Chr(34) & "*" Then
-                            If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *") Then
+                            If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *" Or UCase(CurrentRow) Like "* SET *" Or UCase(CurrentRow) Like "* LET *" Or UCase(CurrentRow) Like "* GET *") Then
                                 ' A Procedure
                                 '                          |----------|
                                 '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
@@ -824,6 +850,7 @@ Option Explicit
                                     Case UCase(CurrentRow) Like "*PUBLIC FUNCTION *(*)*"        : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC FUNCTION ")        + Len("PUBLIC FUNCTION ")        : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
                                     Case UCase(CurrentRow) Like "*PUBLIC PROPERTY GET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY GET ")    + Len("PUBLIC PROPERTY GET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
                                     Case UCase(CurrentRow) Like "*PUBLIC PROPERTY SET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY SET ")    + Len("PUBLIC PROPERTY SET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
+                                    Case UCase(CurrentRow) Like "*PUBLIC PROPERTY LET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY LET ")    + Len("PUBLIC PROPERTY LET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
                                     Case Else
                                 End Select
                                 '                                       |------------------------------|
@@ -890,8 +917,11 @@ Option Explicit
         Dim Count As Long
         Dim Words() As String
         Dim AbstractionFound As Boolean
+        Dim SearchArray() As Variant
+        Dim MaxAbstractionDepth As Long
 
 
+        If Intellisense_Active = False Then Exit Sub
         Dim AbstractionDepth As Long: AbstractionDepth = 0
         Dim LeftNoStringValue As Long:  LeftNoStringValue = InStr(1, Text, Chr(34))
         Dim RightNoStringValue As Long: RightNoStringValue = InStr(LeftNoStringValue + 1, Text, Chr(34))
@@ -905,12 +935,23 @@ Option Explicit
         If Ubound(Words) = -1 Then Exit Sub
         Text = Words(Ubound(Words))
 
+
+        If stdLambda_Active = True And UCase(GetLine(ConsoleText.Text, CurrentLineIndex)) Like "*[?]RUN *" Then
+            SearchArray = LambdaArray
+            MaxAbstractionDepth = 0
+            AbstractionDepth = 0
+        Else
+            SearchArray = VariableArray
+            MaxAbstractionDepth = 2
+        End If
+
+
         IntelliSenseList.Clear
         Redim Found(0)
         If AbstractionDepth > 0 Then
-            For x = AbstractionDepth To 2
-                For i = 0 To Ubound(VariableArray, 2)
-                    If UCase(VariableArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1)) Then
+            For x = AbstractionDepth To MaxAbstractionDepth
+                For i = 0 To Ubound(SearchArray, 2)
+                    If UCase(SearchArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1)) Then
                         StartPoint = i
                         AbstractionFound = True
                         AbstractionDepth = x
@@ -918,11 +959,11 @@ Option Explicit
                     End If
                 Next
                 EndPoint = StartPoint
-                If i =< Ubound(VariableArray, 2) Then 
-                    Do While UCase(VariableArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1))
+                If i =< Ubound(SearchArray, 2) Then 
+                    Do While UCase(SearchArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1))
                         EndPoint = i
                         i = i + 1
-                        If i > Ubound(VariableArray, 2) Then Exit Do
+                        If i > Ubound(SearchArray, 2) Then Exit Do
                     Loop
                 End If
                 If AbstractionFound = True Then Exit For
@@ -930,22 +971,22 @@ Option Explicit
         End If
         If AbstractionFound <> True Then
             StartPoint = 0
-            EndPoint = Ubound(VariableArray, 2)
+            EndPoint = Ubound(SearchArray, 2)
         End If
-        For x = AbstractionDepth To 2
+        For x = AbstractionDepth To MaxAbstractionDepth
             For i = StartPoint To EndPoint
-                If UCase(VariableArray(x, i)) Like Ucase(Text) & "*" Then
+                If UCase(SearchArray(x, i)) Like Ucase(Text) & "*" Then
                     For j = 0 To Ubound(Found)
-                        If Found(j) = VariableArray(x, i) Then
+                        If Found(j) = SearchArray(x, i) Then
                             Foundd = True
                             Exit For
                         End If
                     Next
                     If Foundd <> True Then
                         IntelliSenseList.AddItem
-                        IntelliSenseList.List(Ubound(Found), 0) = VariableArray(x, i)
+                        IntelliSenseList.List(Ubound(Found), 0) = SearchArray(x, i)
                         If x = 2 Then IntelliSenseList.List(Ubound(Found), 1) = GetProcedureText(i) 
-                        Found(Ubound(Found)) = VariableArray(x, i)
+                        Found(Ubound(Found)) = SearchArray(x, i)
                         Redim Preserve Found(Ubound(Found) + 1)
                     End If
                     Foundd = False
@@ -1009,6 +1050,7 @@ Option Explicit
                     ReturnString = IntelliSenseList.List(IntelliSense_Index, 0)
                     Start = InStr(1, Ucase(ReturnString), Ucase(Word))
                     If Start = 0 Then Start = 1
+                    Word = Replace(Ucase(Word), "?RUN ", "")
                     PrintConsole Mid(ReturnString, Start + Len(Word), Len(ReturnString) - Len(Word))
                     Close_IntelliSenseList
                     Exit Sub
@@ -1028,4 +1070,183 @@ Option Explicit
         If IntelliSenseList.ListCount > 0 Then IntelliSenseList.ListIndex = IntelliSense_Index
 
     End Sub
+'
+
+'Following Part is stdLambda
+    Private Function HandleLambda(Arguments() As Variant) As Variant
+
+        Dim Index As Long
+        Dim i As Long
+        Dim Temp() As String '0 = Lambda Member, 1 = LambdaName
+        Dim Lambda As stdLambda
+        Temp = Split(Arguments(0), " ")
+        Temp(0) = Mid(Temp(0), 2, Len(Temp(0)) - 1) ' Get rid of [?]
+
+        Select Case UCase(CStr(Temp(0)))
+            Case "CREATE" ' Temp(1) = Name, Arguments(1) = sEquation, Arguments(2) = bUsePerformanceCache, Arguments(2) = bSandboxExtras
+                If Ubound(Arguments) < 2 Then ReDim Preserve Arguments(3)
+                If CreateLambda(Temp(1), Arguments(1), Iif(UCase(CStr(Arguments(2))) = "TRUE", True, False), Iif(UCase(CStr(Arguments(3))) = "TRUE", True, False)) <> True Then
+                    HandleLambda = "Lambda could not be registered"
+                Else
+                    HandleLambda = "Lambda registered successfully"
+                End If
+            Case "RUN" ' Temp(1) = Name or Index, Arguments(1 - 30 are args)
+                Index = FindLambda(Temp(1))
+                If Index <> -1 Then
+                    Set Lambda = LambdaArray(1, Index)
+                    On Error GoTo Error
+                    Select Case UBound(Arguments)
+                        Case 00:   HandleLambda = Lambda.Run()
+                        Case 01:   HandleLambda = Lambda.Run(Arguments(1))
+                        Case 02:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2))
+                        Case 03:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3))
+                        Case 04:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4))
+                        Case 05:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5))
+                        Case 06:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6))
+                        Case 07:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7))
+                        Case 08:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8))
+                        Case 09:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9))
+                        Case 10:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10))
+                        Case 11:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11))
+                        Case 12:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12))
+                        Case 13:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13))
+                        Case 14:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14))
+                        Case 15:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15))
+                        Case 16:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16))
+                        Case 17:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17))
+                        Case 18:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18))
+                        Case 19:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19))
+                        Case 20:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20))
+                        Case 21:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21))
+                        Case 22:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22))
+                        Case 23:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23))
+                        Case 24:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24))
+                        Case 25:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25))
+                        Case 26:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26))
+                        Case 27:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27))
+                        Case 28:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28))
+                        Case 29:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29))
+                        Case 30:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29), Arguments(30))
+                        Case Else: HandleLambda = "Too many Arguments": LastError = 3
+                    End Select
+                Else
+                    HandleLambda = "Could not find Lambda"
+                End If
+            Case "BIND"
+            Case "BINDGLOBAL"
+            Case Else ' like ?1+1
+                Set Lambda = stdLambda.Create(CStr(Temp(0)), False, False)
+                HandleLambda = Lambda.Run
+        End Select
+        Exit Function
+        Error:
+            HandleLambda = "could not run lambda successfully"
+
+    End Function
+
+    Private Function CreateLambda(Name As String, Optional Equation As Variant = "", Optional UsePerformanceCache As Boolean = False, Optional SandboxExtras As Boolean = False) As Boolean
+        Dim Temp As stdLambda
+        Set Temp = stdLambda.Create(Equation, UsePerformanceCache, SandboxExtras)
+        LambdaArray(0, LambdaIndex) = Name
+        Set LambdaArray(1, LambdaIndex) = Temp
+        LambdaIndex = LambdaIndex + 1
+        ReDim Preserve LambdaArray(1, LambdaIndex)
+        CreateLambda = True
+    End Function
+
+    ' Lambda needs to be of Type stdLambda. It wanst specified, so that Console works without stdLambda dependency
+    Public Function LoadLambda(Name As String, Lambda As Variant) As Boolean
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": LoadLambda = False: Exit Function
+        LambdaArray(0, LambdaIndex) = Name
+        Set LambdaArray(1, LambdaIndex) = Lambda
+        LambdaIndex = LambdaIndex + 1
+        ReDim Preserve LambdaArray(1, LambdaIndex)
+        LoadLambda = True
+    End Function
+
+    ' Load a custom array to LambdaArray 2D (1,n)
+    Public Function LoadLambdaArray(Arr() As Variant) As Boolean
+
+        Dim i As Integer
+        Dim NoOfDimenions As Integer
+        Dim Temp As Integer
+        On Error GoTo Error
+
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": LoadLambdaArray = False: Exit Function
+        For i = 1 To 255
+            Temp = Ubound(Arr, i)
+            NoOfDimenions = i
+        Next
+        Error:
+        If NoOfDimenions = 2 Then
+            If Ubound(Arr, 1) = 1 Then
+                LambdaArray = Arr
+                LambdaIndex = Ubound(Arr, 2) + 1
+                ReDim Preserve LambdaArray(1, LambdaIndex)
+                LoadLambdaArray = True
+            Else
+                LoadLambdaArray = False ' Wrong Number of Elements for 1st dimension
+            End If        
+        Else
+            LoadLambdaArray = False ' Wrong Number of dimensions
+        End If
+
+    End Function
+
+    Public Function BindGlobal(LambdaNameOrIndex As String, Name As String, Variable As Variant) As Boolean
+        Dim Index As Long
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": BindGlobal = False: Exit Function
+        Index = FindLambda(LambdaNameOrIndex)
+        If Index <> -1 Then
+            Call LambdaArray(1, Index).BindGlobal(Name, Variable)
+            BindGlobal = True
+        Else
+            PrintEnter "Couldnt Bind Variable globally to " & LambdaNameOrIndex
+        End If
+    End Function
+
+    Public Function Bind(LambdaNameOrIndex As Variant, ParamArray Arguments() As Variant) As Boolean
+        Dim Args() As Variant
+        Dim Index As Long
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": Bind = False: Exit Function
+        Args = Arguments
+        Index = FindLambda(LambdaNameOrIndex)
+        If Index <> -1 Then
+            Set LambdaArray(1, Index) = LambdaArray(1, Index).BindEx(Args)
+            Bind = True
+        Else
+            PrintEnter "Couldnt Bind Arguments to " & LambdaNameOrIndex
+        End If
+    End Function
+
+    Private Function FindLambda(NameOrIndex As Variant) As Long
+        Dim i As Long
+        Dim Index As Long
+        If IsNumeric(NameOrIndex) Then
+            Index = Clng(NameOrIndex)
+        Else
+            For i = 0 To LambdaIndex
+                If LambdaArray(0, i) = NameOrIndex Then
+                    Index = i
+                    Exit For
+                End If
+                Index = -1
+            Next
+        End If
+        FindLambda = Index
+    End Function
+
+    ' Lambda needs to be of Type stdLambda. It wanst specified, so that Console works without stdLambda dependency
+    Public Function GetLambda(NameOrIndex As Variant) As Variant
+        Dim Index As Long
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": GetLambda = Nothing: Exit Function
+        Index = FindLambda(NameOrIndex)
+        If Index <> -1 Then Set GetLambda = LambdaArray(1, Index)
+    End Function
+
+    Public Function GetLambdaArray() As Variant
+        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": GetLambdaArray = Nothing: Exit Function
+        Set GetLambdaArray = LambdaArray
+    End Function
+
 '

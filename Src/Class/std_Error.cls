@@ -6,7 +6,7 @@ Attribute VB_Name = "std_Error"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
+Attribute VB_Exposed = False
 
 Option Explicit
 
@@ -36,12 +36,18 @@ Private Const ERROR_CATEGORY As Long = 0002
 ' Standard Value if no ErrorValue is passed
 Private Const EMPTY_ERROR As Variant = Empty
 
+' Pass your goal to log here. For example a Range or textfile
+Private LogDestination As Variant
+
 ' De-/-activate LogMode
-Private Const LogMode As Long = 0
+Private LogMode As Long
 Private Enum LogModeEnum
     Standard = 0    
     Console = 1
+    Sheet = 2
 End Enum
+
+Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (ByRef dwflags As Long, ByVal dwReserved As Long) As Long
 
 
 ' Public Errormethods
@@ -56,6 +62,17 @@ End Enum
         p_PrintError = Value
     End Property
 
+    Public Property Let Mode(Value As Long)
+        LogMode = Value
+    End Property
+    Public Property Get Mode() As Long
+        Mode = LogMode
+    End Property
+
+    Public Property Set Destination(n_Destination As Variant)
+        Set LogDestination = n_Destination
+    End Property
+
 
     ' Handles Errormessage
     Public Function Handle(Catalog() As Variant, Index As Long, ParamArray ErrorValues()) As Boolean
@@ -63,7 +80,6 @@ End Enum
         Dim Severity As Integer
         Dim Arguments As Variant
 
-        ProtInit
         Arguments = ErrorValues
         If IsArray(Catalog) = False Then
             Showw ErrorCatalog, 35
@@ -116,10 +132,12 @@ End Enum
                 Case ">=", "=>"        : If FirstValue >= SecondValue Then Variable = Handle(ErrorCatalog, 09, FirstValue, SecondValue): Exit Function
                 Case Else
             End Select
+        Else
+            If FirstValue = Empty                                     Then Variable = Handle(ErrorCatalog, 03, "FirstValue"):            Exit Function
         End If
         If MinValue <> Empty Then         If FirstValue < MinValue    Then Variable = Handle(ErrorCatalog, 10, FirstValue, MinValue):    Exit Function
         If MaxValue <> Empty Then         If FirstValue > MaxValue    Then Variable = Handle(ErrorCatalog, 11, FirstValue, MaxValue):    Exit Function
-        If FirstValue = Empty                                         Then Variable = Handle(ErrorCatalog, 03, "FirstValue"):            Exit Function
+        
 
     End Function
 
@@ -222,6 +240,28 @@ End Enum
 
     End Function
 
+        ' INTERNET_CONNECTION_MODEM   = &H1
+        ' INTERNET_CONNECTION_LAN     = &H2
+        ' INTERNET_CONNECTION_PROXY   = &H4
+        ' INTERNET_CONNECTION_OFFLINE = &H20
+    Public Function InternetConnection(Optional ConnectType As Long = 0) As Boolean
+
+        Dim L As Long
+        Dim R As Long
+        R = InternetGetConnectedState(L, 0&)
+        Select Case R
+            Case &H00:                         InternetConnection = Handle(ErrorCatalog, 35, ConnectType)
+            Case &H01: If ConnectType = R Then InternetConnection = Handle(ErrorCatalog, 36, ConnectType)
+            Case &H02: If ConnectType = R Then InternetConnection = Handle(ErrorCatalog, 37, ConnectType)
+            Case &H04: If ConnectType = R Then InternetConnection = Handle(ErrorCatalog, 38, ConnectType)
+            Case &H20: If ConnectType = R Then InternetConnection = Handle(ErrorCatalog, 39, ConnectType)
+            Case Else
+        End Select
+            
+    End Function
+                
+            
+
     ' Check DatabaseConnection and Handle Errors
     Public Function ConnectToDatabase(DataBasePath As String) As Boolean
 
@@ -281,8 +321,9 @@ End Enum
     Private Sub Printt(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
         
         Select Case LogMode
-            Case Standard: Debug.Print GetMessage(Catalog, Index, ErrorValues)
-            Case Console: 'PrintEnter GetMessage(Catalog, Index, ErrorValues)
+            Case LogModeEnum.Standard: Debug.Print GetMessage(Catalog, Index, ErrorValues)
+            Case LogModeEnum.Console: HandleOtherLogmode GetMessage(Catalog, Index, ErrorValues)
+            Case LogModeEnum.Sheet: HandleOtherLogmode GetMessage(Catalog, Index, ErrorValues)
         End Select
     
     End Sub
@@ -292,8 +333,9 @@ End Enum
         
         Dim Temp As Variant
         Select Case LogMode
-            Case Standard: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
-            Case Console: ' Nothing, as it happens in Printt for the console
+            Case LogModeEnum.Standard: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
+            Case LogModeEnum.Console: ' Nothing, as it happens in Printt for the console
+            Case LogModeEnum.Sheet: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
         End Select
         
     End Sub
@@ -306,11 +348,35 @@ End Enum
         ArrayAnswer = Array("y","n")
         ArrayMessage = Array("Answer is Yes", "Answer is No")
         Select Case LogMode
-            Case Standard: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbYesNo, "QUESTION")
-            Case Console: 'Temp = CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
+            Case LogModeEnum.Standard: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbYesNo, "QUESTION")
+            Case LogModeEnum.Console: 'Temp = CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
+            Case LogModeEnum.Sheet: Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbYesNo, "QUESTION")
         End Select
         If Temp = False Then Ask = IS_ERROR
     End Function
+
+    Private Sub HandleOtherLogmode(Text As String)
+        
+        Dim i As Long
+        If Not LogDestination Is Nothing Then
+            Select Case TypeName(LogDestination)
+                Case "Range"
+                    Do Until LogDestination.Offset(i, 0).Formula = ""
+                        i = i + 1
+                    Loop
+                    LogDestination.Offset(i, 0).Formula = Text
+                Case "File"
+                    Dim TextStream As Object
+                    Set TextStream = LogDestination.OpenAsTextStream(2, 2) '(ForWriting, TristateUseDefault)
+                    TextStream.WriteLine Text
+                    TextStream.Close
+                Case "Console"
+                    LogDestination.PrintEnter Text, (&H100000FF - &H10000000)
+                Case Else
+            End Select
+        End If
+
+    End Sub
     
     ' Gets Errormessage
     Private Function GetMessage(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As String
@@ -318,8 +384,7 @@ End Enum
         Dim ErrorMessage As String
         Dim String1 As String
         Dim i As Long
-        String1 = ErrorCatalog(1, Index)
-        ProtInit
+        String1 = Catalog(1, Index)
         ErrorMessage = "Category: " & Catalog(1, 0)                              & vbCrLf & _
                        "Severity: " & Catalog(0, Index)                          & vbCrLf & _
                        "Index   : " & Index                                      & vbCrLf & _
@@ -335,6 +400,13 @@ End Enum
         GetMessage = ErrorMessage
     
     End Function
+
+    Private Sub Class_Initialize()
+        ProtInit
+    End Sub
+
+    Private Sub Class_Terminate()
+    End Sub
     
     ' Runs once to Initialize all Errormessages
     Private Sub ProtInit()
@@ -376,11 +448,11 @@ End Enum
             ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "Error-Catalog not a 2D Array with size (1,X)"
             ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "Error-Catalog not properly initialize"
             ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "Error-Catalog not an Array"
-            ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
-            ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
-            ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
-            ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
-            ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
+            ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "No Internet Connection"
+            ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "Internet Connection is Modem"
+            ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "Internet Connection is Lan"
+            ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "Internet Connection is Proxy"
+            ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "Internet Connection is Offline"
             ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
             ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
             ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
