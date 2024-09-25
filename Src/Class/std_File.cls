@@ -13,99 +13,34 @@ Option Explicit
 Private Initialized As Boolean
 Private ErrorCatalog(1, 99) As Variant
 Private FSO As New FileSystemObject
-
-
-
-
-'File
-'    Attributes
-'    Copy
-'    DateCreated
-'    DateLastAccessed
-'    DateLastModified
-'    Delete
-'    Drive
-'    Move
-'    Name
-'    OpenAsTextStream
-'    ParentFolder
-'    Path
-'    ShortName
-'    ShortPath
-'    Size
-'    Type
-'FileSystemObject
-'    BuildPath
-'    CopyFile
-'    CopyFolder
-'    CreateFolder
-'    CreateTextFile
-'    DeleteFile
-'    DeleteFolder
-'    DriveExists
-'    Drives
-'    FileExists
-'    FolderExists
-'    GetAbsolutePathName
-'    GetBaseName
-'    GetDrive
-'    GetDriveName
-'    GetExtensionName
-'    GetFile
-'    GetFileName
-'    GetFileVersion
-'    getFolder
-'    GetParentFolderName
-'    GetSpecialFolder
-'    GetStandardStram
-'    GetTempName
-'    MoveFile
-'    MoveFolder
-'    OpentextFile
-'Folder
-'    Attributes
-'    Copy
-'    CreateTextFile
-'    DateCreated
-'    DateLastAccessed
-'    DateLastModified
-'    Delete
-'    Drive
-'    Files
-'    IsRootFolder
-'    Move
-'    Name
-'    ParentFolder
-'    Path
-'    ShortName
-'    ShortPath
-'    Size
-'    SubFolders
-'    Type
-'TextStream
-'    AtEndOfLine
-'    AtEndOfStream
-'    Close
-'    Column
-'    Line
-'    Read
-'    ReadAll
-'    ReadLine
-'    Skip
-'    SkipLine
-'    Write
-'    WriteBlankLines
-'    WriteLine
+Private Handler As New std_Error
 
 ' Public Procedures
+
+    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
+        On Error GoTo Error
+        Let Handler.ShowError = n_ShowError
+        Let Handler.LogError = n_LogError
+        Set Handler.ShowDestination = n_ShowDestination
+        Set Handler.LoggingDestination = n_LoggingDestination
+        AssignHandler = True
+        Exit Function
+        Error:
+    End Function
+
+    Public Property Get IS_ERROR() As Boolean
+        IS_ERROR = Handler.IS_ERROR
+    End Property
+
     Public Function Create() As std_File
         Set Create = New std_File
     End Function
 
-    Public Function GetDriveValue(SearchValue As Variant, SearchProperty As String, ReturnProperty As String) As Variant
+    Public Function GetDriveValue(SearchValue As Variant, SearchProperty As String, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
 
         Dim Drive As Drive
         Dim Found As Boolean
+        Dim ErrorCode As Long
         For Each Drive In FSO.Drives
             Select Case UCase(SearchProperty)
                 Case "AVAILABLESPACE": If SearchValue = Drive.AvailableSpace Then Found = True: Exit For
@@ -121,8 +56,7 @@ Private FSO As New FileSystemObject
                 Case "TOTALSIZE"     : If SearchValue = Drive.TotalSize      Then Found = True: Exit For
                 Case "VOLUMENAME"    : If SearchValue = Drive.VolumeName     Then Found = True: Exit For
                 Case Else
-                    GetDriveValue = std_Error.Handle(ErrorCatalog, 4, SearchValue, SearchProperty)
-                    Exit Function
+                    ErrorCode = 4: GoTo Error
             End Select
         Next Drive
         If Found = True Then
@@ -140,18 +74,28 @@ Private FSO As New FileSystemObject
                 Case "TOTALSIZE"     : GetDriveValue = Drive.TotalSize
                 Case "VOLUMENAME"    : GetDriveValue = Drive.VolumeName
                 Case Else
-                    GetDriveValue = std_Error.Handle(ErrorCatalog, 4, SearchValue, SearchProperty)
+                    ErrorCode = 4: GoTo Error
             End Select
             Else
-                GetDriveValue = std_Error.Handle(ErrorCatalog, 2, SearchValue, SearchProperty)
+                ErrorCode = 2: GoTo Error
+        End If
+        Exit Function
+
+        Error:
+        If ThrowError Then
+            GetDriveValue = Handler.Handle(ErrorCatalog, ErrorCatalog, SearchValue, SearchProperty, ReturnProperty)
+        Else
+            GetDriveValue = Handler.IS_ERROR
         End If
 
     End Function
 
-    Public Function GetFolderValue(FolderPath As String, ReturnProperty As String) As Variant
+    Public Function GetFolderValue(FolderPath As String, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
 
         Dim Folder As Folder
+        Dim ErrorCode As Long
         On Error GoTo Error
+        ErrorCode = 9
         Set Folder = FSO.GetFolder(FolderPath)
         Select Case UCase(ReturnProperty)
             Case "ATTRIBUTES"       : GetFolderValue = Folder.Attributes
@@ -170,19 +114,25 @@ Private FSO As New FileSystemObject
             Case "SUBFOLDERS"       : GetFolderValue = Folder.SubFolders
             Case "TYPE"             : GetFolderValue = Folder.Type
             Case Else
-                GetFolderValue = std_Error.Handle(ErrorCatalog, 11, ReturnProperty)
+                ErrorCode = 11: GoTo Error
         End Select
         Exit Function
 
         Error:
-        GetFolderValue = std_Error.Handle(ErrorCatalog, 9, FolderPath)
+        If ThrowError Then
+            GetFolderValue = Handler.Handle(ErrorCatalog, ErrorCode, FolderPath, ReturnProperty)
+        Else
+            GetFolderValue = Handler.IS_ERROR
+        End If
             
     End Function
 
-    Public Function GetFileValue(FilePath As String, ReturnProperty As String, Optional ReturnCharacters As Long = 0) As Variant
+    Public Function GetFileValue(FilePath As String, ReturnProperty As String, Optional ReturnCharacters As Long = 0, Optional ThrowError As Boolean = True) As Variant
 
         Dim File As File
+        Dim ErrorCode As Long
         On Error GoTo Error
+        ErrorCode = 16
         Set File = FSO.GetFile(FilePath)
         Select Case UCase(ReturnProperty)
             Case "ATTRIBUTES"       : GetFileValue = File.Attributes
@@ -206,12 +156,16 @@ Private FSO As New FileSystemObject
             Case "READALL"          : GetFileValue = File.OpenAsTextStream().ReadAll
             Case "READLINE"         : GetFileValue = File.OpenAsTextStream().ReadLine()
             Case Else
-                GetFileValue = std_Error.Handle(ErrorCatalog, 18, ReturnProperty)
+                ErrorCode = 18: GoTo Error
         End Select
         Exit Function
 
         Error:
-        GetFileValue = std_Error.Handle(ErrorCatalog, 16, FilePath)
+        If ThrowError Then
+            GetFileValue = Handler.Handle(ErrorCatalog, ErrorCode, FilePath, ReturnProperty)
+        Else
+            GetFileValue = Handler.IS_ERROR
+        End If
             
     End Function
 
@@ -235,45 +189,41 @@ Private FSO As New FileSystemObject
     Public Function Exists(Path As String, Optional ExistsAs As String = "", Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
 
         Dim Returns As Boolean
-        Dim Typee As Long
+        Dim ErrorCode As Long
 
         Select Case UCase(ExistsAs)
             Case ""
-                Typee = 1
+                ErrorCode = 1
                 If Returns = False Then Returns = FSO.DriveExists(Path)
-                Typee = 8
+                ErrorCode = 8
                 If Returns = False Then Returns = FSO.FolderExists(Path)
-                Typee = 15
+                ErrorCode = 15
                 If Returns = False Then Returns = FSO.FileExists(Path)
             Case "DRIVE"
-                Typee = 1
+                ErrorCode = 1
                 If Returns = False Then Returns = FSO.DriveExists(Path)
             Case "FOLDER"
-                Typee = 8
+                ErrorCode = 8
                 If Returns = False Then Returns = FSO.FolderExists(Path)
             Case "FILE"
-                Typee = 15
+                ErrorCode = 15
                 If Returns = False Then Returns = FSO.FileExists(Path)
             Case Else
-                Exists = std_Error.Handle(ErrorCatalog, 29, ExistsAs)
+                ErrorCode = 29: GoTo Error
         End Select
         If ShouldExist Then
-            If Returns = False Then
-                If ThrowError Then
-                    Exists = std_Error.Handle(ErrorCatalog, Typee + 1, Path, ShouldExist)
-                Else
-                    Exists = std_Error.IS_ERROR
-                End If
-            End If
+            If Returns = False Then ErrorCode = ErrorCode + 1: GoTo Error
         Else
-            If Returns = False Then
-                If ThrowError Then
-                    Exists = std_Error.Handle(ErrorCatalog, Typee, Path, ShouldExist)
-                Else
-                    Exists = std_Error.IS_ERROR
-                End If
-            End If
-        End If        
+            If Returns Then
+                If ThrowError Then GoTo Error
+        End If
+
+        Error:
+        If ThrowError Then
+            Exists = Handler.Handle(ErrorCatalog, ErrorCode, Path, ExistsAs, ShouldExist)
+        Else
+            Exists = Handler.IS_ERROR
+        End If
 
     End Function
 
@@ -281,19 +231,14 @@ Private FSO As New FileSystemObject
 
         Dim Found As Boolean
         Dim Number As Long
-        Dim Temp As Boolean
         On Error GoTo Error
         Number = 0
         Repeat:
         Found = False
         Found = FSO.FolderExists(Path & "\" & Name)
-        If Found = True Then
-            If Unique = True Then
-                If ThrowError = True Then
-                    GoTo Error
-                Else
-                    Temp = std_Error.IS_ERROR
-                End If
+        If Found Then
+            If Unique Then
+                GoTo Error
             Else
                 Dim Position As Long
                 Position = InStr(1, Name, ".") - 1
@@ -309,7 +254,9 @@ Private FSO As New FileSystemObject
         Exit Function
 
         Error:
-        Temp = std_Error.Handle(ErrorCatalog, 8, Path, Name, Unique, ThrowError)
+        If ThrowError Then
+            Call Handler.Handle(ErrorCatalog, 8, Path, Name, Unique, ThrowError)
+        End If
         Set CreateFolderObj = Nothing
 
     End Function
@@ -317,27 +264,22 @@ Private FSO As New FileSystemObject
     Public Function CreateFolder(Path As String, Name As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As Folder
         Set Temp = CreateFolderObj(Path, Name, Unique, ThrowError)
-        If Temp Is Nothing Then CreateFolder = std_Error.IS_ERROR
+        If Temp Is Nothing Then CreateFolder = Handler.IS_ERROR
     End Function
 
     Public Function CreateFileObj(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As File
 
         Dim Found As Boolean
         Dim Number As Long
-        Dim Temp As Boolean
         Dim Stream As TextStream
         On Error GoTo Error
         Number = 0
         Repeat:
         Found = False
         Found = FSO.FileExists(FolderPath & "\" & FileName)
-        If Found = True Then
-            If Unique = True Then
-                If ThrowError = True Then
-                    GoTo Error
-                Else
-                    Temp = std_Error.IS_ERROR
-                End If
+        If Found Then
+            If Unique Then
+                GoTo Error
             Else
                 Dim Position As Long
                 Position = InStr(1, FileName, ".") - 1
@@ -353,7 +295,9 @@ Private FSO As New FileSystemObject
         Exit Function
 
         Error:
-        Temp = std_Error.Handle(ErrorCatalog, 15, FolderPath, FileName, Unique, ThrowError)
+        If ThrowError Then
+            Call Handler.Handle(ErrorCatalog, 15, FolderPath, FileName, Unique, ThrowError)
+        End If
         Set CreateFileObj = Nothing
 
     End Function
@@ -361,16 +305,9 @@ Private FSO As New FileSystemObject
     Public Function CreateFile(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As File
         Set Temp = CreateFileObj(FolderPath, FileName, Unique, ThrowError)
-        If Temp Is Nothing Then CreateFile = std_Error.IS_ERROR
+        If Temp Is Nothing Then CreateFile = Handler.IS_ERROR
     End Function
 '
-
-
-
-
-
-
-
 
 
 ' Private Procedures
