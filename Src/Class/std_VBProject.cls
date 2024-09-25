@@ -14,15 +14,26 @@ Private VBProj As VBIDE.VBProject
 Private Initialized As Boolean
 Private ErrorCatalog(1, 99) As Variant
 Private TempIncludes() As String
-
-
-
-' TODO
-' Implement StartLine for AddCodeFromComponent and AddCodeFromString
-' Look into DecludeFolder
+Private Handler As New std_Error
 
 
 ' Public Procedures
+
+    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
+        On Error GoTo Error
+        Let Handler.ShowError = n_ShowError
+        Let Handler.LogError = n_LogError
+        Set Handler.ShowDestination = n_ShowDestination
+        Set Handler.LoggingDestination = n_LoggingDestination
+        AssignHandler = True
+        Exit Function
+        Error:
+    End Function
+
+    Public Property Get IS_ERROR() As Boolean
+        IS_ERROR = Handler.IS_ERROR
+    End Property
+
     Public Function Create(Project As VBIDE.VBProject) As std_VBProject
         Set Create = New std_VBProject
         Set Create.Project = Project
@@ -32,50 +43,66 @@ Private TempIncludes() As String
         Set VBProj = Project
     End Property
 
-    Public Function Include(FilePath As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As Long = 0) As Boolean
+    Public Function Include(FilePath As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As Long = 0, Optional ThrowError As Boolean = True) As Boolean
     
         Dim Temp() As String
         Dim CompName As String
+        Dim ErrorCode As Long
+        Dim ErroValue As Variant
 
-        If FilePath = Empty Then Include = std_Error.Handle(ErrorCatalog, 5, FilePath): Exit Function
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then Include = std_Error.Handle(ErrorCatalog, 25, PasteType): Exit Function
+        If FilePath = Empty Then ErrorCode = 5: ErrorValue = FilePath: GoTo Error
+        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error
 
         FilePath = ValidateFilePath(FilePath)
         Temp = Split(FilePath, "/")
         CompName = GetCompName(FilePath)
 
         If CheckFileFormat(FilePath) Then
-                Include = Import(FilePath, CompName, PasteType, Temporary)
+                Include = Import(FilePath, CompName, PasteType, Temporary, ThrowError)
         ElseIf FilePath Like "*.frx" Then
         ElseIf TryAsInclude Then
-            If ComponentName = Empty Then Include = std_Error.Handle(ErrorCatalog, 18, ComponentName): Exit Function
-            If ComponentType = 0     Then Include = std_Error.Handle(ErrorCatalog, 20, ComponentType): Exit Function
-            If AddComponent(ComponentName, ComponentType, PasteType) <> std_Error.IS_Error Then
-                Include = AddCodeFromFile(FilePath, ComponentName)
+            If ComponentName = Empty Then ErrorCode = 18: ErrorValue = ComponentName: GoTo Error
+            If ComponentType = 0     Then ErrorCode = 20: ErrorValue = ComponentType: GoTo Error
+            If AddComponent(ComponentName, ComponentType, PasteType, ThrowError) <> Handler.IS_Error Then
+                Include = AddCodeFromFile(FilePath, ComponentName, ThrowError)
             End If
             Call AddTemporary(Temporary, CompName)
         Else
-            Include = std_Error.Handle(ErrorCatalog, 16, FilePath)
+            ErrorCode = 16: ErrorValue = FilePath: GoTo Error
+        End If
+        Exit Function
+
+        Error:
+        If ThrowError Then
+            Include = Handler.Handle(ErrorCatalog, ErrorCode, ComponentType)
+        Else
+            Include = Handler.IS_ERROR
         End If
     
     End Function
     
-    Public Function Declude(CompName As String) As Boolean
+    Public Function Declude(CompName As String, Optional ThrowError As Boolean = True) As Boolean
 
         Dim VBComp As VBIDE.VBComponent
         Dim Found As Boolean
+        Dim ErrorCode As Long
 
         On Error GoTo Error
-        If CompName = Empty Then Declude = std_Error.Handle(ErrorCatalog, 5, CompName): Exit Function
-        If CompName = "std_VBProject" Then Declude = std_Error.Handle(ErrorCatalog, 17, CompName): Exit Function
-        If CompName = "std_Error" Then Declude = std_Error.Handle(ErrorCatalog, 17, CompName): Exit Function
+        If CompName = Empty           Then ErrorCode = 05: GoTo Error
+        If CompName = "std_VBProject" Then ErrorCode = 17: GoTo Error
+        If CompName = "Handler"       Then ErrorCode = 17: GoTo Error
         Set VBComp = VBProj.VBComponents(CompName) 
         VBProj.VBComponents.Remove VBComp
         Exit Function
 
         Error:
-        If Exists(CompName, VBProj) = False Then Declude = std_Error.Handle(ErrorCatalog, 12, CompName): Exit Function
-        Declude = std_Error.Handle(ErrorCatalog, 14, CompName): Exit Function
+        ErrorCode = 14
+        If Exists(CompName, VBProj) = False Then ErrorCode = 12
+        If ThrowError Then
+            Declude = Handler.Handle(ErrorCatalog, ErrorCode, CompName)
+        Else
+            Declude = Handler.IS_ERROR
+        End If
     
     End Function
     
@@ -83,9 +110,11 @@ Private TempIncludes() As String
     
         Dim VBComp As VBComponent
         Dim i As Long
+        Dim ErrorValue As Variant
+        Dim ErrorCode As Long
 
-        If ComponentType <> 1 And ComponentType <> 2 And ComponentType <> 3 And ComponentType <> 11 And ComponentType <> 100 Then AddComponent = std_Error.Handle(ErrorCatalog, 20, Name): Exit Function
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then AddComponent = std_Error.Handle(ErrorCatalog, 25, PasteType): Exit Function 
+        If ComponentType <> 1 And ComponentType <> 2 And ComponentType <> 3 And ComponentType <> 11 And ComponentType <> 100 Then ErrorCode = 20: ErrorValue = Name: GoTo Error
+        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error 
 
         If Exists(Name, VBProj) Then
             If PasteType = 2 Then
@@ -99,19 +128,27 @@ Private TempIncludes() As String
                 Exit Function
             Else
                 If ThrowError Then
-                    AddComponent = std_Error.Handle(ErrorCatalog, 19, Name)
+                    AddComponent = ErrorCode = 19: ErrorValue = Name: GoTo Error
                 Else
-                    AddComponent = std_Error.IS_ERROR
+                    AddComponent = Handler.IS_ERROR
                 End If
             End If
         Else
             Set VBComp = VBProj.VBComponents.Add(ComponentType)
             VBComp.Name = Name
         End If
+        Exit Function
+
+        Error:
+        If ThrowError Then
+            AddComponent = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue)
+        Else
+            AddComponent = Handler.IS_ERROR
+        End If
     
     End Function
     
-    Public Function AddCodeFromFile(FilePath As String, CompName As String, Optional StartLine As Long = 1) As Boolean
+    Public Function AddCodeFromFile(FilePath As String, CompName As String, Optional StartLine As Long = 1, Optional ThrowError As Boolean = True) As Boolean
     
         Dim CodeMod As CodeModule
         Dim Line As String
@@ -133,82 +170,114 @@ Private TempIncludes() As String
         Close #FileNumber
         Exit Function
         Error:
-        AddCodeFromFile = std_Error.Handle(ErrorCatalog, ErrorCode, CompName)
-
-    End Function
-
-    Public Function AddCodeFromComponent(FromComponent As VBComponent, ToComponent As VBComponent, Optional StartLine As Long = 1) As Boolean
-    
-        On Error GoTo Error
-        Call ToComponent.CodeModule.AddFromString(FromComponent.CodeModule.Lines(1, FromComponent.CodeModule.CountOfLines))
-        Exit Function
-
-        Error:
-        AddCodeFromComponent = std_Error.Handle(ErrorCatalog, 28, FromComponent.Name)
-
-    End Function
-
-    Public Function AddCodeFromString(CompName As String, Text As String, Optional StartLine As Long = 1) As Boolean
-
-        Dim VBComp As VBComponent
-        Set VBComp = Exists(CompName, VBProj, True, False)
-        If Not VBComp Is Nothing Then
-            VBComp.CodeModule.AddFromString(Text)
+        If ThrowError Then
+            AddCodeFromFile = Handler.Handle(ErrorCatalog, ErrorCode, CompName)
         Else
-            AddCodeFromString = std_Error.Handle(ErrorCatalog, 12, CompName, Text)
+            AddCodeFromFile = Handler.IS_ERROR
         End If
 
     End Function
 
-    Public Function DeleteCode(CompName As String, Optional StartLine As Long = 1, Optional EndLine As Long = 0) As Boolean
+    Public Function AddCodeFromComponent(FromComponent As VBComponent, ToComponent As VBComponent, Optional StartLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    
+        On Error GoTo Error
+        If StartLine = 0 Then
+            Call ToComponent.CodeModule.AddFromString(FromComponent.CodeModule.Lines(1, FromComponent.CodeModule.CountOfLines))
+        Else
+            Call ToComponent.CodeModule.InsertLines(StartLine, FromComponent.CodeModule.Lines(1, FromComponent.CodeModule.CountOfLines))
+        End If
+        Exit Function
+
+        Error:
+        If ThrowError Then
+            AddCodeFromComponent = Handler.Handle(ErrorCatalog, 28, FromComponent.Name)
+        Else
+            AddCodeFromComponent = Handler.IS_ERROR
+        End If
+
+    End Function
+
+    Public Function AddCodeFromString(CompName As String, Text As String, Optional StartLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+
+        Dim VBComp As VBComponent
+        Set VBComp = Exists(CompName, VBProj, True, False)
+        If Not VBComp Is Nothing Then
+            If StartLine = 0 Then
+                VBComp.CodeModule.InsertLines(StartLine, Text)
+            Else
+                VBComp.CodeModule.AddFromString(Text)
+            End If
+        Else
+            If ThrowError Then
+                AddCodeFromString = Handler.Handle(ErrorCatalog, 12, CompName, Text)
+            Else
+                AddCodeFromString = Handler.IS_ERROR
+            End If
+        End If
+
+    End Function
+
+    Public Function DeleteCode(CompName As String, Optional StartLine As Long = 1, Optional EndLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
 
         Dim CodeModule As CodeModule
+        Dim ErrorCode As Long
 
         On Error GoTo Error
-        If CompName = Empty Then DeleteCode = std_Error.Handle(ErrorCatalog, 5, CompName): Exit Function
+        If CompName = Empty Then DeleteCode = ErrorCode = 5: GoTo Error
         Set CodeModule = VBProj.VBComponents(CompName).CodeModule
         If EndLine = 0 Then EndLine = CodeModule.CountOfLines
+        ErrorCode = 27
         CodeModule.DeleteLines StartLine, EndLine
         Exit Function
 
         Error:
-        DeleteCode = std_Error.Handle(ErrorCatalog, 27, CompName, StartLine, EndLine)
-
+        If ThrowError Then
+            DeleteCode = Handler.Handle(ErrorCatalog, ErrorCode, CompName, StartLine, EndLine)
+        Else
+            DeleteCode = Handler.IS_ERROR
+        End If
 
     End Function
     
-    Public Function IncludeFolder(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ParamArray Ignore() As Variant) As Boolean
-    
+    Public Function IncludeFolder(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
-        IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, Ignores)
-    
+        IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
     End Function
 
-    Public Function IncludeFolderArr(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, Ignore() As Variant) As Boolean
+    Public Function IncludeFolderArr(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
     
         Dim fso As Object
         Dim Folder As Object
+        Dim ErrorCode As Long
+        Dim ErrorValue As Variant
     
         On Error GoTo Error
-        If FilePath = Empty Then IncludeFolderArr = std_Error.Handle(ErrorCatalog, 5, FilePath): Exit Function
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then IncludeFolderArr = std_Error.Handle(ErrorCatalog, 25, Name): Exit Function
+        If FilePath = Empty Then ErrorCode = 5: ErrorValue = FilePath: GoTo Error
+        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = Name: GoTo Error
+        ErrorCode = 29
+        ErrorValue = FilePath
         Set fso = CreateObject("Scripting.FileSystemObject")
         Set Folder = fso.GetFolder(FolderPath)
-        IncludeFolderArr = RecursiveInclude(Folder, PasteType, Temporary, Ignore, TryAsInclude)
+        IncludeFolderArr = RecursiveInclude(Folder, PasteType, Temporary, Ignore, TryAsInclude, ThrowError)
 
         Error:
-        IncludeFolderArr = std_Error.Handle(ErrorCatalog, 29, FilePath): Exit Function
+        If ThrowError Then
+            IncludeFolderArr = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue): Exit Function
+        Else
+            IncludeFolderArr = Handler.IS_ERROR
+        End If
     
     End Function
     
-    Public Function DecludeFolder(FolderPath As String) As Boolean
+    Public Function DecludeFolder(FolderPath As String, Optional ThrowError As Boolean = True) As Boolean
     
         Dim VBComp As VBComponent
         Dim fso As Object
         Dim Folder As Object
+        Dim ErrorCode As Long
     
-        If FolderPath = Empty Then DecludeFolder = std_Error.Handle(ErrorCatalog, 5, FolderPath): Exit Function
+        If FolderPath = Empty Then ErrorCode = 5: GoTo Error
         Set fso = CreateObject("Scripting.FileSystemObject")
         Set Folder = fso.GetFolder(FolderPath)
         For Each File In Folder.Files
@@ -217,12 +286,20 @@ Private TempIncludes() As String
             Next
         Next    
         For Each SubFolder In Folder.SubFolders
-            DecludeFolder = DecludeFolder(SubFolder.Path)
+            DecludeFolder = DecludeFolder(SubFolder.Path, ThrowError)
         Next
+        Exit Function
+
+        Error:
+        If ThrowError Then
+            DecludeFolder = Handler.Handle(ErrorCatalog, 5, FolderPath)
+        Else
+            DeculdeFolder = Handler.IS_ERROR
+        End If
     
     End Function
 
-    Public Function AddReference(Optional AddFromFile As String = "", Optional AddFromGuid As String = "", Optional Major As Long = 0, Optional Minor As Long = 0) As Boolean
+    Public Function AddReference(Optional AddFromFile As String = "", Optional AddFromGuid As String = "", Optional Major As Long = 0, Optional Minor As Long = 0, Optional ThrowError As Boolean = True) As Boolean
 
         Dim ErrorCode As Long
         Dim Ref As VBIDE.Reference
@@ -244,11 +321,15 @@ Private TempIncludes() As String
         Exit Function
 
         Error:
-        AddReference = std_Error.Handle(ErrorCatalog, ErrorCode, AddFromFile, AddFromGuid, Major, Minor)
+        If ThrowError Then
+            AddReference = Handler.Handle(ErrorCatalog, ErrorCode, AddFromFile, AddFromGuid, Major, Minor)
+        Else
+            AddReference = Handler.IS_ERROR
+        End If
 
     End Function
 
-    Public Function RemoveReference(Value As String, AccordingTo As String) As Boolean
+    Public Function RemoveReference(Value As String, AccordingTo As String, Optional ThrowError As Boolean = True) As Boolean
         
         Dim Ref As VBIDE.Reference
         
@@ -269,7 +350,11 @@ Private TempIncludes() As String
         Exit Function
 
         Error:
-        RemoveReference = std_Error.Handle(ErrorCatalog, 26, Ref.FullPath, Ref.Name, Ref.Major, Ref.Minor, Ref.Description, Ref.Type, Ref.BuiltIn, Ref.GUID, Ref.IsBroken)
+        If ThrowError Then
+            RemoveReference = Handler.Handle(ErrorCatalog, 26, Ref.FullPath, Ref.Name, Ref.Major, Ref.Minor, Ref.Description, Ref.Type, Ref.BuiltIn, Ref.GUID, Ref.IsBroken)
+        Else
+            RemoveReference = Handler.IS_ERROR
+        End If
     
     End Function
 
@@ -328,16 +413,13 @@ Private TempIncludes() As String
 
     End Function
 
-    Public Function IncludeWorkbook(WB As Workbook, PasteType As Long, Temporary As Boolean, ParamArray Ignore() As Variant) As Boolean
-
+    Public Function IncludeWorkbook(WB As Workbook, PasteType As Long, Temporary As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
-        IncludeWorkbook = IncludeWorkbookArr(WB, PasteType, Temporary, TryAsInclude, Ignores)
-    
+        IncludeWorkbook = IncludeWorkbookArr(WB, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
     End Function
 
-    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As Long, Temporary As Boolean, Ignore() As Variant) As Boolean
-
+    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As Long, Temporary As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
         Dim WBProject As VBProject
         Dim VBComp As VBComponent
         Dim Existing As Boolean
@@ -345,31 +427,32 @@ Private TempIncludes() As String
         Set WBProject = WB.VBProject
         For Each VBComp In WBProject.VBComponents
             If Exists(VBComp.Name, Ignore) = False Then
-                If AddComponent(VBComp.Name, VBComp.Type, PasteType, False) <> std_Error.IS_ERROR Then
-                    If PasteType = 1 Then Call DeleteCode(VBComp.Name)
-                    Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name))
-                    Call AddTemporary(Temporary, VBComp.Name)
+                If AddComponent(VBComp.Name, VBComp.Type, PasteType, False, ThrowError) <> Handler.IS_ERROR Then
+                    If PasteType = 1 Then Call DeleteCode(VBComp.Name, ThrowError)
+                    Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), ThrowError)
+                    Call AddTemporary(Temporary, VBComp.Name, ThrowError)
                 End If
             End If
         Next VBComp
-    
     End Function
 
-    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As Long, Optional Temporary As Boolean = False) As Boolean
-
+    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As Long, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
         Dim VBComp As VBComponent
 
         Set VBComp = Exists(CompName, WB.VBProject, True, False)
         If Not VBComp Is Nothing Then
-            If AddComponent(VBComp.Name, VBComp.Type, PasteType, False) <> std_Error.IS_ERROR Then
-                If PasteType = 1 Then Call DeleteCode(VBComp.Name)
-                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name))
-                Call AddTemporary(Temporary, VBComp.Name)
+            If AddComponent(VBComp.Name, VBComp.Type, PasteType, False, ThrowError) <> Handler.IS_ERROR Then
+                If PasteType = 1 Then Call DeleteCode(VBComp.Name, ThrowError)
+                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), ThrowError)
+                Call AddTemporary(Temporary, VBComp.Name, ThrowError)
             End If
         Else
-            IncludeWorkbookSingle = std_Error.Handle(ErrorCatalog, 28, WB.Name, CompName, PasteType, Temporary)
+            If ThrowError Then
+                IncludeWorkbookSingle = Handler.Handle(ErrorCatalog, 28, WB.Name, CompName, PasteType, Temporary)
+            Else
+                IncludeWorkbookSingle = Handler.IS_ERROR
+            End If
         End If
-    
     End Function
 
     Public Function Exists(Search As Variant, Optional SearchIn As Variant, Optional ShouldExist As Boolean = True, Optional ReturnAsBoolean As Boolean = True) As Variant
@@ -420,29 +503,29 @@ Private TempIncludes() As String
 '
 
 ' Private Procedures
-    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False) As Boolean
+    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
 
         Dim VBComp As VBIDE.VBComponent
         Dim Found As Boolean
         Dim Temp As Boolean
+        Dim ErrorCode As Long
+        Dim ErrorValue As Variant
 
         On Error GoTo Error
+        ErrorCode = 1: ErrorValue = FilePath: GoTo Error
         If CheckClassType(FilePath) = False Then Exit Function
-        For Each VBComp In VBProj.VBComponents
-            If VBComp.Name = ComponentName Then Found = True: Exit For
-        Next
+        Found = Exists(ComponentName)
         Select Case PasteType
             Case 0
-                If Found <> True Then
-                    VBProj.VBComponents.Import FilePath
+                If Found Then
+                    ErrorCode = 11: ErrorValue = ComponentName: GoTo Error
                 Else
-                    Import = std_Error.Handle(ErrorCatalog, 11, ComponentName)
-                    Exit Function
+                    VBProj.VBComponents.Import FilePath
                 End If
             Case 1
                 If Found Then
                     VBComp.Name = ComponentName & "_TODELETE"
-                    If Declude(ComponentName & "_TODELETE") <> std_Error.IS_ERROR Then
+                    If Declude(ComponentName & "_TODELETE", ThrowError) <> Handler.IS_ERROR Then
                         VBProj.VBComponents.Import FilePath
                     End If
                 Else
@@ -451,8 +534,7 @@ Private TempIncludes() As String
             Case 2
                 VBProj.VBComponents.Import FilePath
             Case Else
-                Import = std_Error.Handle(ErrorCatalog, 25, PasteType)
-                Exit Function
+                ErrorCode = 25: ErrorValue = PasteType: GoTo Error
         End Select
         If Temporary Then
             ReDim Preserve TempIncludes(Ubound(TempIncludes) + 1)
@@ -460,12 +542,16 @@ Private TempIncludes() As String
         End If
         Exit Function
 
-        Error: 
-        Import = std_Error.Handle(ErrorCatalog, 1, FilePath)
+        Error:
+        If ThrowError Then
+            Import = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue)
+        Else
+            Import = Handler.IS_ERROR
+        End If
 
     End Function
 
-    Private Function RecursiveInclude(Folder As Object, PasteType As Long, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False) As Boolean
+    Private Function RecursiveInclude(Folder As Object, PasteType As Long, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
 
         Dim File As Object
         Dim SubFolder As Object
@@ -484,7 +570,7 @@ Private TempIncludes() As String
             Else
                 CompName = GetCompName(File.Path)
                 CompType = vbext_ComponentType.vbext_ct_StdModule
-                If Include(File.Path, PasteType, Temporary, TryAsInclude, CompName, CompType) = std_Error.IS_Error Then RecursiveInclude = std_Error.IS_Error
+                If Include(File.Path, PasteType, Temporary, TryAsInclude, CompName, CompType, ThrowError) = Handler.IS_Error Then RecursiveInclude = Handler.IS_Error
                 CompName = ""
                 CompType = 0
             End If
@@ -497,14 +583,13 @@ Private TempIncludes() As String
             If Skip Then
                 Skip = False
             Else
-            RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore)
+            RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore, TryAsInclude, ThrowError)
             End If
         Next
 
     End Function
 
     Private Function GetCompName(FilePath As String) As String
-
         Dim Temp() As String
         Dim Name As String
 
@@ -513,7 +598,6 @@ Private TempIncludes() As String
         Name = Temp(Ubound(Temp))
         Name = Replace(Replace(Replace(Name, ".bas", ""), ".cls", ""), ".frm", "")
         GetCompName = Name
-
     End Function
 
     Private Function CheckFileFormat(FilePath As String) As Boolean
