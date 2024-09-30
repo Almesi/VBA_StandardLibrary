@@ -95,10 +95,12 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
             Dim i As Long
             Dim fso As Object
             Dim TextStream As Object
+            Dim Text As String
+            Text = GetMessage(Catalog, Index, ErrorValues)
             Set fso = CreateObject("Scripting.FileSystemObject")
             Select Case True
-                Case (p_LoggingDestination Is Nothing)         : Debug.Print        GetMessage(Catalog, Index, ErrorValues)
-                Case TypeName(p_LoggingDestination) = "Console": Console.PrintEnter GetMessage(Catalog, Index, ErrorValues), (&H100000FF - &H10000000)
+                Case (p_LoggingDestination Is Nothing)         : Debug.Print Text
+                Case TypeName(p_LoggingDestination) = "Console": Call Console.PrintEnter(Text, (&H100000FF - &H10000000))
                 Case TypeName(p_LoggingDestination) = "Range"
                     Do Until p_LoggingDestination.Offset(i, 0).Formula = ""
                         i = i + 1
@@ -136,7 +138,7 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
             ArrayMessage = Array("Answer is Yes", "Answer is No")
             Select Case True
                 Case (p_ShowDestination Is Nothing)            : Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
-                Case TypeName(p_LoggingDestination) = "Console": Console.CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
+                Case TypeName(p_LoggingDestination) = "Console": Call Console.CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
             End Select
             If Temp = False Then Ask = IS_ERROR
         End If
@@ -160,7 +162,7 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
 
         Error:
         Call Handle(ErrorCatalog, ErrorCode, ErrorValue)
-        Handle = IS_ERROR
+        ValidateCatalog = IS_ERROR
 
     End Function
     

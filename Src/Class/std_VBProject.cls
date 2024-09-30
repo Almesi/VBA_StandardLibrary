@@ -48,7 +48,7 @@ Private Handler As New std_Error
         Dim Temp() As String
         Dim CompName As String
         Dim ErrorCode As Long
-        Dim ErroValue As Variant
+        Dim ErrorValue As Variant
 
         If FilePath = Empty Then ErrorCode = 5: ErrorValue = FilePath: GoTo Error
         If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error
@@ -64,7 +64,7 @@ Private Handler As New std_Error
             If ComponentName = Empty Then ErrorCode = 18: ErrorValue = ComponentName: GoTo Error
             If ComponentType = 0     Then ErrorCode = 20: ErrorValue = ComponentType: GoTo Error
             If AddComponent(ComponentName, ComponentType, PasteType, ThrowError) <> Handler.IS_Error Then
-                Include = AddCodeFromFile(FilePath, ComponentName, ThrowError)
+                Include = AddCodeFromFile(FilePath, ComponentName, 1, ThrowError)
             End If
             Call AddTemporary(Temporary, CompName)
         Else
@@ -203,7 +203,7 @@ Private Handler As New std_Error
         Set VBComp = Exists(CompName, VBProj, True, False)
         If Not VBComp Is Nothing Then
             If StartLine = 0 Then
-                VBComp.CodeModule.InsertLines(StartLine, Text)
+                Call VBComp.CodeModule.InsertLines(StartLine, Text)
             Else
                 VBComp.CodeModule.AddFromString(Text)
             End If
@@ -245,7 +245,7 @@ Private Handler As New std_Error
         IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
     End Function
 
-    Public Function IncludeFolderArr(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
+    Public Function IncludeFolderArr(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore As Variant) As Boolean
     
         Dim fso As Object
         Dim Folder As Object
@@ -253,13 +253,14 @@ Private Handler As New std_Error
         Dim ErrorValue As Variant
     
         On Error GoTo Error
-        If FilePath = Empty Then ErrorCode = 5: ErrorValue = FilePath: GoTo Error
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = Name: GoTo Error
+        If FolderPath = Empty Then ErrorCode = 5: ErrorValue = FolderPath: GoTo Error
+        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error
         ErrorCode = 29
-        ErrorValue = FilePath
+        ErrorValue = FolderPath
         Set fso = CreateObject("Scripting.FileSystemObject")
         Set Folder = fso.GetFolder(FolderPath)
         IncludeFolderArr = RecursiveInclude(Folder, PasteType, Temporary, Ignore, TryAsInclude, ThrowError)
+        Exit Function
 
         Error:
         If ThrowError Then
@@ -512,8 +513,8 @@ Private Handler As New std_Error
         Dim ErrorValue As Variant
 
         On Error GoTo Error
-        ErrorCode = 1: ErrorValue = FilePath: GoTo Error
-        If CheckClassType(FilePath) = False Then Exit Function
+        ErrorCode = 1: ErrorValue = FilePath
+        If CheckClassType(FilePath) = False Then: GoTo Error
         Found = Exists(ComponentName)
         Select Case PasteType
             Case 0
@@ -524,6 +525,7 @@ Private Handler As New std_Error
                 End If
             Case 1
                 If Found Then
+                    Set VBComp = Exists(ComponentName,,,False)
                     VBComp.Name = ComponentName & "_TODELETE"
                     If Declude(ComponentName & "_TODELETE", ThrowError) <> Handler.IS_ERROR Then
                         VBProj.VBComponents.Import FilePath
@@ -561,6 +563,11 @@ Private Handler As New std_Error
         Dim Skip As Boolean
 
         If Ubound(Ignore) < 0 Then ReDim Ignore(0)
+        For Each SubFolder In Folder.SubFolders        
+            For Each Element In Ignore
+                If SubFolder.Name = Cstr(Element) Then Skip = True: Exit For
+            Next
+        Next
         For Each File In Folder.Files
             For Each Element In Ignore
                 If File.Name = Cstr(Element) Then Skip = True: Exit For
