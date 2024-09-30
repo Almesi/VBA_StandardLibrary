@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "std_Workbook"
+Attribute VB_Name = "std_Error"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -11,103 +11,181 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private WB As Workbook
-Private ErrorCatalog(1, 99) As Variant
-Private Initialized As Boolean
-Private Handler As New std_Error
+
+Private       ErrorCatalog(1, 99)   As Variant
+Private       Initialized           As Boolean
+
+Private Const p_IS_ERROR            As Boolean = True
+Private Const EMPTY_ERROR           As Variant = Empty
+Private Const SEVERITY_BREAK        As Long    = 1000
+Private Const ERROR_QUESTION        As Long    = 0001
+Private Const ERROR_CATEGORY        As Long    = 0002
+
+Private       p_ShowError           As Boolean
+Private       p_LogError            As Boolean
+Private       p_LoggingDestination  As Variant
+Private       p_ShowDestination     As Variant
+
+Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (ByRef dwflags As Long, ByVal dwReserved As Long) As Long
 
 
-    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
-        On Error GoTo Error
-        Let Handler.ShowError = n_ShowError
-        Let Handler.LogError = n_LogError
-        Set Handler.ShowDestination = n_ShowDestination
-        Set Handler.LoggingDestination = n_LoggingDestination
-        AssignHandler = True
-        Exit Function
-        Error:
+' Public Errormethods
+    Public Property Get IS_ERROR()
+        IS_ERROR = p_IS_ERROR
+    End Property
+
+    Public Property Let ShowError(Value As Boolean)
+        p_ShowError = Value
+    End Property
+    Public Property Let LogError(Value As Boolean)
+        p_LogError = Value
+    End Property
+
+    Public Property Set LoggingDestination(n_Destination As Variant)
+        If IsObject(n_Destination) Then
+            Set p_LoggingDestination = n_Destination
+        Else
+            p_LoggingDestination = n_Destination
+        End If
+    End Property
+    Public Property Set ShowDestination(n_Destination As Variant)
+        If IsObject(n_Destination) Then
+            Set p_ShowDestination = n_Destination
+        Else
+            p_ShowDestination = n_Destination
+        End If
+    End Property
+
+
+    Public Function Create(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As std_Error
+        Set Create = New std_Error
+        Let Create.ShowError          = n_ShowError
+        Let Create.LogError           = n_LogError
+        Set Create.LoggingDestination = n_LoggingDestination
+        Set Create.ShowDestination    = n_ShowDestination
+
     End Function
 
-    Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = Handler.IS_ERROR
-    End Property
+    Public Function Handle(Catalog() As Variant, Index As Long, ParamArray ErrorValues()) As Boolean
 
-    Public Property Set Workbook(n_Workbook As Workbook)
-        Set WB = n_Workbook
-    End Property
+        Dim Severity As Integer
+        Dim Arguments As Variant
 
-    Public Property Get Workbook() As Workbook
-        Set Workbook = WB
-    End Property
-
-    Public Property Set WorkbookViaName(Name As String)
-        Dim Temp As Workbook
-        Set Temp = Exists(Name, True, False)
-        If Temp Is Nothing Then
+        Call ValidateCatalog(Catalog)
+        Arguments = ErrorValues
+        Severity = Catalog(0, Index)
+        If Severity = ERROR_QUESTION Then
+            Handle = Ask(Catalog, Index, Arguments)
         Else
-            Set WB = Temp
+            Call Showing(Catalog, Index, Arguments)
+            Handle = IS_ERROR
         End If
-    End Property
+        Call Logging(Catalog, Index, Arguments) 
+        If Severity > SEVERITY_BREAK Then End
 
-    Public Function Open(FilePath As Variant, Optional UpdateLinks As Variant = Empty, Optional ReadOnly As Variant = Empty, Optional Format As Variant = Empty, Optional Password As Variant = Empty, Optional WriteResPassword As Variant = Empty, Optional IgnoreReadOnlyRecommende As Variant = Empty, Optional Origin As Variant = Empty, Optional Delimiter As Variant = Empty, Optional Editable As Variant = Empty, Optional Notify As Variant = Empty, Optional Converter As Variant = Empty, Optional AddToMru As Variant = Empty, Optional Local As Variant = Empty, Optional CorruptLoad As Variant = Empty, Optional ThrowError As Boolean = True) As Variant
-        On Error GoTo Error
-        Workbooks.Open FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad
-        Set WB = ActiveWorkbook
-        Exit Function
+    End Function
+'
 
-        Error:
-        If ThrowError Then
-            Open = Handler.Handle(ErrorCatalog, 1, FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad)
-        Else
-            Open = Handler.IS_ERROR
+
+
+' Private Errormethods
+    Private Sub Logging(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
+
+        If p_LogError Then
+            Dim i As Long
+            Dim fso As Object
+            Dim TextStream As Object
+            Dim Text As String
+            Text = GetMessage(Catalog, Index, ErrorValues)
+            Set fso = CreateObject("Scripting.FileSystemObject")
+            Select Case True
+                Case (p_LoggingDestination Is Nothing)         : Debug.Print Text
+                Case TypeName(p_LoggingDestination) = "Console": Call Console.PrintEnter(Text, (&H100000FF - &H10000000))
+                Case TypeName(p_LoggingDestination) = "Range"
+                    Do Until p_LoggingDestination.Offset(i, 0).Formula = ""
+                        i = i + 1
+                    Loop
+                    p_LoggingDestination.Offset(i, 0).Formula = Text
+                Case TypeName(p_LoggingDestination) = "File", TypeName(p_LoggingDestination) = "String"
+                    If TypeName(p_LoggingDestination) = "String" Then
+                        If fso.FileExists(p_LoggingDestination) Then
+                        Set TextStream = fso.GetFile(p_LoggingDestination).OpenAsTextStream(2, 2)
+                        End If
+                    Else
+                        Set TextStream = p_LoggingDestination.OpenAsTextStream(2, 2) '(ForWriting, TristateUseDefault)
+                    End If
+                    TextStream.WriteLine Text
+                    TextStream.Close
+            End Select
+        End If
+    End Sub
+    
+    Private Sub Showing(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
+        If p_ShowError Then
+            Dim Temp As Variant
+            Select Case True
+                Case (p_ShowDestination Is Nothing): Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
+            End Select
+        End If
+    End Sub
+    
+    Private Function Ask(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As Boolean
+        If p_ShowError Then
+            Dim Temp As Variant
+            Dim ArrayAnswer() As Variant
+            Dim ArrayMessage() As Variant
+            ArrayAnswer = Array("y","n")
+            ArrayMessage = Array("Answer is Yes", "Answer is No")
+            Select Case True
+                Case (p_ShowDestination Is Nothing)            : Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
+                Case TypeName(p_LoggingDestination) = "Console": Call Console.CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
+            End Select
+            If Temp = False Then Ask = IS_ERROR
         End If
     End Function
 
-    Public Function Close(Optional Name As String = "", Optional ThrowError As Boolean = True) As Boolean
-        Dim Temp As Workbook
-        Dim ErrorValue As String
+    Private Function ValidateCatalog(Catalog() As Variant) As Boolean
 
+        Dim ErrorCode As Long
+        Dim ErrorValue(1) As Long
         On Error GoTo Error
-        If Name = "" Then
-            ErrorValue = WB.Name
-            WB.Close
-        Else
-            Set Temp = Exists(Name)
-            If Temp Is Nothing Then
-                ErrorValue = Name
-                GoTo Error
-            Else
-                ErrorValue = Temp.Name
-                Temp.Close
-            End If 
+        ErrorCode = 3
+        If IsArray(Catalog) = False Then GoTo Error
+        ErrorCode = 1
+        If Ubound(Catalog, 1) <> 1 Or Ubound(Catalog, 2) =< 0 Then GoTo Error
+        ErrorCode = 2
+        If Catalog(0,0) <> ERROR_CATEGORY Then
+            ErrorValue(0) = Catalog(0,0)
+            ErrorValue(1) = Catalog(1,0)
         End If
         Exit Function
 
         Error:
-        If ThrowError Then
-            Close = Handler.Handle(ErrorCatalog, 2, ErrorValue)
-        Else
-            Close = Handler.IS_ERROR
-        End If
-        
+        Call Handle(ErrorCatalog, ErrorCode, ErrorValue)
+        ValidateCatalog = IS_ERROR
+
     End Function
-
-    Public Function Exists(Name As String, Optional ShouldExist As Boolean = True, Optional ReturnAsBoolean As Boolean = True) As Variant
-        Dim WBs As Workbook
-        Dim Found As Boolean
-
-        For Each WBs In Workbooks
-            If WBs.Name = Name Then Found = True: Exit For
-        Next WBs
-        If ReturnAsBoolean Then
-            Exists = Not (Found Xor ShouldExist)
+    
+    Private Function GetMessage(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As String
+    
+        Dim ErrorMessage As String
+        Dim String1 As String
+        Dim i As Long
+        String1 = Catalog(1, Index)
+        ErrorMessage = "Category: " & Catalog(1, 0)                              & vbCrLf & _
+                       "Severity: " & Catalog(0, Index)                          & vbCrLf & _
+                       "Index   : " & Index                                      & vbCrLf & _
+                       "Message : " & String1                                    & vbCrLf
+        If ISArray(ErrorValues) Then
+            For i = 0 To UBound(ErrorValues)
+                ErrorMessage = ErrorMessage & "Value" & i & "  : " & ErrorValues(i) & vbCrLf
+            Next
         Else
-            If Found Then
-                Set Exists = WBs
-            Else
-                Set Exists = Nothing
-            End If
+                ErrorMessage = ErrorMessage & "Value" & i & "  : " & ErrorValues & vbCrLf
         End If
+        ErrorMessage = ErrorMessage & "------------------------------------------------------------------------------"
+        GetMessage = ErrorMessage
+    
     End Function
 
     Private Sub Class_Initialize()
@@ -115,18 +193,14 @@ Private Handler As New std_Error
     End Sub
 
     Private Sub Class_Terminate()
-        x
     End Sub
-        
-    ' Runs once to Initialize all Errormessages
-    Private Sub ProtInit()
     
+    Private Sub ProtInit()
         If Initialized = False Then
-        ' System-Errors
-            ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_Workbook"
-            ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not open workbook"
-            ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could not close workbook"
-            ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "PLACEHOLDER"
+            ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_Error"
+            ErrorCatalog(0, 0001) = 1001: ErrorCatalog(1, 0001) = "Error-Catalog not a 2D Array with size (1,X)"
+            ErrorCatalog(0, 0002) = 1001: ErrorCatalog(1, 0002) = "Error-Catalog not properly initialize"
+            ErrorCatalog(0, 0003) = 1001: ErrorCatalog(1, 0003) = "Error-Catalog not an Array"
             ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "PLACEHOLDER"
             ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "PLACEHOLDER"
             ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "PLACEHOLDER"
@@ -225,6 +299,5 @@ Private Handler As New std_Error
             ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
             Initialized = True
         End If
-    
     End Sub
 '

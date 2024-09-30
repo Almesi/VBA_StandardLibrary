@@ -23,6 +23,9 @@ This library is "simple datatypes first", meaning, it tries to use string, doubl
 If possible try not to pass objects.
 Main reason for that is, that the object should be described/called via its name, a key or index, so that you can call it via a written text e.g. a console.
 
+## Locality
+Please try to keep your Public and Global Variables and Function to a minimum, especially when it is a module and not a class/form
+
 
 ## Class/Module naming
 
