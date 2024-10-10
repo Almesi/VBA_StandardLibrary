@@ -9,15 +9,8 @@ Private Initialized As Boolean
 Private Handler As New std_Error
 
 
-Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
-    On Error GoTo Error
-    Let Handler.ShowError = n_ShowError
-    Let Handler.LogError = n_LogError
-    Set Handler.ShowDestination = n_ShowDestination
-    Set Handler.LoggingDestination = n_LoggingDestination
-    AssignHandler = True
-    Exit Function
-    Error:
+Public Property Set SetHandler(n_Handler As std_Error)
+    Set Handler = n_Handler
 End Function
 
 Public Property Get IS_ERROR() As Boolean
@@ -43,11 +36,7 @@ Public Function Variable(FirstValue As Variant, Optional Operator As String = EM
     If MaxValue <> Empty Then         If FirstValue > MaxValue    Then ErrorCode = 11: GoTo Error
     Exit Function
     Error:
-    If ThrowError Then
-        Variable = Handler.Handle(ErrorCatalog, ErrorCode, FirstValue, Operator, SecondValue, MinValue, MaxValue)
-    Else
-        Variable = Handler.IS_ERROR
-    End If
+    Variable = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
 End Function
 
 Public Function Object(FirstValue As Object, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Object = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
@@ -61,11 +50,7 @@ Public Function Object(FirstValue As Object, Optional Operator As String = EMPTY
     If FirstValue Is Nothing                                         Then ErrorCode = 03: GoTo Error
     Exit Function
     Error:
-    If ThrowError Then
-        Object = Handler.Handle(ErrorCatalog, 04, "FirstValue", Operator, "SecondValue")
-    Else
-        Object = Handler.IS_ERROR
-    End If
+    Object = Handler.Handle(ErrorCatalog, 04, ThrowError, "FirstValue", Operator, "SecondValue")
 End Function
 
 Public Function Strings(Text As String, Optional Operator As String = EMPTY_ERROR, Optional SecondText As String = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
@@ -86,20 +71,12 @@ Public Function Strings(Text As String, Optional Operator As String = EMPTY_ERRO
     If Text = Empty                                                Then ErrorCode = 03: GoTo Error
     Exit Function
     Error:
-    If ThrowError Then
-        Strings = Handler.Handle(ErrorCatalog, ErrorCode, Text, Operator, SecondText)
-    Else
-        Strings = Handler.IS_ERROR
-    End If
+    Strings = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Text, Operator, SecondText)
 End Function
 
 Public Function Number(FirstValue As Variant, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Variant = EMPTY_ERROR, Optional MinValue As Variant = EMPTY_ERROR, Optional MaxValue As Variant = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
     If IsNumeric(FirstValue) = False Then
-        If ThrowError Then
-            Number = Handler.Handle(ErrorCatalog, 19, FirstValue, Operator, SecondValue, MinValue, MaxValue)
-        Else
-            Number = Handler.IS_ERROR
-        End If
+        Number = Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
         Number = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
@@ -108,11 +85,7 @@ End Function
 
 Public Function Dates(FirstValue As Variant, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Variant = EMPTY_ERROR, Optional MinValue As Variant = EMPTY_ERROR, Optional MaxValue As Variant = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
     If IsDate(FirstValue) = False Then
-        If ThrowError Then
-            Dates = Handler.Handle(ErrorCatalog, 19, FirstValue, Operator, SecondValue, MinValue, MaxValue)
-        Else
-            Dates = Handler.IS_ERROR
-        End If
+        Dates = Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
         Dates = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
@@ -127,11 +100,7 @@ Public Function File(FilePath As String, Optional ShouldExist As Boolean = True,
     End If
     Exit Function
     Error:
-    If ThrowError Then
-        File = Handler.Handle(ErrorCatalog, ErrorCode, FilePath)
-    Else
-        File = std_Error
-    End If
+    File = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath)
 End Function
 
 Public Function Connection(Optional Computer As String = ".", Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
@@ -163,11 +132,7 @@ Public Function Connection(Optional Computer As String = ".", Optional ShouldExi
         End If
     End If
     Exit Function
-    If ThrowError Then
-        Connection = Handler.Handle(ErrorCatalog, ErrorCatalog, Computer)
-    Else
-        Connection = Handler.IS_ERROR
-    End If
+    Connection = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Computer)
 
 End Function
 
@@ -191,11 +156,7 @@ Public Function InternetConnection(Optional ConnectType As Long = 0, Optional Th
     End Select
     Exit Function
     Error:
-    If ThrowError Then
-        InternetConnection = Handler.Handle(ErrorCatalog, ErrorCode, ConnectType)
-    Else
-        InternetConnection = Handler.IS_ERROR
-    End If
+    InternetConnection = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ConnectType)
 
 End Function
                 
@@ -211,11 +172,7 @@ Public Function ConnectToDatabase(DataBasePath As String, Optional ThrowError As
     If Conn.State <> 1 Then ErrorCode = 27: GoTo Error
     Exit Function
     Error:
-    If ThrowError Then
-        ConnectToDatabase = Handler.Handle(ErrorCatalog, ErrorCode, "ConnectToDatabase", DataBasePath)
-    Else
-        ConnectToDatabase = Handler.IS_ERROR
-    End If
+    ConnectToDatabase = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, "ConnectToDatabase", DataBasePath)
 End Function
 
 Public Function DataType(Value As Variant, InputType As String, Optional ShouldBe As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
@@ -244,11 +201,7 @@ Public Function DataType(Value As Variant, InputType As String, Optional ShouldB
     Exit Function
 
     Error:
-    If ThrowError Then
-        DataType = Handler.Handle(ErrorCatalog, ErrorCode, Value, InputType, ShouldBe)
-    Else
-        DataType = Handler.IS_ERROR
-    End If
+    DataType = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Value, InputType, ShouldBe)
 End Function
 
 

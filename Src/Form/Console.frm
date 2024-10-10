@@ -18,25 +18,34 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-' Private and Public Variables
+' Private Variables
     
-    Private       CurrentLineIndex    As Long              ' Index of the CurrentLine
-    Private Const Recognizer          As String = "\>>>"   ' Used to recognize when CurrentLine should start
-    Private       PasteStarter        As Boolean           ' Determines if starter should be printed or not
-    Private       UserInput           As Variant           ' Value the user put in
-    Private       LastError           As Variant           ' Used for more information about last Error
-    Private       MultilineTemp       As Boolean           ' Used to stop Printstarter for the "MULTILINE" Special keyword and stops handleenter to run code until there is no "_" character at the end
+    Private       CurrentLineIndex     As Long              ' Index of the CurrentLine
+    Private Const Recognizer           As String = "\>>>"   ' Used to recognize when CurrentLine should start
+    Private Const ArgSeperator         As String = ", " 
+    Private Const AsgOperator          As String = " = "
+    Private       PasteStarter         As Boolean           ' Determines if starter should be printed or not
+    Private       UserInput            As Variant           ' Value the user put in
+    Private       LastError            As Variant           ' Used for more information about last Error
+    Private       CurrentChar          As Long
 
-    Private       ConsoleVariables()  As Variant           ' Defined as (1, n), where 0,n is the variable name and 1,n is its value. Used to save userinput into a variable with name
+    Private       Intellisense_Index   As Long
+    Private       ConsVarIndex         As Long
+
+    Private       p_Password           As String
+    Private       PasswordActive       As Boolean
+    Private       PasswordMode         As Boolean
+
+    
 
     ' Check if the console awaits pre-declared answer, user input or just logging
     Private WorkMode As Long
     Private Enum WorkModeEnum
         Logging = 0
         UserInputt = 1
-        PreDeclaredAnswer = 2
-        UserLog = 3
-        MultilineMode = 4
+        UserLog = 2
+        MultilineMode = 3
+        ScriptMode = 4
     End Enum
 
     
@@ -44,17 +53,13 @@ Option Explicit
 
     ' Dependenant on Microsoft Visual Studio Extensebility 5.3
     Private Const Intellisense_Active As Boolean = True
-    Private       VariableArray()     As Variant          ' Big Array storing all Variables, Subs and Functions of all classes, modules and forms
-    Private       Intellisense_Index  As Long
-    Private Const MaxArg              As Long = 33        ' 
 
     ' Dependant on sancarn´s stdLambda class
     Private Const stdLambda_Active    As Boolean = True
-    Private       LambdaArray         As Variant          ' Defined as (3, n), where (0,n) is lambda-name, (1,n) is equation, (2,n) is bUsePerformanceCache, (3,n) is bSandboxExtras OR Array of stdLambda´s
-    Private       LambdaIndex         As Long
 
     'Intellisense Colors
     Private in_Basic       As Long
+    Private in_System      As Long
     Private in_Procedure   As Long
     Private in_Operator    As Long 'smooooooth operatooooor
     Private in_Datatype    As Long
@@ -64,42 +69,239 @@ Option Explicit
     Private in_Keyword     As Long
     Private in_Parantheses As Long
     Private in_Variable    As Long
+    Private in_Script      As Long
 '
 
 
 
+'######################################################
+'TODO´S
+' Basic structures like for loop, do until, if statements
+' Basic keywords like Exit
+' More Color customabibality
+' Better help
+' Clean Up Code
+'
+'
+'
+'
+'
+'
+'
+'
+'######################################################
 
+' Tree
+    Private Type Node
+        Value As Variant
+        Size As Long
+        Branches() As Long
+    End Type
 
+    Private Type cCollection
+        Nodes() As Node
+        Size As Long
+    End Type
 
+    Private Trees() As cCollection
+
+    Private Function AddNode(TreeIndex As Long, NodeIndex As Long, Value As Variant) As Long
+
+        Dim NodeIndexSize As Long
+        Dim n_Node As Node
+
+        On Error GoTo Error
+        If IsObject(Value) Then
+            Set n_Node.Value = Value 
+        Else
+            n_Node.Value = Value
+        End If
+        n_Node.Size = -1
+        Trees(TreeIndex).Size = UBound(Trees(TreeIndex).Nodes) + 1
+        Continuee:
+        ReDim Preserve Trees(TreeIndex).Nodes(Trees(TreeIndex).Size)
+        Trees(TreeIndex).Nodes(Trees(TreeIndex).Size) = n_Node
+        If NodeIndex <> -1 Then
+            Trees(TreeIndex).Nodes(NodeIndex).Size = Trees(TreeIndex).Nodes(NodeIndex).Size + 1
+            NodeIndexSize = Trees(TreeIndex).Nodes(NodeIndex).Size
+            ReDim Preserve Trees(TreeIndex).Nodes(NodeIndex).Branches(NodeIndexSize) 
+            Trees(TreeIndex).Nodes(NodeIndex).Branches(NodeIndexSize) = Trees(TreeIndex).Size
+        End If
+        AddNode = Trees(TreeIndex).Size
+        Exit Function
+
+        Error:
+        Trees(TreeIndex).Size = 0
+        GoTo Continuee
+
+    End Function
+
+    Private Function FindNode(TreeIndex As Long, Name As String, Optional NodeIndex As Long = 0) As Long
+        
+        Dim i As Long
+        Dim j As Long
+        Dim CurrentNode As Long
+        Dim CurrentNode2 As Long
+
+        If Name = Empty Then
+            FindNode = -1
+        Else
+            If NodeIndex = -1 Then
+                NodeIndex = 0
+                For i = 0 To Trees(TreeIndex).Nodes(NodeIndex).Size
+                    CurrentNode = Trees(TreeIndex).Nodes(NodeIndex).Branches(i)
+                    For j = 0 To Trees(TreeIndex).Nodes(CurrentNode).Size
+                        CurrentNode2 = Trees(TreeIndex).Nodes(CurrentNode).Branches(j)
+                        If GetProcedureText(CStr(Trees(TreeIndex).Nodes(CurrentNode2).Value), 0) = Name Then
+                            FindNode = CurrentNode2
+                            Exit Function
+                        End If
+                        FindNode = -1
+                    Next j
+                Next i
+                FindNode = -1
+            Else
+                For i = 0 To Trees(TreeIndex).Nodes(NodeIndex).Size
+                    CurrentNode = Trees(TreeIndex).Nodes(NodeIndex).Branches(i)
+                    If GetProcedureText(CStr(Trees(TreeIndex).Nodes(CurrentNode).Value), 0) = Name Then
+                        FindNode = CurrentNode
+                        Exit Function
+                    End If
+                    FindNode = -1
+                Next i
+                FindNode = -1
+            End If
+        End If
+    End Function
+
+    Function InTrees(Name As String) As Variant()
+
+        Dim i As Long, j As Long
+        Dim Name As Variant
+
+        For i = 0 To ConsVarIndex
+            For j = 1 To Trees(i).Size
+                If TypeName(Trees(i).Nodes(j).Value) <> "stdLambda" Then
+                    If GetProcedureText(CStr(Trees(i).Nodes(j).Value), 0) = Name Then
+                        InTrees = i & "-" & j
+                        Exit Function
+                    End If
+                End If
+            Next j
+        Next i
+        InTrees = -1
+    End Function
+
+    Private Function SetVariableValue(TreeIndex As Long, NameOrIndex As Variant, Value As Variant) As Long
+        
+        Dim Index As Long
+
+        If IsNumeric(NameOrIndex) Then
+            Index = CLng(NameOrIndex)
+        Else
+            Index = FindNode(TreeIndex, CStr(NameOrIndex))
+        End If
+        If Index = -1 Then
+            Index = AddNode(TreeIndex, 0, NameOrIndex)
+        End If
+        If Trees(TreeIndex).Nodes(Index).Size = -1 Then
+            Index = AddNode(TreeIndex, Index, Value)
+        Else
+            Trees(TreeIndex).Nodes(Trees(TreeIndex).Nodes(Index).Branches(0)).Value = Value
+        End If
+        SetVariableValue = Index
+
+    End Function
+
+    Private Function GetVariableByName(TreeIndex As Long, Name As String, Optional ReturnValue As Boolean = False) As Variant
+
+        Dim Index As Long
+
+        Index = FindNode(TreeIndex, Name)
+        If Index = -1 Then
+            GetVariableByName = "Could not find Variable"
+        Else
+            If ReturnValue Then
+                Trees(TreeIndex).Nodes(Index).Value
+            Else
+                Index = Trees(TreeIndex).Nodes(Index).Branches(0)
+                If TypeName(Trees(TreeIndex).Nodes(Index).Value) = "stdLambda" Then
+                    Set GetVariableByName = Trees(TreeIndex).Nodes(Index).Value
+                Else
+                    Let GetVariableByName = Trees(TreeIndex).Nodes(Index).Value
+                End If
+            End If
+        End If
+
+    End Function
+
+    Private Function GetVariable(TreeIndex As Long, NodeIndex As Long, Optional ReturnValue As Boolean = False, Optional ReturnObject As Boolean = False, Optional Arguments As Variant) As Variant
+        
+        Dim Index As Long
+        Dim ReturnType As String
+
+        If Returnvalue Then
+            ReturnType = GetProcedureText(CStr(Trees(TreeIndex).Nodes(NodeIndex).Value), 1)
+            If Not ReturnType Like "Procedure *" Then Index = Trees(TreeIndex).Nodes(NodeIndex).Branches(0)
+            Select Case True
+                Case ReturnType Like "As stdLambda"
+                    If ReturnObject Then
+                        Set GetVariable = Trees(TreeIndex).Nodes(Index).Value
+                    Else
+                        GetVariable = RunLambda(Trees(TreeIndex).Nodes(Index).Value, Arguments)
+                    End If
+                Case ReturnType Like "As ConsoleScript"
+                    Dim Lines() As String
+                    Dim i As Long
+                    Lines = SplitString(CStr(Trees(TreeIndex).Nodes(Index).Value), "PAGEBREAK/()\")
+                    For i = 0 To UboundK(Lines)
+                        Call PrintEnter(HandleCode(Lines(i)), in_System)
+                    Next
+                    If UboundK(Lines) <> -1 Then
+                        GetVariable = "Script ran successfully"
+                    Else
+                        GetVariable = "Script did not run successfully"
+                    End If
+                Case ReturnType Like "Procedure *"
+                    If ReturnObject Then
+                        GetVariable = Trees(TreeIndex).Nodes(NodeIndex).Value
+                    Else
+                        GetVariable = RunApplication(GetProcedureText(Trees(TreeIndex).Nodes(NodeIndex).Value, 0), Arguments)
+                    End If
+                Case IsNumeric(Trees(TreeIndex).Nodes(Index).Value)
+                    GetVariable = CLng(Trees(TreeIndex).Nodes(Index).Value)
+                Case IsDate(Trees(TreeIndex).Nodes(Index).Value)
+                    GetVariable = CDate(Trees(TreeIndex).Nodes(Index).Value)
+                Case ReturnType Like "As ConsoleVariable"
+                    GetVariable = Trees(TreeIndex).Nodes(Index).Value
+                Case Else
+                    GetVariable = "Could not return Value"
+            End Select
+        Else
+            GetVariable = Trees(TreeIndex).Nodes(NodeIndex).Value
+        End If
+        
+    End Function
+
+    Private Sub InitializeTree()
+        Dim i As Long
+        Dim WB As Workbook
+        ReDim Trees((Workbooks.Count - 1) + 1)
+        ConsVarIndex = Ubound(Trees)
+        i = 0
+        For Each WB In Workbooks
+            Call AddNode(i, -1, WB.VBProject.Name & ", As VBProject")
+            i = i + 1
+        Next
+        Call AddNode(ConsVarIndex, -1, "ConsoleVariables, As ConsoleVariables")
+    End Sub
+'
 
 ' Public Console Functions
 
-    Public Property Get GetName(Index As Long) As Variant
-        GetName = ConsoleVariables(0, Index)
-    End Property
-
-    Public Property Get GetValue(Optional Name As Variant = Empty, Optional Index As Variant = Empty) As Variant
-        Dim i As Long
-        If Index <> Empty Then
-            GetValue = ConsoleVariables(1, Index)
-            Exit Function
-        Else
-            For i = 0 To Ubound(ConsoleVariables, 2)
-                If ConsoleVariables(0, i) = Name Then
-                    GetValue = ConsoleVariables(1, i)
-                    Exit Function
-                End If
-            Next
-        End If
-        GetValue = Empty
-    End Property
-
-
-    ' Check for UserInput
-    ' Answers needs to be of same dimension as AllowedValues
     Public Function GetUserInput(Message As Variant, Optional InputType As String = "VARIANT") As Variant
 
-        PrintConsole Message
+        Call PrintConsole(Message, in_System)
         WorkMode = WorkModeEnum.UserInputt
         PasteStarter = False
         Do While WorkMode = WorkModeEnum.UserInputt
@@ -128,11 +330,11 @@ Option Explicit
             Message = Message & Cstr(i) & "|"
         Next i
         Message = Message & ") "
-        PrintConsole Message
+        Call PrintConsole(Message)
 
-        WorkMode = WorkModeEnum.PreDeclaredAnswer
+        WorkMode = WorkModeEnum.UserInputt
         PasteStarter = False
-        Do While WorkMode = WorkModeEnum.PreDeclaredAnswer
+        Do While WorkMode = WorkModeEnum.UserInputt
             Index = 0
             DoEvents
             If UserInput <> "" Then
@@ -147,15 +349,15 @@ Option Explicit
                     Index = Index + 1
                 Next i
                 If Found <> True Then
-                    PrintEnter "Value not Valid"
-                    PrintConsole Message
+                    Call PrintEnter("Value not Valid")
+                    Call PrintConsole(Message)
                 End If
                 UserInput = ""
             End If
         Loop
         PasteStarter = True
-        PrintEnter Answers(Index)
-        PrintConsole PrintStarter
+        Call PrintEnter(Answers(Index))
+        Call PrintConsole(PrintStarter)
 
     End Function
 
@@ -164,7 +366,7 @@ Option Explicit
     End Function
 
     Public Sub PrintEnter(Text As Variant, Optional Color As Variant)
-        PrintConsole Text & vbcrlf, Color
+        Call PrintConsole(Text & vbcrlf, Color)
     End Sub
 
     Public Sub PrintConsole(Text As Variant, Optional Color As Variant)
@@ -172,9 +374,9 @@ Option Explicit
         Dim i As Long
         If IsMissing(Color) Then Color = in_Basic
         If ISArray(Color) Then
-            If Ubound(Color) + 1 < Len(Text) Then
+            If UboundK(Color) + 1 < Len(Text) Then
                 LastError = 4
-                HandleLastError
+                Call PrintEnter(HandleLastError, in_System)
                 Exit Sub
             End If
             ConsoleText.SelLength = 0
@@ -183,110 +385,88 @@ Option Explicit
                 ConsoleText.SelColor = Color(i - 1)
                 ConsoleText.SelText = Mid(Text, i, 1)
             Next i
+            CurrentChar = Len(ConsoleText.Text)
         Else
             ConsoleText.SelStart = Len(ConsoleText.Text)
             ConsoleText.SelLength = 0
             ConsoleText.SelColor = Color
             ConsoleText.SelText = Text
+            CurrentChar = Len(ConsoleText.Text)
         End If
-        SetUpNewLine
+        Call SetUpNewLine
 
     End Sub
+
+    Public Sub AddScript(Name As String, Script As String)
+        Script = Replace(Script, ";_", ", ")
+        Script = Replace(Script, "_", "PAGEBREAK/()\")
+        Call SetVariableValue(ConsVarIndex, Name & ", As ConsoleScript", Script)
+    End Sub
+
+    Public Function Password(Old_Password As String, New_PassWord As String) As Boolean
+        If Old_PassWord = p_Password Then
+            p_Password = New_PassWord
+            PasswordActive = True
+        End If
+    End Function
 '
 
-' Private Console Functions
+' Initialization
 
     Private Sub UserForm_Initialize()
-        AssignColor
+        Call AssignColor
         PasteStarter = True
+
         ConsoleText.Text = GetStartText
+        CurrentChar = Len(GetStartText)
         ConsoleText.SelStart = 0
         ConsoleText.SelLength = Len(ConsoleText.Text)
-        ConsoleText.SelColor = in_Basic
-        CurrentLineIndex = UBound(Split(ConsoleText.Text, vbCrLf))
+        ConsoleText.SelColor = in_System
+        ConsoleText.SelStart = CurrentChar
+
+        CurrentLineIndex = UBoundK(Split(ConsoleText.Text, vbCrLf))
         ScrollHeight = 5000
         ScrollWidth = 3000
-        ReDim ConsoleVariables(1, 0)
-        ReDim LambdaArray(1, 0)
-        LambdaIndex = 0
+        p_Password = ""
+        PasswordMode = True
+
+
+        InitializeTree
         ' Dependenant on Microsoft Visual Studio Extensebility 5.3
-        If Intellisense_Active = True Then
-            GetAllProcedures
-        End If
+        If Intellisense_Active = True Then GetAllProcedures
     End Sub
 
     Private Sub UserForm_Terminate()
     End Sub
+'
 
-    ' Just doing &H00FFFFFF will (for some reason) become a negative number, so to secure a positive number this is done
-    Private Sub AssignColor()
-        in_Basic        = &H10FFFFFF - &H10000000
-        in_Procedure    = &H1000FFFF - &H10000000
-        in_Operator     = &H100000FF - &H10000000
-        in_Datatype     = &H1000AA00 - &H10000000
-        in_Value        = &H1000FF00 - &H10000000
-        in_String       = &H1000AAFF - &H10000000
-        in_Statement    = &H10FF00FF - &H10000000
-        in_Keyword      = &H10FF0000 - &H10000000
-        in_Parantheses  = &H1000AAAA - &H10000000
-        in_Variable     = &H10FFFF00 - &H10000000
-    End Sub
+' Get/Set Values
 
-    Private Sub SetValue(Name As Variant, Value As Variant, Optional Index As Long = Empty)
+    Private Function GetStartText() As String
+        GetStartText =                   _
+        "VBA Console [Version 1.0]" & vbcrlf & _
+        "No Rights reserved"        & vbcrlf & _
+        vbcrlf                               & _
+        "Enter Password"            & vbcrlf
+    End Function
+
+    Private Function GetTextLength(Text As String, Seperator As String, Optional IndexBreakPoint As Long = -2) As Long
         Dim i As Long
-        If Index <> Empty Then
-            ConsoleVariables(1, Index) = Value
-            Exit Sub
-        End If
-        For i = 0 To Ubound(ConsoleVariables, 2)
-            If ConsoleVariables(0, i) = Name Or ConsoleVariables(0, i) = Empty Then
-                ConsoleVariables(0, i) = Name
-                ConsoleVariables(1, i) = Value
-                Exit Sub
-            End If
-        Next
-        ReDim Preserve ConsoleVariables(1, Ubound(ConsoleVariables, 2) + 1)
-        ConsoleVariables(0, Ubound(ConsoleVariables, 2)) = Name
-        ConsoleVariables(1, Ubound(ConsoleVariables, 2)) = Value
+        Dim Lines() As String
+        Lines = Split(Text, Seperator)
+        If IndexBreakPoint = -2 Then IndexBreakPoint = UboundK(Lines)
+        For i = 0 To IndexBreakPoint
+            GetTextLength = GetTextLength + Len(Lines(i)) + 1
+        Next i
+    End Function
 
-    End Sub
-
-    Private Sub ConsoleText_KeyUp(pKey As Long, ByVal ShiftKey As Integer)
-        
-        Dim Temp As Variant
-        Temp = Split(ConsoleText.Text, vbCrLf)
-        Select Case pKey
-            Case vbKeyReturn
-                HandleEnter
-                SetPositions
-            Case vbKeyUp
-                If CurrentLineIndex > 1 Then
-                    CurrentLineIndex = CurrentLineIndex - 1
-                    ConsoleText.SelStart = Len(ConsoleText.Text) - Len(Temp(Ubound(Temp))) - 5
-                    ConsoleText.SelLength = Len(ConsoleText.Text)
-                    ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex)
-                End If
-            Case vbKeyDown
-                If CurrentLineIndex < UBound(Temp) Then
-                    CurrentLineIndex = CurrentLineIndex + 1
-                    ConsoleText.SelStart = Len(ConsoleText.Text) - Len(Temp(Ubound(Temp)))
-                    ConsoleText.SelLength = Len(ConsoleText.Text)
-                    ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex) - 5
-                End If
-            Case Else
-                HandleOtherKeys pKey, ShiftKey
-        End Select
-
-    End Sub
-
-    ' Module Code
     Private Function GetLine(Text As String, Index As Long) As String
         Dim Lines() As String
         Dim SearchString As String
         Dim ReplaceString As String
         Dim i As Variant
         Lines = Split(Text, vbCrLf)
-        If Index > 0 And Index <= UBound(Lines) + 1 Then
+        If Index > 0 And Index <= UBoundK(Lines) + 1 Then
             SearchString = Lines(Index)
             If InStr(1, SearchString, Recognizer) = 0 Then
                 ReplaceString = ""
@@ -299,465 +479,37 @@ Option Explicit
         End If
     End Function
 
-    Private Function GetWord(Text As String, Optional Index As Long = Empty) As String
+    Private Function GetWord(Text As String, Optional Index As Long = -1) As String
         Dim Words() As String
         Words = Split(Text, " ")
-        If Index = Empty Then Index = Ubound(Words)
-        If Ubound(Words) > -1 Then GetWord = Words(Index)
+        If Index = -1 Then Index = UboundK(Words)
+        If UboundK(Words) > -1 Then GetWord = Words(Index)
     End Function
 
-    Private Sub SetUpNewLine()
-        Dim Temp As Variant
-        Temp = Split(ConsoleText.Text, vbCrLf)
-        CurrentLineIndex = Ubound(Temp)
-    End Sub
-
-    Private Sub HandleEnter()
-
-        Dim i As Long
-        Dim Line As String
-        SetUpNewLine
-        Line = GetLine(ConsoleText.Text, CurrentLineIndex - 1)
-        MulitlineEnd:
-        Select Case WorkMode
-            Case WorkModeEnum.Logging
-                If InStr(1, Line, "==") <> 0 Then
-                    HandleConsoleVariable Line
-                Else
-                    PrintEnter HandleCode(SplitString(Line, "; "))
-                End If
-            Case WorkModeEnum.UserInputt, WorkModeEnum.PredeclaredAnswer
-                UserInput = Replace(Line, vbCrLf, "")
-            Case WorkModeEnum.UserLog
-                ConsoleText.Text = Mid(ConsoleText.Text, 1, Len(ConsoleText.Text) - 3)
-            Case WorkModeEnum.MultilineMode
-                If Mid(Line, Len(Line), 1) <> "_" Then
-                    Dim Temp(2) As String '0 is final string, 1 fusion of final string with current string, 2 is current string
-                    Dim TempCount As Long
-                    Temp(0) = Line
-                    TempCount = CurrentLineIndex - 1
-                    Temp(2) = GetLine(ConsoleText.Text, TempCount - 1) ' needed for initialization
-                    If Len(Temp(2)) = 0 Then 
-                        Do Until Mid(Temp(2), Len(Temp(2)), 1) <> "_"
-                            Temp(1) = Temp(2) & Temp(0)
-                            Temp(0) = Temp(1)
-                            Temp(1) = ""
-                            TempCount = TempCount - 1
-                            Temp(2) = GetLine(ConsoleText.Text, TempCount - 1)
-                            If Len(Temp(2)) = 0 Then Exit Do
-                        Loop
-                    End If
-                    Temp(0) = Replace(Temp(0), "_", "")
-                    Line = Temp(0)
-                    WorkMode = WorkModeEnum.Logging
-                    GoTo MulitlineEnd
-                End If
-        End Select
-        If PasteStarter = True And Workmode <> WorkModeEnum.MultilineMode Then PrintConsole PrintStarter
-
-    End Sub
-
-    Private Function HandleCode(Arguments() As Variant) As Variant
-
-        Dim Temp As Variant
-        Temp = HandleSpecial(Arguments)
-        Select Case Temp
-            Case "Success": LastError = 1: Exit Function
-            Case " "      : LastError = 1: Exit Function
-            Case "ELSE"
-                If IsDate(Arguments(0)) Then
-                    HandleCode = CDate(Arguments(0))
-                ElseIf IsNumeric(Arguments(0)) Then
-                    HandleCode = CDbl(Arguments(0))
-                Else
-                    Dim i As Long
-                    Dim Found As Boolean
-                    For i = 0 To Ubound(ConsoleVariables, 2)
-                        If Arguments(0) = ConsoleVariables(0, i) Then
-                            HandleCode = Arguments(0)
-                            Found = True
-                        End If
-                    Next
-                    If Found <> True Then HandleCode = RunApplication(Arguments)
-                End If
-            Case Else
-                HandleCode = Temp
-        End Select
-        If HandleCode = Empty Then
-            HandleCode = "Success"
-            LastError = 1
-        End If
-
-    End Function
-
-    Private Function RunApplication(Arguments() As Variant) As Variant
-
-        On Error GoTo Error
-        Select Case UBound(Arguments)
-            Case 00:   RunApplication = Application.Run(Arguments(0))
-            Case 01:   RunApplication = Application.Run(Arguments(0), Arguments(1))
-            Case 02:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2))
-            Case 03:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3))
-            Case 04:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4))
-            Case 05:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5))
-            Case 06:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6))
-            Case 07:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7))
-            Case 08:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8))
-            Case 09:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9))
-            Case 10:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10))
-            Case 11:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11))
-            Case 12:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12))
-            Case 13:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13))
-            Case 14:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14))
-            Case 15:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15))
-            Case 16:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16))
-            Case 17:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17))
-            Case 18:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18))
-            Case 19:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19))
-            Case 20:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20))
-            Case 21:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21))
-            Case 22:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22))
-            Case 23:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23))
-            Case 24:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24))
-            Case 25:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25))
-            Case 26:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26))
-            Case 27:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27))
-            Case 28:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28))
-            Case 29:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29))
-            Case 30:   RunApplication = Application.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29), Arguments(30))
-            Case Else: RunApplication = "Too many Arguments": LastError = 3
-        End Select
-        If IsError(RunApplication) Then
-            GoTo Error:
-        Else
-            Exit Function
-        End If
-        Error:
-        RunApplication = "Could not run Procedure. Procedure might not exist"
-        LastError = 2
-
-    End Function
-
-    Private Function HandleSpecial(Arguments() As Variant) As Variant
-        Select Case True
-            Case UCase(CStr(Arguments(0))) Like "HELP"      : HandleSpecial = "Success" : HandleHelp
-            Case UCase(CStr(Arguments(0))) Like "CLEAR"     : HandleSpecial = " "       : HandleClear
-            Case UCase(CStr(Arguments(0))) Like "MULTILINE" : HandleSpecial = " "       : Workmode = WorkModeEnum.MultilineMode
-            Case UCase(CStr(Arguments(0))) Like "INFO"      : HandleSpecial = "Success" : HandleLastError
-            Case UCase(CStr(Arguments(0))) Like "[?]*"
-                If stdLambda_Active = True Then
-                    HandleSpecial = HandleLambda(Arguments)
-                Else
-                    HandleSpecial = "stdLambda is deactivated"
-                End If
-            Case Else                                       : HandleSpecial = "ELSE"
-        End Select
-    End Function
-
-    Private Sub HandleConsoleVariable(Line As Variant)
-
-        Dim AssignOperator As Long    : AssignOperator = InStr(1, Line, "==")
-        Dim Name           As Variant : Name           = Mid(Line, 1, AssignOperator - 1)
-        Dim RightSide      As String  : RightSide      = Mid(Line, AssignOperator + 2)
-        Dim Value          As Variant : Value          = HandleCode(SplitString(RightSide, "; "))
-        Dim i              As Long
-        Dim VariableFound  As Boolean
-
-        If Value <> "Could not run Procedure. Procedure might not exist" Or IsNumeric(Value) = False Then
-            For i = 0 To Ubound(ConsoleVariables, 2)
-                If Value = ConsoleVariables(0, i) Then
-                    Value = ConsoleVariables(1, i)
-                    VariableFound = True
-                End If
-            Next
-            If VariableFound <> True Then Value = RightSide
-        End If
-        SetValue Name, Value
-
-    End Sub
-
-    Private Function SplitString(Text As Variant, SplitText As Variant) As Variant()
+    Private Function SplitString(Text As String, SplitText As String) As String()
         Dim Temp() As String
-        Dim ReturnArray() As Variant
+        Dim ReturnArray() As String
         Dim i As Long
 
-        If InStr(1, CStr(Text), CStr(SplitText)) <> 0 Then
-            Temp = Split(CStr(Text), CStr(SplitText))
-            ReDim ReturnArray(Ubound(Temp))
-            For i = 0 To Ubound(ReturnArray)
-                ReturnArray(i) = CStr(Temp(i))
+        If Text = "" Then
+        ElseIf InStr(1, Text, SplitText) <> 0 Then
+            Temp = Split(Text, SplitText)
+            ReDim ReturnArray(UboundK(Temp))
+            For i = 0 To UboundK(ReturnArray)
+                ReturnArray(i) = Temp(i)
             Next i
         Else
-            ReDim ReturnArray(0)
-            ReturnArray(0) = Text
         End If
         SplitString = ReturnArray
     End Function
 
-    Private Sub HandleLastError()
-        Dim Message As String
-        Dim Color As Long
-
-        Color = &H100000FF - &H10000000
-        Select Case LastError
-        Case Empty:
-            Message = "No previous Error detected"
-        Case 1
-            Message = "The last run line was executed without problems"
-        Case 2
-            Message = "The last run line couldnt be executed. Some Problems could be:"         & vbcrlf & _
-                      "    1. Line wasnt written correctly"                                    & vbcrlf & _
-                      "    2. Code doesnt exist"                                               & vbcrlf & _
-                      "    3. There exists more than one publ1c procedure with the same name"  & vbcrlf & _
-                      "    4. The Procedure has the same name as the component it sits in"     & vbcrlf & _
-                      "    5. The Workbook with its VBProject isnt open"                       & vbcrlf & _
-                      "    6. The parameters were passed wrong"                                & vbcrlf '1 in publ1c to not mess with GetAllProcedures
-        Case 3
-            Message = " You passed too many arguments, VBA limits ParamArray Arguments to 30 (1 up to 30)"
-        Case 4
-            Message = "PrintConsole or PrintEnter didnt recieve equal or more elements than the text passed"                 & vbcrlf & _
-                      "To ensure this not happening pass 0 elements for in_basic, 1 to paint all chars to that color,"       & vbcrlf & _
-                      "or if you want all individually then pass equal or more elements through the optional color argument"
-        Case 5
-            Message = "You didnt pass enough arguments, stdLambda requieres at least 2 arguments"
-        End Select
-        PrintEnter Message, Color
-    End Sub
-
-    Private Static Function HandleOtherKeys(pKey As Long, ByVal ShiftKey As Integer)
-
-        Static CapitalKey As Boolean
-        Dim asciiChar As String
-        Dim CurrentWord As String
-        Dim CurrentLine As String
-        
-        ' Adjust for Shift key (Uppercase letters, special characters)
-        CurrentLine = GetLine(ConsoleText.Text, CurrentLineIndex)
-        CurrentWord = GetWord(CurrentLine)
-        If pKey = vbKeyCapital Then
-            CapitalKey = CapitalKey Xor True
-            GoTo SkipKey
-        End If
-        If CapitalKey = True Then ShiftKey = 1
-        Select Case ShiftKey
-            Case 0
-                ' Base character
-                Select Case pKey
-                    Case vbKeyA To vbKeyZ:      asciiChar = LCase(Chr(pKey))
-                    Case vbKey0 To vbKey9:      asciiChar = Chr(pKey)
-                    Case vbKeySpace:            asciiChar = " "
-                    Case vbKeyBack:             asciiChar = Chr(8) ' Backspace
-                    Case vbKeyReturn:           asciiChar = Chr(13) ' Carriage Return
-                    Case vbKeyTab:              asciiChar = Chr(9) ' Tab
-                    Case vbKeyMultiply:         asciiChar = "*"
-                    Case vbKeyAdd, 187:         asciiChar = "+"
-                    Case vbKeySubtract, 189:    asciiChar = "-"
-                    Case vbKeyDecimal, 190:     asciiChar = "."
-                    Case vbKeyDivide:           asciiChar = "/"
-                    Case 188:                   asciiChar = ","
-                    Case 191:                   asciiChar = "#"
-                    Case 226:                   asciiChar = "<"
-                    Case vbKeyRight:            asciiChar = "RIGHT"
-                End Select
-            Case = 1
-                Select Case pKey
-                    Case vbKeyA To vbKeyZ:      asciiChar = UCase(asciiChar)
-                    Case vbKey1:                asciiChar = "!"
-                    Case vbKey2:                asciiChar = Chr(34) ' """
-                    Case vbKey3:                asciiChar = "§"
-                    Case vbKey4:                asciiChar = "$"
-                    Case vbKey5:                asciiChar = "%"
-                    Case vbKey6:                asciiChar = "&"
-                    Case vbKey7:                asciiChar = "/"
-                    Case vbKey8:                asciiChar = "("
-                    Case vbKey9:                asciiChar = ")"
-                    Case vbKey0:                asciiChar = "="
-                    Case 187:                   asciiChar = "*"
-                    Case 188:                   asciiChar = ";"
-                    Case 189:                   asciiChar = "_"
-                    Case 190:                   asciiChar = ":"
-                    Case 191:                   asciiChar = "'"
-                    Case 226:                   asciiChar = ">"
-                End Select
-            Case 2
-
-            Case 3
-                    Case 226:                   asciiChar = "|"
-        End Select
-        Select Case asciiChar
-            Case Chr(9), "RIGHT" ' TAB
-                If Intellisense_Active = True Then IntellisenseList.Visible = True: IntellisenseList.SetFocus
-            Case Else
-                SetUp_IntelliSenseList CurrentWord
-        End Select
-        SkipKey:
-        SetPositions
-        ColorWord
-
-    End Function
-
-    Private Sub SetPositions()
-        Dim Temp()       As String: Temp = Split(ConsoleText.Text, vbCrLf)
-        Dim FactorHeight As Double: FactorHeight = Height / 4
-        Dim FactorWidth  As Double: FactorWidth = Width / 8
-        Dim ListOffset   As Double: ListOffset = 1.45
-        Dim ListFactor   As Double: ListFactor = 1.35
-        Dim CurrentLine  As String: CurrentLine = GetLine(ConsoleText.Text, UBound(Temp))
-        ScrollTop = UBound(Temp) * 10 * ListFactor - FactorHeight - 100
-        ScrollLeft = Len(CurrentLine) * 10
-        If Intellisense_Active = True Then
-            IntellisenseList.Top = ScrollTop + (FactorWidth * ListOffset) + 100
-            IntellisenseList.Left = ScrollLeft
-            IntellisenseList.Visible = True
-        End If
-    End Sub
-
-    Private Sub ColorWord()
-
-        Dim Lines() As String
-        Dim CurrentLine As String
-        Dim Tempp As Long
-        Dim CurrentLinePoint As Long
-        Dim j As Long
-        Dim i As Long
-        Dim Words() As String
-        Dim CurrentWord As String
-        Dim PreviousWord As String
-        Dim Is_String As Boolean
-        Dim Temp As String
-        Dim Para_Counter As Long
-        Dim Color As Long
-        
-        Lines            = Split(ConsoleText.Text, vbCrLf)
-        CurrentLine      = GetLine(ConsoleText.Text, CurrentLineIndex)
-        Tempp            = InStr(1, Lines(Ubound(Lines)), Recognizer)
-        CurrentLinePoint = Len(ConsoleText.Text) - Len(Lines(Ubound(Lines))) - 4
-        If Tempp <> 0 Then CurrentLinePoint = CurrentLinePoint + Tempp + Len(Recognizer)
-        Words = Split(CurrentLine, " ")
-
-        For i = 0 To UBound(Words)
-            Dim TempCounter As Long
-            For j = 0 To i - 1
-                TempCounter = TempCounter + Len(Words(j)) + 1 ' one for space
-            Next j
-            ConsoleText.SelStart = CurrentLinePoint + TempCounter
-            TempCounter = 0
-            ConsoleText.SelLength = Len(Words(i))
-            Select Case UCase(Words(i))
-                Case "IF", "THEN", "ELSE", "END", "FOR", "EACH", "NEXT", "DO", "WHILE", "LOOP", "SELECT", "CASE", "EXIT", "CONTINUE"
-                    Color = in_Statement
-                Case "DIM", "PUBLIC", "PRIVATE", "GLOBAL", "TRUE", "FALSE", "FUNCTION", "SUB", "REDIM", "PRESERVE"
-                    Color = in_Keyword
-                Case "+", "[*]", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "<>", "NOT", "AND", "OR", "XOR", "!=", "++", "||", "&", "&&", "=>", "=<", "<=", ">=", "[?]"
-                    Color = in_Operator
-                Case Else
-                    If Ucase(PreviousWord) = "AS" Then
-                        Color = in_Datatype
-                    ElseIf Words(i) Like "*(*)" Then
-                        Temp = Mid(Words(i), 1, InStr(1, Words(i), "(") - 1)
-                        ConsoleText.SelLength = Len(Temp)
-                        Color = in_Procedure                        
-                    Else
-                        If Intellisense_Active = True Then
-                            If InArray(Words(i), VariableArray) Then
-                                Color = in_Variable
-                            Else
-                                Color = in_Basic
-                            End If
-                        Else
-                            Color = in_Basic
-                        End If
-                    End If
-            End Select
-            ConsoleText.SelColor = Color
-            PreviousWord = Words(i)
-        Next i
-        Color = 0
-        For i = 1 To Len(CurrentLine)
-            If Is_String = True Then
-                Color = in_String
-            Else
-                Select Case Mid(CurrentLine, i, 1)
-                    Case = "("
-                        Color = in_Parantheses
-                        Para_Counter = Para_Counter + 1
-                        If Para_Counter Mod 2 = 0 Then Color = Color + &H00333300
-                        ConsoleText.SelColor = Color
-                    Case = ")"
-                        Color = in_Parantheses
-                        If Para_Counter Mod 2 = 0 Then Color = Color + &H00333300
-                        ConsoleText.SelColor = Color
-                        Para_Counter = Para_Counter - 1
-                    Case "+", "[*]", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "[?]"
-                        Color = in_Operator
-                    Case Chr(34)
-                        Color = in_String
-                        Is_String = Is_String Xor True
-                    Case Else
-                        Color = 0
-                End Select
-            End If
-            If Color <> 0 Then
-                ConsoleText.SelStart = CurrentLinePoint + i - 1 ' 1 comes from offset between .text and .seltext
-                ConsoleText.SelLength = 1
-                ConsoleText.SelColor = Color
-            End If
-        Next i
-        ConsoleText.SelStart = Len(ConsoleText.Text)
-        ConsoleText.SelColor = in_Basic
-
-    End Sub
-
-    Private Function GetStartText() As String
-        GetStartText =                   _
-        "VBA Console [Version 1.0]" & vbcrlf & _
-        "No Rights reserved"        & vbcrlf & _
-        vbcrlf                               & _
-        PrintStarter
-    End Function
-
-    Private Function HandleClear()
-        ConsoleText.Text = ""
-        ConsoleText.SelStart = 0
-        ConsoleText.SelLength = Len(ConsoleText.Text)
-        ConsoleText.SelColor = in_Basic
-        SetUpNewLine
-    End Function
-
-    Private Sub HandleHelp()
-
-        Dim Message As String
-        Dim Color As Long
-
-        Color = &H100000FF - &H10000000
-        Message = _
-        "--------------------------------------------------"                                           & vbcrlf & _
-        "This Console can do the following:"                                                           & vbcrlf & _
-        "1. It can be used as a form to show messages, ask questions to the user or get a user input"  & vbcrlf & _
-        "2. It can be used to show and log errors and handle them by user input"                       & vbcrlf & _
-        "3. It can run Procedures with up to 29 arguments"                                             & vbcrlf & _
-        ""                                                                                             & vbcrlf & _
-        "HOW TO USE IT:"                                                                               & vbcrlf & _
-        "   Run a Procedure:"                                                                          & vbcrlf & _
-        "       To run a procedure you have to write the name of said procedure (Case sensitive)"      & vbcrlf & _
-        "       If you want to pass parameters you have to write    |; | between every parameter"      & vbcrlf & _
-        "       Example:"                                                                              & vbcrlf & _
-        "           Say; THIS IS A PARAMETER; THIS IS ANOTHER PARAMETER"                               & vbcrlf & _
-        ""                                                                                             & vbcrlf & _
-        "   Ask a question:"                                                                           & vbcrlf & _
-        "       Use CheckPredeclaredAnswer"                                                            & vbcrlf & _
-        "           Param1 = Message to be showwn"                                                     & vbcrlf & _
-        "           Param2 = Array of Values, which are acceptable answers"                            & vbcrlf & _
-        "           Param3 = Array of Messages, which show a text according to answer in Param2"       & vbcrlf & _
-        "       The Function will loop until one of the acceptable answers is typed"                   & vbcrlf & _
-        "--------------------------------------------------"                                           & vbcrlf
-        PrintEnter Message, Color
-
+    Private Sub SetUpNewLine()
+        CurrentLineIndex = UboundK(Split(ConsoleText.Text, vbCrLf))
     End Sub
 
     Private Function InStrAll(Text As String, SearchText As String, Optional StartIndex As Long = 1, Optional EndIndex As Long = 0, Optional StartFinding As Long = 0, Optional ReturnCount As Long = 255, Optional Line As Long = 0, Optional BreakText As String = Empty) As Long()
         
-        Dim ReturnArray() As Long
+        Dim ReturnArray() As Long: ReDim ReturnArray(0)
         Dim Lines() As String
         Dim EndLine As Long
         Dim CurrentValue As Long : CurrentValue = 0
@@ -773,11 +525,11 @@ Option Explicit
         Else
             ReDim Lines(0)
             Lines(0) = Text
-            EndLine = Ubound(Lines)
+            EndLine = UboundK(Lines)
         End If
         
         For j = Line To EndLine
-            Do Until i = EndIndex
+            Do Until i > EndIndex
                 CurrentValue = 0
                 CurrentValue = InStr(i, Lines(j), SearchText)
                 If CurrentValue <> 0 Then 
@@ -801,11 +553,798 @@ Option Explicit
 
     End Function
 
+    '                        |--|  |--------|                  Returns Array of Length -1                    
+    ' ExampleString=Function(Arg1, Arg2(Arg3))                 ExampleString=Function()
+    Private Function GetFunctionArgs(Line As String) As Variant()
+        Dim Temp() As String
+        Dim Tempp() As Variant
+        Dim i As Long
+        Temp = SplitString(GetParanthesesText(Line), ", ")
+        If UboundK(Temp) <> -1 Then
+            ReDim Tempp(UboundK(Temp))
+            For i = 0 To UBoundK(Temp)
+                Tempp(i) = Temp(i)
+            Next
+        End If
+        GetFunctionArgs = Tempp
+    End Function
+
+    '               |------|                        AS TREE POSITION LIKE eg. 1, 3
+    ' ExampleString=Function(Arg1, Arg2(Arg3))
+    Private Function GetFuncTreePosition(Line As String) As Variant()
+
+        Dim CurrentWord As String
+        Dim i As Long
+        Dim j As Long
+        Dim ReturnArray() As Variant
+
+        CurrentWord = GetFunctionName(Line)
+        For i = 0 To ConsVarIndex
+            j = FindNode(i, CurrentWord, Iif(i = ConsVarIndex, 0, -1))
+            If j <> -1 Then
+                Redim ReturnArray(1)
+                ReturnArray(0) = i
+                ReturnArray(1) = j
+                GetFuncTreePosition = ReturnArray
+                Exit Function
+            End If
+        Next i
+
+    End Function
+
+    Private Function GetFunctionName(Line As String) As Variant
+        Dim i As Long
+        i = InStr(1, Line, "(")
+        If i = 0 Then
+            GetFunctionName = Line
+        Else
+            GetFunctionName = MidP(Line, 1, i -1)
+        End If
+    End Function
+
+    ' Mid, but with EndPoint instead of Length
+    Private Function MidP(Text As String, StartPoint As Long, EndPoint As Long) As String
+        MidP = Mid(Text, StartPoint, (EndPoint - StartPoint) + 1)
+    End Function
+
+    '                        |--------------|
+    ' ExampleString=Function(Arg1, Arg2(Arg3))
+    Private Function GetParanthesesText(Line As String) As String
+
+        Dim OpenPos() As Long: OpenPos = InStrAll(Line, "(") 
+        Dim ClosePos() As Long: ClosePos = InStrAll(Line, ")")
+        Dim StartPoint As Long
+        Dim EndPoint As Long
+
+        If UboundK(OpenPos) = UboundK(ClosePos) Then
+            StartPoint = OpenPos(0) + 1
+            EndPoint = ClosePos(UboundK(ClosePos)) - 1
+        End If
+        If UboundK(OpenPos) = 0 And OpenPos(0) = 0 Then StartPoint = Len(Line) + 1
+        If UboundK(ClosePos) = 0 And ClosePos(0) = 0 Then EndPoint = Len(Line)
+        GetParanthesesText = MidP(Line, StartPoint, EndPoint)
+
+    End Function
+
+    Private Function UboundK(Arr As Variant) As Long
+        On Error Resume Next
+        UBoundK = -1
+        UBoundK = Ubound(Arr)
+    End Function
+
+    Private Function InString(Text As String, StartPoint As Long, EndPoint As Long) As Boolean
+        Dim Quotes() As Long
+        Dim i As Long
+        Dim EndIndex As Long
+        Quotes = InStrAll(Text, Chr(34))
+        Select Case UboundK(Quotes)
+            Case 0
+                If Quotes(0) = 0 Then
+                    InString = True
+                ElseIf Quotes(0) =< StartPoint Then
+                    InString = True
+                End If
+            Case >0
+                If IsEven(UboundK(Quotes)) Then
+                    EndIndex = UboundK(Quotes)
+                Else
+                    EndIndex = UboundK(Quotes) - 1
+                    If Quotes(UboundK(Quotes)) =< StartPoint Then InString = True: Exit Function
+                End If
+                For i = 0 To EndIndex Step+2
+                    If Quotes(i) =< StartPoint And Quotes(i + 1) >= EndPoint Then InString = True
+                Next i
+            Case Else
+        End Select
+    End Function
+
+    Private Function GetOperatorPos(Text As String, Optional Operator As String = "") As Long
+        If Operator = "" Then
+            Dim Operators() As Variant
+            Dim i As Long
+            Operators = Array(" IS ", "==", "<>", " NOT ", " AND ", " OR ", " XOR ", "!=", "++", "||", "&&", "&", "=>", "=<", "<=", ">=", "?", "+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "?", ",", " = ")
+            For i = 0 To UBoundK(Operators)
+                GetOperatorPos = InStr(1, Text, Operators(i))
+                If GetOperatorPos <> 0 Then Exit Function
+            Next i
+        Else
+            GetOperatorPos = InStr(1, Text, Operator)
+        End If
+    End Function
+
+    Private Function GetOperator(Text As String, Optional Operator As String = "") As String
+        Dim Found As Long
+        If Operator = "" Then
+            Dim Operators() As Variant
+            Dim i As Long
+            Operators = Array(" IS ", "==", "<>", " NOT ", " AND ", " OR ", " XOR ", "!=", "++", "||", "&&", "&", "=>", "=<", "<=", ">=", "?", "+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "?", ",", " = ")
+            For i = 0 To UBoundK(Operators)
+                Found = InStr(1, Text, Operators(i))
+                If Found <> 0 Then GetOperator = Operators(i): Exit Function
+            Next i
+        Else
+            Found = InStr(1, Text, Operator)
+            If Found <> 0 Then GetOperator = Operator: Exit Function
+        End If
+    End Function
+
+    Function ReplacePositions(Expression As String, Start As Integer, Length As Integer, Replace As String) As String
+        ReplacePositions = Mid(Expression, 1, Start - 1) _
+                         & Replace _
+                         & Mid(Expression, Start + Length)
+    End Function
+    
 '
 
+' Handle Input
+    
+    Private Sub ConsoleText_KeyPress(Char As Long)
+        If PasswordMode Then 
+            Select Case Char
+                Case 8
+                    UserInput = Mid(UserInput, 1, Len(UserInput) - 1)
+                Case 32 To 126, 128 To 255
+                    UserInput = UserInput & Chr(Char)
+                    Char = 42 '"*""
+                Case Else
+            End Select
+        End If
+    End Sub
 
+    Private Sub ConsoleText_KeyUp(pKey As Long, ByVal ShiftKey As Integer)
+        
+        Dim Lines As Variant
+        Lines = Split(ConsoleText.Text, vbCrLf)
+            Select Case pKey
+                Case vbKeyReturn
+                    Call HandleEnter
+                    Call SetPositions
+                Case vbKeyUp
+                    If PasswordMode Then Exit Sub
+                    If Workmode = WorkModeEnum.Logging Then
+                        If CurrentLineIndex > 1 Then
+                            CurrentLineIndex = CurrentLineIndex - 1
+                            ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbcrlf, UboundK(Lines) - 1)
+                            ConsoleText.SelLength = Len(ConsoleText.Text)
+                            ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex)
+                        End If
+                    End If
+                Case vbKeyDown
+                    If PasswordMode Then Exit Sub
+                    If Workmode = WorkModeEnum.Logging Then
+                        If CurrentLineIndex < UBoundK(Lines) Then
+                            CurrentLineIndex = CurrentLineIndex + 1
+                            ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbcrlf, UboundK(Lines) - 1)
+                            ConsoleText.SelLength = Len(ConsoleText.Text)
+                            ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex)
+                        End If
+                    End If
+                Case vbKeyRight
+                    If PasswordMode Then Exit Sub
+                    CurrentChar = CurrentChar + 1
+                    If CurrentChar > Len(ConsoleText.Text) Then CurrentChar = Len(ConsoleText.Text)
+                Case vbKeyLeft
+                    If PasswordMode Then Exit Sub
+                    CurrentChar = CurrentChar - 1
+                    If CurrentChar < 0 Then CurrentChar = 0
+                Case Else
+                    CurrentChar = CurrentChar + 1
+                    If CurrentChar > Len(ConsoleText.Text) Then CurrentChar = Len(ConsoleText.Text)
+                    Call HandleOtherKeys(pKey, ShiftKey)
+            End Select
 
-' Following Part is Intellisense, which is dependant on Microsoft Visual Studio extensebility 5.3
+    End Sub
+
+    Private Sub HandleEnter()
+
+        Dim i As Long
+        Dim Line As String
+        Call SetUpNewLine
+        If PasswordActive = False Then
+            If HandlePassword Then
+                Call PrintEnter("Password accepted", in_System)
+                Call PrintConsole(PrintStarter, in_System)
+            Else
+                Call PrintEnter("Enter Password", in_System)
+            End If
+            Exit Sub
+        End If
+        Line = GetLine(ConsoleText.Text, CurrentLineIndex - 1)
+        MulitlineEnd:
+        Select Case WorkMode
+            Case WorkModeEnum.Logging
+                Call PrintEnter(HandleCode(Line), in_System)
+            Case WorkModeEnum.UserInputt
+                UserInput = Replace(Line, vbCrLf, "")
+            Case WorkModeEnum.UserLog
+                ConsoleText.Text = Mid(ConsoleText.Text, 1, Len(ConsoleText.Text) - 3)
+            Case WorkModeEnum.MultilineMode, WorkModeEnum.ScriptMode
+                If Mid(Line, Len(Line), 1) <> "_" Then
+                    Dim Temp(2) As String '0 is final string, 1 fusion of final string with current string, 2 is current string
+                    Dim TempCount As Long
+
+                    Temp(0) = Line
+                    TempCount = CurrentLineIndex - 1
+                    Temp(2) = GetLine(ConsoleText.Text, TempCount - 1) ' needed for initialization
+                    If Len(Temp(2)) <> 0 Then 
+                        Do Until Mid(Temp(2), Len(Temp(2)), 1) <> "_"
+                            Temp(1) = Temp(2) & Temp(0)
+                            Temp(0) = Temp(1)
+                            Temp(1) = ""
+                            TempCount = TempCount - 1
+                            Temp(2) = GetLine(ConsoleText.Text, TempCount - 1)
+                            If Len(Temp(2)) = 0 Then Exit Do
+                        Loop
+                    End If
+                    If WorkMode = WorkModeEnum.ScriptMode Then
+                        Dim Name As String
+                        Dim Script As String
+                        TempCount = InStr(1, Temp(0), "_")
+                        Name = Mid(Temp(0), 1, TempCount - 1)
+                        Script = Mid(Temp(0), TempCount + 1, Len(Temp(0)))
+                        Call AddScript(Name, Script)
+                        Call PrintEnter("New Script with Name " & Name & " was created", in_System)
+                        WorkMode = WorkModeEnum.Logging
+                    Else
+                        Temp(0) = Replace(Temp(0), "_", "")
+                        Line = Temp(0)
+                        WorkMode = WorkModeEnum.Logging
+                        GoTo MulitlineEnd
+                    End If
+                End If
+        End Select
+        If PasteStarter = False Or Workmode = WorkModeEnum.MultilineMode Or WorkMode = WorkModeEnum.ScriptMode Then
+        Else
+            Call PrintConsole(PrintStarter, in_System)
+        End If
+
+    End Sub
+
+    Private Function HandleCode(Line As String) As Variant
+
+        Select Case UCase(Line)
+            Case "HELP"      : HandleCode = HandleHelp
+            Case "CLEAR"     : HandleCode = HandleClear
+            Case "MULTILINE" : HandleCode = "Multiline is active": Workmode = WorkModeEnum.MultilineMode
+            Case "INFO"      : HandleCode = HandleLastError
+            Case "EXIT"      : HandleCode = HandleClear: Me.Hide
+            Case "SCRIPT"    : HandleCode = "Scriptwriting is active": Workmode = WorkModeEnum.ScriptMode
+            Case Else
+                HandleCode = HandleConsoleVariable(Line)
+        End Select
+        
+    End Function
+
+    Private Function HandleConsoleVariable(Line As String) As Variant
+
+        Dim AssignOperator  As Long    : AssignOperator = InStr(1, Line, AsgOperator)
+        Dim LeftSide        As String  : If AssignOperator <> 0 Then LeftSide = Mid(Line, 1, AssignOperator - 1) Else LeftSide = Empty
+        Dim LeftSideName()  As Variant : LeftSideName   = GetFuncTreePosition(LeftSide)
+        Dim RightSide       As String  : If AssignOperator <> 0 Then RightSide = Mid(Line, AssignOperator + Len(AsgOperator), Len(Line)) Else RightSide = Mid(Line, 1, Len(Line))
+        Dim RightSideName() As Variant : RightSideName  = GetFuncTreePosition(RightSide)
+        Dim Quotes()        As Long    : Quotes         = InStrAll(CStr(RightSide), Chr(34))
+        Dim Value           As Variant
+        Dim Args() As Variant
+        Dim Pos() As String
+
+        If UboundK(RightSideName) <> -1 Then
+            Args = GetFunctionArgs(RightSide)
+            If UboundK(Args) = -1 And GetParanthesesText(RightSide) <> "" Then
+                ReDim Args(0)
+                Args(0) = GetParanthesesText(RightSide)
+            End If
+            Call RecursiveReturnVariable(Args)
+            If UboundK(Args) <> -1 Then
+                Value = GetVariable(Clng(RightSideName(0)), Clng(RightSideName(1)), True, False, Args)
+            Else
+                Value = GetVariable(Clng(RightSideName(0)), Clng(RightSideName(1)), True, False)
+            End If
+        Else
+            Select Case True
+                Case IsNumeric(RightSide)
+                    Value = CLng(RightSide)
+                Case IsDate(RightSide)
+                    Value = CDate(RightSide)
+                Case UboundK(Quotes) >= 1
+                    Value = MidP(CStr(RightSide), 2, Len(CStr(RightSide)) - 1)
+                Case Mid(RightSide, 1, 1) Like "[?]*"
+                    If stdLambda_Active Then
+                        If CreateLambda(LeftSide, Mid(RightSide, 2, Len(RightSide)), False, False) Then
+                            HandleConsoleVariable = "Lambda created successfully"
+                            Exit Function
+                        Else
+                            HandleConsoleVariable = "Could not create Lambda"
+                            Exit Function
+                        End If
+                    Else
+                        HandleConsoleVariable = "stdLambda is deactivated"
+                        Exit Function
+                    End If
+                Case Else
+                    Value = "Could not get any Value"
+            End Select
+        End If
+
+        If LeftSide = Empty Then
+            HandleConsoleVariable = Value
+        Else
+            If UboundK(LeftSideName) = -1 Then
+                Call SetVariableValue(ConsVarIndex, LeftSide & ", As ConsoleVariable", Value)
+                HandleConsoleVariable = "New Variable " & LeftSide & " was created with Value: " & Value
+            Else
+                Call SetVariableValue(ConsVarIndex, LeftSide, Value)
+                HandleConsoleVariable = "New Value assigned to Variable "
+            End If
+        End If
+
+    End Function
+
+    Private Function RunApplication(Name As String, Arguments As Variant) As Variant
+
+        On Error GoTo Error
+        Select Case UBoundK(Arguments)
+            Case -1:   RunApplication = Application.Run(Name)
+            Case 00:   RunApplication = Application.Run(Name, Arguments(0))
+            Case 01:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1))
+            Case 02:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2))
+            Case 03:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3))
+            Case 04:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4))
+            Case 05:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5))
+            Case 06:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6))
+            Case 07:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7))
+            Case 08:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8))
+            Case 09:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9))
+            Case 10:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10))
+            Case 11:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11))
+            Case 12:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12))
+            Case 13:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13))
+            Case 14:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14))
+            Case 15:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15))
+            Case 16:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16))
+            Case 17:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17))
+            Case 18:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18))
+            Case 19:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19))
+            Case 20:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20))
+            Case 21:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21))
+            Case 22:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22))
+            Case 23:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23))
+            Case 24:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24))
+            Case 25:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25))
+            Case 26:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26))
+            Case 27:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27))
+            Case 28:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28))
+            Case 29:   RunApplication = Application.Run(Name, Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29))
+            Case Else: RunApplication = "Too many Arguments": LastError = 3
+        End Select
+        If IsError(RunApplication) Then
+            GoTo Error:
+        Else
+            Exit Function
+        End If
+        Error:
+        RunApplication = "Could not run Procedure. Procedure might not exist"
+        LastError = 2
+
+    End Function
+
+    Private Static Function HandleOtherKeys(pKey As Long, ByVal ShiftKey As Integer) As String
+
+        Static CapitalKey As Boolean
+        Dim AsciiChar As String
+        Dim CurrentWord As String
+        Dim CurrentLine As String
+        
+        ' Adjust for Shift key (Uppercase letters, special characters)
+        CurrentLine = GetLine(ConsoleText.Text, CurrentLineIndex)
+        CurrentWord = GetWord(CurrentLine)
+        If pKey = vbKeyCapital Then
+            CapitalKey = CapitalKey Xor True
+            GoTo SkipKey
+        End If
+        If CapitalKey = True Then ShiftKey = 1
+        Select Case ShiftKey
+            Case 0
+                ' Base character
+                Select Case pKey
+                    Case vbKeyA To vbKeyZ:      AsciiChar = LCase(Chr(pKey))
+                    Case vbKey0 To vbKey9:      AsciiChar = Chr(pKey)
+                    Case vbKeySpace:            AsciiChar = " "
+                    Case vbKeyBack:             AsciiChar = Chr(8) ' Backspace
+                    Case vbKeyReturn:           AsciiChar = Chr(13) ' Carriage Return
+                    Case vbKeyTab:              AsciiChar = Chr(9) ' Tab
+                    Case vbKeyMultiply:         AsciiChar = "*"
+                    Case vbKeyAdd, 187:         AsciiChar = "+"
+                    Case vbKeySubtract, 189:    AsciiChar = "-"
+                    Case vbKeyDecimal, 190:     AsciiChar = "."
+                    Case vbKeyDivide:           AsciiChar = "/"
+                    Case 188:                   AsciiChar = ","
+                    Case 191:                   AsciiChar = "#"
+                    Case 226:                   AsciiChar = "<"
+                    Case vbKeyRight:            AsciiChar = "RIGHT"
+                    Case vbKeyLeft:             AsciiChar = "LEFT"
+                    Case vbKeyUp:               AsciiChar = "UP"
+                    Case vbKeyDown:             AsciiChar = "DOWN"
+                End Select
+            Case = 1
+                Select Case pKey
+                    Case vbKeyA To vbKeyZ:      AsciiChar = UCase(AsciiChar)
+                    Case vbKey1:                AsciiChar = "!"
+                    Case vbKey2:                AsciiChar = Chr(34) ' """
+                    Case vbKey3:                AsciiChar = "§"
+                    Case vbKey4:                AsciiChar = "$"
+                    Case vbKey5:                AsciiChar = "%"
+                    Case vbKey6:                AsciiChar = "&"
+                    Case vbKey7:                AsciiChar = "/"
+                    Case vbKey8:                AsciiChar = "("
+                    Case vbKey9:                AsciiChar = ")"
+                    Case vbKey0:                AsciiChar = "="
+                    Case 187:                   AsciiChar = "*"
+                    Case 188:                   AsciiChar = ";"
+                    Case 189:                   AsciiChar = "_"
+                    Case 190:                   AsciiChar = ":"
+                    Case 191:                   AsciiChar = "'"
+                    Case 226:                   AsciiChar = ">"
+                End Select
+            Case 2
+
+            Case 3
+                    Case 226:                   AsciiChar = "|"
+        End Select
+        Select Case AsciiChar
+            Case Chr(9) ' TAB
+                ConsoleText.SelStart = Len(ConsoleText.Text) - 4
+                ConsoleText.SelLength = 1
+                ConsoleText.SelText = ""
+                If Intellisense_Active = True Then
+                    If IntellisenseList.ListCount > 0 Then IntellisenseList.SetFocus
+                End If
+            Case Else
+                Call SetUp_IntelliSenseList(CurrentWord)
+        End Select
+        SkipKey:
+        Call SetPositions
+        Call ColorWord
+        HandleOtherKeys = AsciiChar
+
+    End Function
+
+    Private Function HandleLastError() As String
+        Select Case LastError
+        Case Empty:
+            HandleLastError = "No previous Error detected"
+        Case 1
+            HandleLastError = "The last run line was executed without problems"
+        Case 2
+            HandleLastError = "The last run line couldnt be executed. Some Problems could be:" & vbcrlf & _
+                      "    1. Line wasnt written correctly"                                    & vbcrlf & _
+                      "    2. Code doesnt exist"                                               & vbcrlf & _
+                      "    3. There exists more than one publ1c procedure with the same name"  & vbcrlf & _
+                      "    4. The Procedure has the same name as the component it sits in"     & vbcrlf & _
+                      "    5. The Workbook with its VBProject isnt open"                       & vbcrlf & _
+                      "    6. The parameters were passed wrong"                                & vbcrlf '1 in publ1c to not mess with GetAllProcedures
+        Case 3
+            HandleLastError = " You passed too many arguments, VBA limits ParamArray Arguments to 30 (1 up to 30)"
+        Case 4
+            HandleLastError = "PrintConsole or PrintEnter didnt recieve equal or more elements than the text passed"         & vbcrlf & _
+                      "To ensure this not happening pass 0 elements for in_basic, 1 to paint all chars to that color,"       & vbcrlf & _
+                      "or if you want all individually then pass equal or more elements through the optional color argument"
+        Case 5
+            HandleLastError = "You didnt pass enough arguments, stdLambda requieres at least 2 arguments"
+        End Select
+    End Function
+
+    Private Function HandleClear() As String
+        ConsoleText.Text = ""
+        ConsoleText.SelStart = 0
+        ConsoleText.SelLength = Len(ConsoleText.Text)
+        ConsoleText.SelColor = in_Basic
+        Call SetUpNewLine
+        HandleClear = " "
+    End Function
+
+    Private Function HandleHelp() As String
+        HandleHelp = _
+        "--------------------------------------------------"                                           & vbcrlf & _
+        "This Console can do the following:"                                                           & vbcrlf & _
+        "1. It can be used as a form to show messages, ask questions to the user or get a user input"  & vbcrlf & _
+        "2. It can be used to show and log errors and handle them by user input"                       & vbcrlf & _
+        "3. It can run Procedures with up to 29 arguments"                                             & vbcrlf & _
+        ""                                                                                             & vbcrlf & _
+        "HOW TO USE IT:"                                                                               & vbcrlf & _
+        "   Run a Procedure:"                                                                          & vbcrlf & _
+        "       To run a procedure you have to write the name of said procedure (Case sensitive)"      & vbcrlf & _
+        "       If you want to pass parameters you have to write    |; | between every parameter"      & vbcrlf & _
+        "       Example:"                                                                              & vbcrlf & _
+        "           Say; THIS IS A PARAMETER; THIS IS ANOTHER PARAMETER"                               & vbcrlf & _
+        ""                                                                                             & vbcrlf & _
+        "   Ask a question:"                                                                           & vbcrlf & _
+        "       Use CheckPredeclaredAnswer"                                                            & vbcrlf & _
+        "           Param1 = Message to be showwn"                                                     & vbcrlf & _
+        "           Param2 = Array of Values, which are acceptable answers"                            & vbcrlf & _
+        "           Param3 = Array of Messages, which show a text according to answer in Param2"       & vbcrlf & _
+        "       The Function will loop until one of the acceptable answers is typed"                   & vbcrlf & _
+        "--------------------------------------------------"                                           & vbcrlf
+    End Function
+
+    
+    '                                                                      #############|----------|
+    '                                                     ################|-------------------------|
+    '                                                |--|                 |             |          ||   
+    '                     #############|----------|  |  |                 |             |          ||   
+    '               |--|               |          |  |  |                 |             |          ||   
+    '   ###########|---------------------------------------------------------------------------------|
+    ' x=BigFunction(Arg1, SmallFunction(Arg3, Arg2), Arg4, SmallerFunction(SmallFunction(Arg3, Arg2)))
+    Private Sub RecursiveReturnVariable(ByRef Arguments() As Variant)
+        
+        Dim i As Long
+
+        Dim CurrentArgPos() As Variant
+        Dim CurrentArguments() As Variant
+        Dim Quotes() As Long
+        If UboundK(Arguments) = -1 Then Exit Sub
+        Dim Operator As String: Operator = GetOperator(CStr(Arguments(i)))
+        For i = 0 To UboundK(Arguments)
+            Quotes = InStrAll(CStr(Arguments(i)), Chr(34))
+            Select Case True
+                Case IsNumeric(Arguments(i))
+                    Arguments(i) = CLng(Arguments(i))
+                Case IsDate(Arguments(i))
+                    Arguments(i) = CDate(Arguments(i))
+                Case UboundK(Quotes) >= 1
+                    Arguments(i) = MidP(CStr(Arguments(i)), 2, Len(CStr(Arguments(i))) - 1)
+                Case Operator <> ""
+                    Dim Temp() As String
+                    Temp = SplitString(CStr(Arguments(i)), Operator)
+                    Arguments(i) = HandleReturnOperator(Temp(0), Temp(1), Operator)
+                Case Else
+                        CurrentArgPos = GetFuncTreePosition(CStr(Arguments(i)))
+                        If UboundK(CurrentArgPos) <> -1 Then
+                            CurrentArguments = GetFunctionArgs(CStr(Arguments(i)))
+                            Call RecursiveReturnVariable(CurrentArguments)
+                            If UboundK(CurrentArguments) > 0 Then
+                                Arguments(i) = GetVariable(CLng(CurrentArgPos(0)), CLng(CurrentArgPos(1)), True, False, CurrentArguments)
+                            Else
+                                Arguments(i) = GetVariable(CLng(CurrentArgPos(0)), CLng(CurrentArgPos(1)), True, False)
+                            End If
+                        End If
+                    If UboundK(CurrentArgPos) = -1 Then Arguments(i) = "Could not handle Argument"
+            End Select
+        Next i
+    End Sub
+
+    Private Function HandleReturnOperator(Value1 As Variant, Value2 As Variant, Operator As String) As Variant
+        On Error GoTo Error
+        If VarType(Value1) <> VarType(Value2) Then
+            HandleReturnOperator = "Type mismatch"
+        Else
+
+            If IsObject(Value1) Then
+                Select Case UCase(Operator)
+                    Case "==", " IS "        : HandleReturnOperator = Value1 Is Value2
+                    Case "<>", "!=", " NOT " : HandleReturnOperator = Not Value1 Is Value2
+                    Case Else
+                                               HandleReturnOperator = "No valid operator for object"
+                End Select
+            Else
+                Select Case UCase(Operator)
+                    Case "==", " IS "        : HandleReturnOperator = CLng(Value1) =   CLng(Value2)
+                    Case "<>", "!=", " NOT " : HandleReturnOperator = CLng(Value1) <>  CLng(Value2)
+                    Case "||", " OR "        : HandleReturnOperator = CLng(Value1) Or  CLng(Value2)
+                    Case "&&", " AND "       : HandleReturnOperator = CLng(Value1) And CLng(Value2)
+                    Case "", "", " XOR "     : HandleReturnOperator = CLng(Value1) Xor CLng(Value2)
+                    Case "<"                 : HandleReturnOperator = CLng(Value1) <   CLng(Value2)
+                    Case ">"                 : HandleReturnOperator = CLng(Value1) >   CLng(Value2)
+                    Case "=<", "<="          : HandleReturnOperator = CLng(Value1) =<  CLng(Value2)
+                    Case ">=", "=>"          : HandleReturnOperator = CLng(Value1) >=  CLng(Value2)
+                    Case "++"                : HandleReturnOperator = CLng(Value1) +   CLng(1)
+                    Case "--"                : HandleReturnOperator = CLng(Value1) -   CLng(1)
+                    Case "**"                : HandleReturnOperator = CLng(Value1) *   CLng(Value1)
+                    Case "//"                : HandleReturnOperator = CLng(Value1) /   CLng(Value1)
+                    Case "^^"                : HandleReturnOperator = CLng(Value1) ^   CLng(Value1)
+                    Case "+="                : HandleReturnOperator = CLng(Value1) +   CLng(Value2)
+                    Case "-="                : HandleReturnOperator = CLng(Value1) -   CLng(Value2)
+                    Case "*="                : HandleReturnOperator = CLng(Value1) *   CLng(Value2)
+                    Case "/="                : HandleReturnOperator = CLng(Value1) /   CLng(Value2)
+                    Case "+"                 : HandleReturnOperator = CLng(Value1) +   CLng(Value2)
+                    Case "-"                 : HandleReturnOperator = CLng(Value1) -   CLng(Value2)
+                    Case "*"                 : HandleReturnOperator = CLng(Value1) *   CLng(Value2)
+                    Case "/"                 : HandleReturnOperator = CLng(Value1) /   CLng(Value2)
+                    Case "^"                 : HandleReturnOperator = CLng(Value1) ^   CLng(Value2)
+                    Case "&"                 : HandleReturnOperator = CLng(Value1) &   CLng(Value2)
+                    Case Else
+                                              HandleReturnOperator = "No valid Operator"
+                End Select
+            End If
+        End If
+        Exit Function
+
+        Error:
+        HandleReturnOperator = "could not handle operator"
+    End Function
+
+    Private Function HandlePassword() As Boolean
+        If PasswordActive = True Then
+            HandlePassword = True
+            PasswordActive = True
+        Else
+            If UserInput = p_Password Then
+                HandlePassword = True
+                PasswordActive = True
+                UserInput = ""
+                PasswordMode = False
+            Else
+                UserInput = ""
+                PasswordMode = True
+            End If
+        End If
+    End Function
+
+    
+'
+
+' Coloring
+
+    Private Sub AssignColor()
+        in_Basic        = RGB(255, 255, 255)
+        in_System       = RGB(170, 170, 170)
+        in_Procedure    = RGB(255, 255, 000)
+        in_Operator     = RGB(255, 000, 000)
+        in_Datatype     = RGB(000, 170, 000)
+        in_Value        = RGB(000, 255, 000)
+        in_String       = RGB(255, 165, 000)
+        in_Statement    = RGB(255, 000, 255)
+        in_Keyword      = RGB(000, 000, 255)
+        in_Parantheses  = RGB(170, 170, 000)
+        in_Variable     = RGB(000, 255, 255)
+        in_Script       = RGB(255, 128, 128)
+    End Sub
+
+    Private Sub ColorWord()
+
+        Dim Lines()            As String: Lines              = Split(ConsoleText.Text, vbCrLf)
+        Dim CurrentLine        As String: CurrentLine        = GetLine(ConsoleText.Text, CurrentLineIndex)
+        Dim RecognizerPosition As Long  : RecognizerPosition = InStr(1, Lines(UboundK(Lines)), Recognizer)
+        Dim CurrentLinePoint   As Long  : CurrentLinePoint   = GetTextLength(ConsoleText.Text, vbcrlf, UboundK(Lines) - 1)
+        Dim Words()            As String: Words              = Split(CurrentLine, " ")
+        Dim i                  As Long
+        Dim j                  As Long
+        Dim PreviousWord       As String
+        Dim Color              As Long
+
+        If RecognizerPosition <> 0 Then CurrentLinePoint = CurrentLinePoint + (RecognizerPosition - 1) + Len(Recognizer)
+        For i = 0 To UBoundK(Words)
+            ConsoleText.SelStart = CurrentLinePoint + GetTextLength(CurrentLine, " ", i - 1)
+            ConsoleText.SelLength = Len(Words(i))
+            Select Case UCase(Words(i))
+                Case "IF", "THEN", "ELSE", "END", "FOR", "EACH", "NEXT", "DO", "WHILE", "LOOP", "SELECT", "CASE", "EXIT", "CONTINUE"
+                    Color = in_Statement
+                Case "DIM", "PUBLIC", "PRIVATE", "GLOBAL", "TRUE", "FALSE", "FUNCTION", "SUB", "REDIM", "PRESERVE"
+                    Color = in_Keyword
+                Case "+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "<>", "NOT", "AND", "OR", "XOR", "!=", "++", "||", "&", "&&", "=>", "=<", "<=", ">=", "?", ","
+                    Color = in_Operator
+                Case Else
+                    If Ucase(PreviousWord) = "AS" Then
+                        Color = in_Datatype                 
+                    ElseIf IsNumeric(UCase(Words(i))) Then
+                        Color = in_Value
+                    Else
+                        Dim Pos() As Variant
+                        Dim VariableType As Variant
+                        Pos = GetFuncTreePosition(Words(i))
+                        If UboundK(Pos) <> -1 Then
+                            VariableType = GetProcedureText(GetVariable(CLng(Pos(0)), CLng(Pos(1))), 1)
+                            If VariableType Like "Procedure *" Or VariableType Like "As stdLambda" Then
+                                Color = in_Procedure
+                            ElseIf VariableType Like "As ConsoleVariable" Then
+                                Color = in_Variable
+                            ElseIf VariableType Like "As ConsoleScript" Then
+                                Color = in_Script
+                            ElseIf  VariableType Like "As *" Then
+                                Color = in_Variable
+                            Else
+                                Color = in_Basic
+                            End If
+                            If InStr(1, Words(i), "(") <> 0 Then ConsoleText.SelLength = Len(Words(i)) - (Len(Words(i)) - InStr(1, Words(i), "(") + 1)
+                        Else
+                            Color = in_Basic
+                        End If
+                    End If
+            End Select
+            ConsoleText.SelColor = Color
+            PreviousWord = Words(i)
+        Next i
+
+        Dim CurrentLineChar() As Long
+        CurrentLineChar = InStrAll(CurrentLine, "(")
+        For i = 0 To UboundK(CurrentLineChar)
+            If CurrentLineChar(i) <> 0 Then
+                ConsoleText.SelStart  = CurrentLinePoint + (CurrentLineChar(i) - 1)
+                ConsoleText.SelLength = 1
+                ConsoleText.SelColor = in_Parantheses + ((i Mod 2) * RGB(050, 050, 000))
+            End If
+        Next i
+        CurrentLineChar = InStrAll(CurrentLine, ")")
+        For i = 0 To UboundK(CurrentLineChar)
+            If CurrentLineChar(i) <> 0 Then
+                ConsoleText.SelStart  = CurrentLinePoint + (CurrentLineChar(i) - 1)
+                ConsoleText.SelLength = 1
+                ConsoleText.SelColor = in_Parantheses + (((i + 1) Mod 2) * RGB(050, 050, 000))
+            End If
+        Next i
+        Dim Operators() As Variant
+        Operators = Array("+", "*", "/", "-", "^", ":", ";", "<", ">", "=", "!", "|", "?", ",")
+        For i = 0 To UboundK(Operators)
+            CurrentLineChar = InStrAll(CurrentLine, CStr(Operators(i)))
+            For j = 0 To UboundK(CurrentLineChar)
+                If CurrentLineChar(j) <> 0 Then
+                    ConsoleText.SelStart  = CurrentLinePoint + (CurrentLineChar(j) - 1)
+                    ConsoleText.SelLength = 1
+                    ConsoleText.SelColor = in_Operator
+                End If
+            Next
+        Next i
+        CurrentLineChar = InStrAll(CurrentLine, Chr(34))
+        For i = 0 To UboundK(CurrentLineChar) Step 2
+            If CurrentLineChar(i) <> 0 Then
+                ConsoleText.SelStart  = CurrentLinePoint + (CurrentLineChar(i) - 1)
+                If UboundK(CurrentLineChar) < (i + 1) Then ' Check for odd array
+                    ConsoleText.SelLength = Len(ConsoleText.Text)
+                Else
+                    ConsoleText.SelLength = CurrentLineChar(i + 1)
+                End If
+                ConsoleText.SelColor = in_String
+            End If
+        Next i
+
+        ConsoleText.SelStart = CurrentChar
+        ConsoleText.SelLength = 0
+        ConsoleText.SelColor = in_Basic
+
+    End Sub
+'
+
+' Following Part is Intellisense, which is dependant on Microsoft Visual Studio extensability 5.3
+
+    Private Sub SetPositions()
+        Dim Temp()       As String: Temp = Split(ConsoleText.Text, vbCrLf)
+        Dim FactorHeight As Double: FactorHeight = Height / 4
+        Dim FactorWidth  As Double: FactorWidth = Width / 8
+        Dim ListOffset   As Double: ListOffset = 1.45
+        Dim ListFactor   As Double: ListFactor = 1.35
+        Dim CurrentLine  As String: CurrentLine = GetLine(ConsoleText.Text, UBoundK(Temp))
+        ScrollTop = UBoundK(Temp) * 10 * ListFactor - FactorHeight - 100
+        If Len(CurrentLine) * 10 >= ConsoleText.Left + 200 Then
+            ScrollLeft = Len(CurrentLine) * 10 - 200
+        Else
+            ScrollLeft = ConsoleText.Left
+        End If
+        If Intellisense_Active = True Then
+            IntellisenseList.Top = ScrollTop + (FactorWidth * ListOffset) + 130
+            IntellisenseList.Left = ScrollLeft
+            IntellisenseList.ColumnWidths = "400;1600"
+        End If
+    End Sub
+
     Private Sub GetAllProcedures()
 
         Dim WB As Workbook
@@ -819,82 +1358,75 @@ Option Explicit
         Dim Name As String
         Dim ReturnType As Variant
         Dim TempArg() As String
+        Dim AsProcedure As String
+        Dim ProcedureDef As String
+        Dim CurrentComponent As Long
 
         Dim i As Integer
         Dim j As Integer
-        Dim ProcedureCount As Long
+        Dim k As Long
         Dim Temp As Long
 
         ' This is to get the second last space, which indicates, that its the startpoint for the returntype
         Dim TempArray() As String
-
-        ProcedureCount = 1000
-        ReDim VariableArray(MaxArg, ProcedureCount)
-        ProcedureCount = 0
+        k = -1
 
         For Each WB In Workbooks
             Set VBProj = WB.VBProject
+            k = k + 1
             For Each VBComp In VBProj.VBComponents
-                    Set CodeMod = VBComp.CodeModule
-                    For i = 1 To CodeMod.CountOfLines
-                        CurrentRow = CodeMod.Lines(i, 1)
-                        If UCase(CurrentRow) Like "*PUBLIC *" And InStr(1, CurrentRow, "'") = 0  And Not UCase(CurrentRow) Like "*" & Chr(34) & "*PUBLIC*" & Chr(34) & "*" Then
-                            If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *" Or UCase(CurrentRow) Like "* SET *" Or UCase(CurrentRow) Like "* LET *" Or UCase(CurrentRow) Like "* GET *") Then
-                                ' A Procedure
-                                '                          |----------|
-                                '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
-                                Select Case True
-                                    Case UCase(CurrentRow) Like "*PUBLIC STATIC SUB *(*)*"      : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC SUB ")      + Len("PUBLIC STATIC SUB ")      : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
-                                    Case UCase(CurrentRow) Like "*PUBLIC SUB *(*)*"             : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC SUB ")             + Len("PUBLIC SUB ")             : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
-                                    Case UCase(CurrentRow) Like "*PUBLIC STATIC FUNCTION *(*)*" : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC FUNCTION ") + Len("PUBLIC STATIC FUNCTION ") : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
-                                    Case UCase(CurrentRow) Like "*PUBLIC FUNCTION *(*)*"        : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC FUNCTION ")        + Len("PUBLIC FUNCTION ")        : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                    Case UCase(CurrentRow) Like "*PUBLIC PROPERTY GET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY GET ")    + Len("PUBLIC PROPERTY GET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                    Case UCase(CurrentRow) Like "*PUBLIC PROPERTY SET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY SET ")    + Len("PUBLIC PROPERTY SET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
-                                    Case UCase(CurrentRow) Like "*PUBLIC PROPERTY LET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY LET ")    + Len("PUBLIC PROPERTY LET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)   
-                                    Case Else
-                                End Select
-                                '                                       |------------------------------|
-                                '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
-                                    StartPoint = InStr(1, CurrentRow, "(")
-                                    EndPoint   = InStr(1, CurrentRow, ")")
-                                    If StartPoint + 1 <> EndPoint Then
-                                        TempArg = Split(Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1), ",")
-                                        For j = 0 To Ubound(TempArg)
-                                            VariableArray(j + 4, ProcedureCount) = TempArg(j)
-                                        Next
-                                    End If
-                                    Temp = 1
-                            Else
-                                ' A Variable
-                                '          |----------|
-                                '   Public VariableName As Variant
-                                Select Case True
-                                    Case UCase(CurrentRow) Like "*PUBLIC CONST *": StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC CONST *") + Len("PUBLIC CONST "): EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1)
-                                    Case UCase(CurrentRow) Like "*PUBLIC *":       StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC *")       + Len("PUBLIC "):       EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1)
-                                    Case Else
-                                End Select
-                                Temp = 1
-                            End If
-                                '                                                                        |---------|
-                                '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
-                                TempArray = Split(CurrentRow, " ")
-                                ReturnType = TempArray(Ubound(TempArray) - 1) & " " & TempArray(Ubound(TempArray))
-                                ' If last character is ")", then it returns nothing
-                                If Mid(TempArray(Ubound(TempArray)), Len(TempArray(Ubound(TempArray))), 1) = ")" Then ReturnType = "Void"
-
-                                VariableArray(0, ProcedureCount) = VBProj.Name
-                                VariableArray(1, ProcedureCount) = VBComp.Name
-                                VariableArray(2, ProcedureCount) = Name
-                                VariableArray(3, ProcedureCount) = ReturnType
-                                ProcedureCount = ProcedureCount + Temp
-                                Temp = 0
-                                ' Add another 1000 Procedures
-                                If ProcedureCount > UBound(VariableArray, 2) Then
-                                    ReDim Preserve VariableArray(MaxArg, UBound(VariableArray, 2) + 1000)
+                Set CodeMod = VBComp.CodeModule
+                CurrentComponent = AddNode(k, 0, VBComp.Name & ", As Component")
+                For i = 1 To CodeMod.CountOfLines
+                    CurrentRow = CodeMod.Lines(i, 1)
+                    AsProcedure = ""
+                    If UCase(CurrentRow) Like "*PUBLIC *" And InStr(1, CurrentRow, "'") = 0 And Not UCase(CurrentRow) Like "*" & Chr(34) & "*PUBLIC*" & Chr(34) & "*" Then
+                        If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *" Or UCase(CurrentRow) Like "* SET *" Or UCase(CurrentRow) Like "* LET *" Or UCase(CurrentRow) Like "* GET *") Then
+                            ' A Procedure
+                            '                          |----------|
+                            '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
+                            AsProcedure = "Procedure "
+                            Select Case True
+                                Case UCase(CurrentRow) Like "*PUBLIC STATIC SUB *(*)*"      : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC SUB ")      + Len("PUBLIC STATIC SUB ")      : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC SUB *(*)*"             : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC SUB ")             + Len("PUBLIC SUB ")             : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC STATIC FUNCTION *(*)*" : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC FUNCTION ") + Len("PUBLIC STATIC FUNCTION ") : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC FUNCTION *(*)*"        : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC FUNCTION ")        + Len("PUBLIC FUNCTION ")        : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY GET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY GET ")    + Len("PUBLIC PROPERTY GET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY SET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY SET ")    + Len("PUBLIC PROPERTY SET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY LET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY LET ")    + Len("PUBLIC PROPERTY LET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): ProcedureDef = Mid(CurrentRow, StartPoint, EndPoint - StartPoint) & ", TEMP/\"
+                                Case Else
+                            End Select
+                            '                                       |------------------------------|
+                            '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
+                                StartPoint = InStr(1, CurrentRow, "(")
+                                EndPoint   = InStr(1, CurrentRow, ")")
+                                If StartPoint + 1 <> EndPoint Then
+                                    TempArg = Split(Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1), ",")
+                                    For j = 0 To UboundK(TempArg)
+                                        ProcedureDef =  ProcedureDef & ArgSeperator & TempArg(j)
+                                    Next
                                 End If
+                        Else
+                            ' A Variable
+                            '          |----------|
+                            '   Public VariableName As Variant
+                            Select Case True
+                                Case UCase(CurrentRow) Like "*PUBLIC CONST *": StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC CONST *") + Len("PUBLIC CONST "): EndPoint = InStr(1, UCase(CurrentRow), " AS "): ProcedureDef = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1) & ", TEMP/\"
+                                Case UCase(CurrentRow) Like "*PUBLIC *":       StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC *")       + Len("PUBLIC "):       EndPoint = InStr(1, UCase(CurrentRow), " AS "): ProcedureDef = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1) & ", TEMP/\"
+                                Case Else
+                            End Select
                         End If
-                        NoLines:
-                    Next
+                            '                                                                        |---------|
+                            '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
+                            TempArray = Split(CurrentRow, " ")
+                            ReturnType = AsProcedure & TempArray(UboundK(TempArray) - 1) & " " & TempArray(UboundK(TempArray))
+                            ' If last character is ")", then it returns void
+                            If Mid(TempArray(UboundK(TempArray)), Len(TempArray(UboundK(TempArray))), 1) = ")" Then ReturnType = AsProcedure & "As Void"
+                            ProcedureDef = Replace(ProcedureDef, "TEMP/\", ReturnType)
+                            Call AddNode(k,  CurrentComponent, ProcedureDef)
+                    End If
+                    NoLines:
+                Next
             Next
         Next
                 
@@ -907,118 +1439,122 @@ Option Explicit
         ConsoleText.SelStart = Len(ConsoleText.Text)
     End Sub
 
-    Private Sub SetUp_IntelliSenseList(Text As String)
-        
-        Dim i As Long, j As Long, x As Long
-        Dim StartPoint As Long
-        Dim EndPoint As Long
-        Dim Found() As String
-        Dim Foundd As Boolean
-        Dim Count As Long
-        Dim Words() As String
-        Dim AbstractionFound As Boolean
-        Dim SearchArray() As Variant
-        Dim MaxAbstractionDepth As Long
+    Private Function GetProcedureText(Text As Variant, ReturnRange As Variant) As String
 
+        Dim Words() As String
+        Dim i As Long
+
+        Words = Split(CStr(Text), ArgSeperator)
+
+        If IsNUmeric(ReturnRange) Then 
+            GetProcedureText = Words(ReturnRange)
+        Else
+            Dim StartPoint As Long
+            Dim EndPoint As Long
+            Dim Directions() As String
+            Directions = Split(ReturnRange, "-")
+            StartPoint = Directions(0)
+            If IsNumeric(Directions(1)) Then EndPoint = CLng(Directions(1)) Else EndPoint = UboundK(Words)
+            If StartPoint =< EndPoint Then
+                GetProcedureText = Words(StartPoint)
+                For i = StartPoint + 1 To EndPoint
+                    GetProcedureText = GetProcedureText & ArgSeperator & Words(i)
+                Next
+            End If
+        End If
+        
+    End Function
+
+    Private Sub SetUp_IntelliSenseList(Text As String)
+
+        Dim i As Long, j As Long, k As Long
+        Dim Words() As Long
+        Dim NameSpaces As Collection
+        Dim CurrentNode As Long
+        Dim CurrentComponent As Long
+        Dim Element As Variant
 
         If Intellisense_Active = False Then Exit Sub
-        Dim AbstractionDepth As Long: AbstractionDepth = 0
-        Dim LeftNoStringValue As Long:  LeftNoStringValue = InStr(1, Text, Chr(34))
-        Dim RightNoStringValue As Long: RightNoStringValue = InStr(LeftNoStringValue + 1, Text, Chr(34))
-        '|---------------|      &    |----|     Dont know why this should be needed, but just in case
-        'Project.Module.Fu"dfdf.sfd "nction
-        If LeftNoStringValue <> 0 Then Text = Left(Text, LeftNoStringValue) & Right(Text, Len(Text) - RightNoStringValue)
-        AbstractionDepth = Len(Text) - Len(Replace(Text,".",""))
-        If AbstractionDepth > 2 Then Exit Sub ' Failsave for too much abstraction
-
-        Words = Split(Text, ".")
-        If Ubound(Words) = -1 Then Exit Sub
-        Text = Words(Ubound(Words))
-
-
-        If stdLambda_Active = True And UCase(GetLine(ConsoleText.Text, CurrentLineIndex)) Like "*[?]RUN *" Then
-            SearchArray = LambdaArray
-            MaxAbstractionDepth = 0
-            AbstractionDepth = 0
-        Else
-            SearchArray = VariableArray
-            MaxAbstractionDepth = 2
-        End If
-
-
+        Words = InStrAll(Text, ".")
+        Set NameSpaces = New Collection
         IntelliSenseList.Clear
-        Redim Found(0)
-        If AbstractionDepth > 0 Then
-            For x = AbstractionDepth To MaxAbstractionDepth
-                For i = 0 To Ubound(SearchArray, 2)
-                    If UCase(SearchArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1)) Then
-                        StartPoint = i
-                        AbstractionFound = True
-                        AbstractionDepth = x
-                        Exit For
-                    End If
-                Next
-                EndPoint = StartPoint
-                If i =< Ubound(SearchArray, 2) Then 
-                    Do While UCase(SearchArray(x - 1, i)) = UCase(Words(Ubound(Words) - 1))
-                        EndPoint = i
-                        i = i + 1
-                        If i > Ubound(SearchArray, 2) Then Exit Do
-                    Loop
-                End If
-                If AbstractionFound = True Then Exit For
-            Next
-        End If
-        If AbstractionFound <> True Then
-            StartPoint = 0
-            EndPoint = Ubound(SearchArray, 2)
-        End If
-        For x = AbstractionDepth To MaxAbstractionDepth
-            For i = StartPoint To EndPoint
-                If UCase(SearchArray(x, i)) Like Ucase(Text) & "*" Then
-                    For j = 0 To Ubound(Found)
-                        If Found(j) = SearchArray(x, i) Then
-                            Foundd = True
-                            Exit For
+        For i = 0 To Trees(ConsVarIndex).Nodes(0).Size
+            CurrentNode = Trees(ConsVarIndex).Nodes(0).Branches(i)
+            NameSpaces.Add Trees(ConsVarIndex).Nodes(CurrentNode).Value
+        Next i
+        Select Case True
+            Case UBoundK(Words) = 0 And Words(0) = 0
+                For i = 0 To ConsVarIndex
+                    For j = 0 To Trees(i).Nodes(0).Size
+                        CurrentNode = Trees(i).Nodes(0).Branches(j)
+                        If CompIsModule(CStr(Trees(i).Nodes(CurrentNode).Value)) Then
+                            For k = 0 To Trees(i).Nodes(CurrentNode).Size
+                                CurrentComponent = Trees(i).Nodes(CurrentNode).Branches(k)
+                                NameSpaces.Add Trees(i).Nodes(CurrentComponent).Value
+                            Next k
                         End If
-                    Next
-                    If Foundd <> True Then
-                        IntelliSenseList.AddItem
-                        IntelliSenseList.List(Ubound(Found), 0) = SearchArray(x, i)
-                        If x = 2 Then IntelliSenseList.List(Ubound(Found), 1) = GetProcedureText(i) 
-                        Found(Ubound(Found)) = SearchArray(x, i)
-                        Redim Preserve Found(Ubound(Found) + 1)
-                    End If
-                    Foundd = False
+                    Next j
+                Next i
+                For i = 0 To ConsVarIndex - 1
+                    NameSpaces.Add Trees(i).Nodes(0).Value
+                Next i
+            Case UBoundK(Words) = 0
+                For i = 0 To ConsVarIndex
+                    If Mid(Text, 1, Words(0) - 1) = GetProcedureText(CStr(Trees(i).Nodes(0).Value), 0) Then Exit For
+                Next i
+                If i > ConsVarIndex Then
+                    Exit Sub
+                Else
+                    For j = 0 To Trees(i).Nodes(0).Size
+                        CurrentNode = Trees(i).Nodes(0).Branches(j)
+                        NameSpaces.Add Trees(i).Nodes(CurrentNode).Value
+                    Next j
                 End If
-            Next
-        Next
+            Case UBoundK(Words) = 1
+                For i = 0 To ConsVarIndex
+                    If Mid(Text, 1, Words(0) - 1) = GetProcedureText(CStr(Trees(i).Nodes(0).Value), 0) Then Exit For
+                Next i
+                If i > ConsVarIndex Then
+                    Exit Sub
+                Else
+                    For j = 0 To Trees(i).Nodes(0).Size
+                        CurrentNode = Trees(i).Nodes(0).Branches(j)
+                        If GetProcedureText(Trees(i).Nodes(CurrentNode).Value, 0) = MidP(Text, Words(0) + 1, Words(1) - 1) Then Exit For
+                    Next j
+                    If j > UboundK(Trees(i).Nodes(CurrentNode).Branches) Then
+                        Exit Sub
+                    Else
+                        For k = 0 To Trees(i).Nodes(CurrentNode).Size
+                            CurrentComponent = Trees(i).Nodes(CurrentNode).Branches(k)
+                            NameSpaces.Add Trees(i).Nodes(CurrentComponent).Value
+                        Next k
+                    End If
+                End If
+            Case Else
+        End Select
+
+        For Each Element In NameSpaces
+            If GetProcedureText(CStr(Element), 0) Like Mid(Text, Words(UboundK(Words)) + 1, Len(Text)) & "*" Then
+                IntelliSenseList.AddItem
+                IntelliSenseList.List(IntelliSenseList.ListCount - 1, 0) = GetProcedureText(CStr(Element), 0)
+                IntelliSenseList.List(IntelliSenseList.ListCount - 1, 1) = GetProcedureText(CStr(Element), "1-X")
+            End If
+        Next Element
+        IntelliSenseList.Visible = (IntelliSenseList.ListCount > 0)
 
     End Sub
 
-    Function InArray(stringToBeFound As String, arr As Variant) As Boolean
-        Dim Element As Variant
-        For Each Element in arr
-            If UCase(Cstr(Element)) = UCase(stringToBeFound) Then
-                InArray = True
-                Exit Function
-                End If
-        Next Element
-    End Function
-    
-    Private Function GetProcedureText(Index As Long) As String
-        Dim i As Long
-        Dim Text As String
-        Text                  = VariableArray(0, Index) & " " & _
-                                VariableArray(1, Index) & " " & _
-                                VariableArray(2, Index) & " " & _
-                                "("
-        For i = 4 To MaxArg
-            Text = Text & ", " & VariableArray(i, Index)
-        Next
-        Text                  = VariableArray(3, Index) & _
-                                ")"
-        GetProcedureText = Text
+    Private Function CompIsModule(Text As String) As Boolean
+
+        Dim WB As Workbook
+        Dim VBComp As Object
+        If Intellisense_Active = False Then Exit Function
+        For Each WB In Workbooks
+            For Each VBComp In WB.VBProject.VBComponents
+                If VBComp.Name = GetProcedureText(Text, 0) Then If VBComp.Type = vbext_ComponentType.vbext_ct_StdModule Then CompIsModule = True: Exit Function
+            Next VBComp
+        Next WB
+
     End Function
 
     Private Sub IntelliSenseList_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
@@ -1030,17 +1566,9 @@ Option Explicit
         Dim ReturnString As String
 
         Line = GetLine(ConsoleText.Text, CurrentLineIndex)
-        Dim AbstractionDepth As Long: AbstractionDepth = 0
-        Dim LeftNoStringValue As Long:  LeftNoStringValue = InStr(1, Line, Chr(34))
-        Dim RightNoStringValue As Long: RightNoStringValue = InStr(LeftNoStringValue + 1, Line, Chr(34))
-        '|---------------|      &    |----|     Dont know why this should be needed, but just in case
-        'Project.Module.Fu"dfdf.sfd "nction
-        If LeftNoStringValue <> 0 Then Line = Left(Line, LeftNoStringValue) & Right(Line, Len(Line) - RightNoStringValue)
-        AbstractionDepth = Len(Line)-Len(Replace(Line,".",""))
-
         Words = Split(Line, ".")
-        If Ubound(Words) = -1 Then Word = Line
-        Word = Words(Ubound(Words))
+        If UboundK(Words) = -1 Then Word = Line
+        Word = Words(UboundK(Words))
         Select Case KeyCode
             Case vbKeyLeft
                 Close_IntelliSenseList
@@ -1051,7 +1579,7 @@ Option Explicit
                     Start = InStr(1, Ucase(ReturnString), Ucase(Word))
                     If Start = 0 Then Start = 1
                     Word = Replace(Ucase(Word), "?RUN ", "")
-                    PrintConsole Mid(ReturnString, Start + Len(Word), Len(ReturnString) - Len(Word))
+                    Call PrintConsole(Mid(ReturnString, Start + Len(Word), Len(ReturnString) - Len(Word)))
                     Close_IntelliSenseList
                     Exit Sub
                 End If
@@ -1073,180 +1601,128 @@ Option Explicit
 '
 
 'Following Part is stdLambda
-    Private Function HandleLambda(Arguments() As Variant) As Variant
 
-        Dim Index As Long
-        Dim i As Long
-        Dim Temp() As String '0 = Lambda Member, 1 = LambdaName
-        Dim Lambda As stdLambda
-        Temp = Split(Arguments(0), " ")
-        Temp(0) = Mid(Temp(0), 2, Len(Temp(0)) - 1) ' Get rid of [?]
-
-        Select Case UCase(CStr(Temp(0)))
-            Case "CREATE" ' Temp(1) = Name, Arguments(1) = sEquation, Arguments(2) = bUsePerformanceCache, Arguments(2) = bSandboxExtras
-                If Ubound(Arguments) < 2 Then ReDim Preserve Arguments(3)
-                If CreateLambda(Temp(1), Arguments(1), Iif(UCase(CStr(Arguments(2))) = "TRUE", True, False), Iif(UCase(CStr(Arguments(3))) = "TRUE", True, False)) <> True Then
-                    HandleLambda = "Lambda could not be registered"
-                Else
-                    HandleLambda = "Lambda registered successfully"
-                End If
-            Case "RUN" ' Temp(1) = Name or Index, Arguments(1 - 30 are args)
-                Index = FindLambda(Temp(1))
-                If Index <> -1 Then
-                    Set Lambda = LambdaArray(1, Index)
-                    On Error GoTo Error
-                    Select Case UBound(Arguments)
-                        Case 00:   HandleLambda = Lambda.Run()
-                        Case 01:   HandleLambda = Lambda.Run(Arguments(1))
-                        Case 02:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2))
-                        Case 03:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3))
-                        Case 04:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4))
-                        Case 05:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5))
-                        Case 06:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6))
-                        Case 07:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7))
-                        Case 08:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8))
-                        Case 09:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9))
-                        Case 10:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10))
-                        Case 11:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11))
-                        Case 12:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12))
-                        Case 13:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13))
-                        Case 14:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14))
-                        Case 15:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15))
-                        Case 16:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16))
-                        Case 17:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17))
-                        Case 18:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18))
-                        Case 19:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19))
-                        Case 20:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20))
-                        Case 21:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21))
-                        Case 22:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22))
-                        Case 23:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23))
-                        Case 24:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24))
-                        Case 25:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25))
-                        Case 26:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26))
-                        Case 27:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27))
-                        Case 28:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28))
-                        Case 29:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29))
-                        Case 30:   HandleLambda = Lambda.Run(Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29), Arguments(30))
-                        Case Else: HandleLambda = "Too many Arguments": LastError = 3
-                    End Select
-                Else
-                    HandleLambda = "Could not find Lambda"
-                End If
-            Case "BIND"
-            Case "BINDGLOBAL"
-            Case Else ' like ?1+1
-                Set Lambda = stdLambda.Create(CStr(Temp(0)), False, False)
-                HandleLambda = Lambda.Run
+    Private Function RunLambda(Lambda As Variant, Arguments As Variant) As Variant
+        On Error GoTo Error
+        Select Case UBoundK(Arguments)
+            Case -1:   RunLambda = Lambda.Run()
+            Case 00:   RunLambda = Lambda.Run(Arguments(0))
+            Case 01:   RunLambda = Lambda.Run(Arguments(0), Arguments(1))
+            Case 02:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2))
+            Case 03:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3))
+            Case 04:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4))
+            Case 05:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5))
+            Case 06:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6))
+            Case 07:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7))
+            Case 08:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8))
+            Case 09:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9))
+            Case 10:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10))
+            Case 11:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11))
+            Case 12:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12))
+            Case 13:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13))
+            Case 14:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14))
+            Case 15:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15))
+            Case 16:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16))
+            Case 17:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17))
+            Case 18:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18))
+            Case 19:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19))
+            Case 20:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20))
+            Case 21:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21))
+            Case 22:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22))
+            Case 23:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23))
+            Case 24:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24))
+            Case 25:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25))
+            Case 26:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26))
+            Case 27:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27))
+            Case 28:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28))
+            Case 29:   RunLambda = Lambda.Run(Arguments(0), Arguments(1), Arguments(2), Arguments(3), Arguments(4), Arguments(5), Arguments(6), Arguments(7), Arguments(8), Arguments(9), Arguments(10), Arguments(11), Arguments(12), Arguments(13), Arguments(14), Arguments(15), Arguments(16), Arguments(17), Arguments(18), Arguments(19), Arguments(20), Arguments(21), Arguments(22), Arguments(23), Arguments(24), Arguments(25), Arguments(26), Arguments(27), Arguments(28), Arguments(29))
+            Case Else: RunLambda = "Too many Arguments": LastError = 3
         End Select
         Exit Function
         Error:
-            HandleLambda = "could not run lambda successfully"
-
+        RunLambda = "could not run lambda successfully"
     End Function
 
     Private Function CreateLambda(Name As String, Optional Equation As Variant = "", Optional UsePerformanceCache As Boolean = False, Optional SandboxExtras As Boolean = False) As Boolean
         Dim Temp As stdLambda
         Set Temp = stdLambda.Create(Equation, UsePerformanceCache, SandboxExtras)
-        LambdaArray(0, LambdaIndex) = Name
-        Set LambdaArray(1, LambdaIndex) = Temp
-        LambdaIndex = LambdaIndex + 1
-        ReDim Preserve LambdaArray(1, LambdaIndex)
+        Call SetVariableValue(ConsVarIndex,  Name & ", As stdLambda", Temp)
         CreateLambda = True
     End Function
 
     ' Lambda needs to be of Type stdLambda. It wanst specified, so that Console works without stdLambda dependency
     Public Function LoadLambda(Name As String, Lambda As Variant) As Boolean
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": LoadLambda = False: Exit Function
-        LambdaArray(0, LambdaIndex) = Name
-        Set LambdaArray(1, LambdaIndex) = Lambda
-        LambdaIndex = LambdaIndex + 1
-        ReDim Preserve LambdaArray(1, LambdaIndex)
+        Dim NewNode As Node
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): LoadLambda = False: Exit Function
+        Call SetVariableValue(ConsVarIndex, Name, Lambda)
         LoadLambda = True
     End Function
 
-    ' Load a custom array to LambdaArray 2D (1,n)
-    Public Function LoadLambdaArray(Arr() As Variant) As Boolean
+    ' Load a custom array to Lambdas 2D (1,n)
+    Public Function LoadLambdas(Arr() As Variant) As Boolean
 
         Dim i As Integer
         Dim NoOfDimenions As Integer
         Dim Temp As Integer
         On Error GoTo Error
 
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": LoadLambdaArray = False: Exit Function
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): LoadLambdas = False: Exit Function
         For i = 1 To 255
-            Temp = Ubound(Arr, i)
+            Temp = UboundK(Arr, i)
             NoOfDimenions = i
         Next
         Error:
         If NoOfDimenions = 2 Then
-            If Ubound(Arr, 1) = 1 Then
-                LambdaArray = Arr
-                LambdaIndex = Ubound(Arr, 2) + 1
-                ReDim Preserve LambdaArray(1, LambdaIndex)
-                LoadLambdaArray = True
+            If UboundK(Arr, 1) = 1 Then
+                For i = 0 To UboundK(Arr, 2)
+                    Call SetVariableValue(ConsVarIndex, Arr(0, i), Arr(1, i))
+                Next i
+                LoadLambdas = True
             Else
-                LoadLambdaArray = False ' Wrong Number of Elements for 1st dimension
+                LoadLambdas = False ' Wrong Number of Elements for 1st dimension
             End If        
         Else
-            LoadLambdaArray = False ' Wrong Number of dimensions
+            LoadLambdas = False ' Wrong Number of dimensions
         End If
 
     End Function
 
-    Public Function BindGlobal(LambdaNameOrIndex As String, Name As String, Variable As Variant) As Boolean
+    Public Function BindGlobal(LambdaName As String, Name As String, Variable As Variant) As Boolean
         Dim Index As Long
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": BindGlobal = False: Exit Function
-        Index = FindLambda(LambdaNameOrIndex)
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): Exit Function
+        Index = FindNode(ConsVarIndex, LambdaName)
         If Index <> -1 Then
-            Call LambdaArray(1, Index).BindGlobal(Name, Variable)
+            VBProject(ConsVarIndex).Nodes(Index).Value.BindGlobal Name, Variable 
             BindGlobal = True
         Else
-            PrintEnter "Couldnt Bind Variable globally to " & LambdaNameOrIndex
+            Call PrintEnter("Couldnt Bind Variable globally to " & LambdaName)
         End If
     End Function
 
-    Public Function Bind(LambdaNameOrIndex As Variant, ParamArray Arguments() As Variant) As Boolean
+    Public Function Bind(LambdaName As Variant, ParamArray Arguments() As Variant) As Boolean
         Dim Args() As Variant
         Dim Index As Long
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": Bind = False: Exit Function
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): Exit Function
         Args = Arguments
-        Index = FindLambda(LambdaNameOrIndex)
+        Index = FindNode(ConsVarIndex, LambdaName)
         If Index <> -1 Then
-            Set LambdaArray(1, Index) = LambdaArray(1, Index).BindEx(Args)
+            Set Lambdas(1, Index) = VBProject(ConsVarIndex).Nodes(Index).Value.BindEx(Args)
             Bind = True
         Else
-            PrintEnter "Couldnt Bind Arguments to " & LambdaNameOrIndex
+            Call PrintEnter("Couldnt Bind Arguments to " & LambdaName)
         End If
-    End Function
-
-    Private Function FindLambda(NameOrIndex As Variant) As Long
-        Dim i As Long
-        Dim Index As Long
-        If IsNumeric(NameOrIndex) Then
-            Index = Clng(NameOrIndex)
-        Else
-            For i = 0 To LambdaIndex
-                If LambdaArray(0, i) = NameOrIndex Then
-                    Index = i
-                    Exit For
-                End If
-                Index = -1
-            Next
-        End If
-        FindLambda = Index
     End Function
 
     ' Lambda needs to be of Type stdLambda. It wanst specified, so that Console works without stdLambda dependency
-    Public Function GetLambda(NameOrIndex As Variant) As Variant
+    Public Function GetLambda(Name As Variant) As Variant
         Dim Index As Long
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": GetLambda = Nothing: Exit Function
-        Index = FindLambda(NameOrIndex)
-        If Index <> -1 Then Set GetLambda = LambdaArray(1, Index)
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): GetLambda = Nothing: Exit Function
+        Index = FindNode(ConsVarIndex, Name)
+        If Index <> -1 Then Set GetLambda = VBProject(ConsVarIndex).Nodes(Index).Value
     End Function
 
-    Public Function GetLambdaArray() As Variant
-        If stdLambda_Active = False Then PrintEnter "stdLambda is deactivated": GetLambdaArray = Nothing: Exit Function
-        Set GetLambdaArray = LambdaArray
+    Public Function GetLambdas() As Variant
+        If stdLambda_Active = False Then Call PrintEnter("stdLambda is deactivated"): GetLambdas = Nothing: Exit Function
+        Set GetLambdas = Lambdas
     End Function
-
 '

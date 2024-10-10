@@ -109,7 +109,6 @@ End Function
 ' Public Errormethods
 
     Private       ErrorCatalog(1, 99)   As Variant         ' First  Dimension is Severity/Message. Second Dimension is Index
-    Private       Initialized           As Boolean         ' Used once to initialize all Errormessages
 
     Private Const p_IS_ERROR            As Boolean = True  ' Used to determine, if it is an Error. Dont Change
     Private Const EMPTY_ERROR           As Variant = Empty ' Standard Value if no ErrorValue is passed
@@ -142,13 +141,17 @@ End Function
     ' Used to create a new std_Error object with all 4 Set/Let from above
     Public Function Create(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As std_Error
 
+    ' Used to Call HandleArr, with ErrorValues as Array instead of Paramarray
+    Public Function Handle(Catalog() As Variant, Index As Long, ThrowError As Boolean, ParamArray ErrorValues()) As Boolean
+
     ' Used to Handle Errormessages
     ' Depending on Settings it will Show and Log the Errormessage at the Destination
     ' It will end all Application if the Severity is higher than SEVERITY_BREAK
         ' Catalog is defined as a 2D Array like ErrorCatalog(1, 99). It doesnt have to be this one, it just needs the same Setup. It is used to "import Errormessages from other Components"
         ' Index is the Index of said Catalog
+        ' ThrowError decides if it should show/log the Error of if it should be used to just return, that there is an Error
         ' ParamArray ErrorValues are all Values to be displayed aside with the Errormessage 
-    Public Function Handle(Catalog() As Variant, Index As Long, ParamArray ErrorValues()) As Boolean
+    Public Function HandleArr(Catalog() As Variant, Index As Long, Optional ThrowError As Boolean = True, Optional ErrorValues As Variant) As Boolean
 
 ' Private Errormethods
     ' Used to document the errors at the specified destination
@@ -161,12 +164,14 @@ End Function
         '          Catalog is defined as a 2D Array like ErrorCatalog(1, 99). It doesnt have to be this one, it just needs the same Setup. It is used to "import Errormessages from other Components"
         '          Index is the Index of said Catalog
         ' Optional ErrorValues are all Values to be displayed aside with the Errormessage
+        '## ConsoleDestination Exists to latebind the Console, if it is not included
     Private Sub Showing(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
     
     ' Used to ask the user a yes/no question and will throw an error when NO is pressed, at your specified location
         '          Catalog is defined as a 2D Array like ErrorCatalog(1, 99). It doesnt have to be this one, it just needs the same Setup. It is used to "import Errormessages from other Components"
         '          Index is the Index of said Catalog
         ' Optional ErrorValues are all Values to be displayed aside with the Errormessage
+        '## ConsoleDestination Exists to latebind the Console, if it is not included
     Private Function Ask(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As Boolean
 
     ' Used to Validate the Catalogs specified in Variable "ErrorCatalog" and will end all execution if false

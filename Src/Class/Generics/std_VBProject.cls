@@ -11,7 +11,6 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private VBProj As VBIDE.VBProject
-Private Initialized As Boolean
 Private ErrorCatalog(1, 99) As Variant
 Private TempIncludes() As String
 Private Handler As New std_Error
@@ -19,15 +18,8 @@ Private Handler As New std_Error
 
 ' Public Procedures
 
-    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
-        On Error GoTo Error
-        Let Handler.ShowError = n_ShowError
-        Let Handler.LogError = n_LogError
-        Set Handler.ShowDestination = n_ShowDestination
-        Set Handler.LoggingDestination = n_LoggingDestination
-        AssignHandler = True
-        Exit Function
-        Error:
+    Public Property Set SetHandler(n_Handler As std_Error)
+        Set Handler = n_Handler
     End Function
 
     Public Property Get IS_ERROR() As Boolean
@@ -73,11 +65,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            Include = Handler.Handle(ErrorCatalog, ErrorCode, ComponentType)
-        Else
-            Include = Handler.IS_ERROR
-        End If
+        Include = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ComponentType)
     
     End Function
     
@@ -98,11 +86,7 @@ Private Handler As New std_Error
         Error:
         ErrorCode = 14
         If Exists(CompName, VBProj) = False Then ErrorCode = 12
-        If ThrowError Then
-            Declude = Handler.Handle(ErrorCatalog, ErrorCode, CompName)
-        Else
-            Declude = Handler.IS_ERROR
-        End If
+        Declude = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName)
     
     End Function
     
@@ -140,11 +124,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            AddComponent = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue)
-        Else
-            AddComponent = Handler.IS_ERROR
-        End If
+        AddComponent = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue)
     
     End Function
     
@@ -170,11 +150,7 @@ Private Handler As New std_Error
         Close #FileNumber
         Exit Function
         Error:
-        If ThrowError Then
-            AddCodeFromFile = Handler.Handle(ErrorCatalog, ErrorCode, CompName)
-        Else
-            AddCodeFromFile = Handler.IS_ERROR
-        End If
+        AddCodeFromFile = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName)
 
     End Function
 
@@ -189,11 +165,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            AddCodeFromComponent = Handler.Handle(ErrorCatalog, 28, FromComponent.Name)
-        Else
-            AddCodeFromComponent = Handler.IS_ERROR
-        End If
+        AddCodeFromComponent = Handler.Handle(ErrorCatalog, 28, ThrowError, FromComponent.Name)
 
     End Function
 
@@ -208,11 +180,7 @@ Private Handler As New std_Error
                 VBComp.CodeModule.AddFromString(Text)
             End If
         Else
-            If ThrowError Then
-                AddCodeFromString = Handler.Handle(ErrorCatalog, 12, CompName, Text)
-            Else
-                AddCodeFromString = Handler.IS_ERROR
-            End If
+            AddCodeFromString = Handler.Handle(ErrorCatalog, 12, ThrowError, CompName, Text)
         End If
 
     End Function
@@ -231,11 +199,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            DeleteCode = Handler.Handle(ErrorCatalog, ErrorCode, CompName, StartLine, EndLine)
-        Else
-            DeleteCode = Handler.IS_ERROR
-        End If
+        DeleteCode = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName, StartLine, EndLine)
 
     End Function
     
@@ -263,11 +227,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            IncludeFolderArr = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue): Exit Function
-        Else
-            IncludeFolderArr = Handler.IS_ERROR
-        End If
+        IncludeFolderArr = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue): Exit Function
     
     End Function
     
@@ -292,11 +252,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            DecludeFolder = Handler.Handle(ErrorCatalog, 5, FolderPath)
-        Else
-            DeculdeFolder = Handler.IS_ERROR
-        End If
+        DecludeFolder = Handler.Handle(ErrorCatalog, 5, ThrowError, FolderPath)
     
     End Function
 
@@ -322,11 +278,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            AddReference = Handler.Handle(ErrorCatalog, ErrorCode, AddFromFile, AddFromGuid, Major, Minor)
-        Else
-            AddReference = Handler.IS_ERROR
-        End If
+        AddReference = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, AddFromFile, AddFromGuid, Major, Minor)
 
     End Function
 
@@ -351,11 +303,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            RemoveReference = Handler.Handle(ErrorCatalog, 26, Ref.FullPath, Ref.Name, Ref.Major, Ref.Minor, Ref.Description, Ref.Type, Ref.BuiltIn, Ref.GUID, Ref.IsBroken)
-        Else
-            RemoveReference = Handler.IS_ERROR
-        End If
+        RemoveReference = Handler.Handle(ErrorCatalog, 26, ThrowError, Ref.FullPath, Ref.Name, Ref.Major, Ref.Minor, Ref.Description, Ref.Type, Ref.BuiltIn, Ref.GUID, Ref.IsBroken)
     
     End Function
 
@@ -448,11 +396,7 @@ Private Handler As New std_Error
                 Call AddTemporary(Temporary, VBComp.Name, ThrowError)
             End If
         Else
-            If ThrowError Then
-                IncludeWorkbookSingle = Handler.Handle(ErrorCatalog, 28, WB.Name, CompName, PasteType, Temporary)
-            Else
-                IncludeWorkbookSingle = Handler.IS_ERROR
-            End If
+            IncludeWorkbookSingle = Handler.Handle(ErrorCatalog, 28, ThrowError, WB.Name, CompName, PasteType, Temporary)
         End If
     End Function
 
@@ -545,11 +489,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            Import = Handler.Handle(ErrorCatalog, ErrorCode, ErrorValue)
-        Else
-            Import = Handler.IS_ERROR
-        End If
+        Import = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue)
 
     End Function
 
@@ -647,111 +587,105 @@ Private Handler As New std_Error
     End Sub
 
     Private Sub ProtInit()
-
-        If Initialized = False Then
-        ' System-Errors
-            ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_VBProject"
-            ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not import"
-            ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could import"
-            ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Could not include file"
-            ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Could include file"
-            ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "String empty"
-            ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "String invalid"
-            ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "could not import temporary"
-            ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "could import temporary"
-            ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "could not include temporary file"
-            ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "could include temporary file"
-            ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Component already exists"
-            ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Component doesnt exist"
-            ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Unknown error"
-            ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "could not declude"
-            ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "could not declude file"
-            ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "wrong file format. It needs to be .cls, .bas or .frm"
-            ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "This Component cant be removed, as this code needs it to run"
-            ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "Could not include file, no ComponentName"
-            ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "could not create Component"
-            ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "componentType is invalid"
-            ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "could not open file"
-            ErrorCatalog(0, 0022) = 1000: ErrorCatalog(1, 0022) = "could not add line of code"
-            ErrorCatalog(0, 0023) = 1000: ErrorCatalog(1, 0023) = "could not add reference via AddFromFile"
-            ErrorCatalog(0, 0024) = 1000: ErrorCatalog(1, 0024) = "could not add reference via AddFromGui"
-            ErrorCatalog(0, 0025) = 1000: ErrorCatalog(1, 0025) = "invalid value"
-            ErrorCatalog(0, 0026) = 1000: ErrorCatalog(1, 0026) = "could not remove reference"
-            ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "could not delete code from module"
-            ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "could not include component"
-            ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "could not include folder"
-            ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "PLACEHOLDER"
-            ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
-            ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
-            ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"
-            ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "PLACEHOLDER"
-            ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
-            ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
-            ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
-            ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
-            ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
-            ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
-            ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
-            ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
-            ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"
-            ErrorCatalog(0, 0044) = 1000: ErrorCatalog(1, 0044) = "PLACEHOLDER"
-            ErrorCatalog(0, 0045) = 1000: ErrorCatalog(1, 0045) = "PLACEHOLDER"
-            ErrorCatalog(0, 0046) = 1000: ErrorCatalog(1, 0046) = "PLACEHOLDER"
-            ErrorCatalog(0, 0047) = 1000: ErrorCatalog(1, 0047) = "PLACEHOLDER"
-            ErrorCatalog(0, 0048) = 1000: ErrorCatalog(1, 0048) = "PLACEHOLDER"
-            ErrorCatalog(0, 0049) = 1000: ErrorCatalog(1, 0049) = "PLACEHOLDER"
-            ErrorCatalog(0, 0050) = 1000: ErrorCatalog(1, 0050) = "PLACEHOLDER"
-            ErrorCatalog(0, 0051) = 1000: ErrorCatalog(1, 0051) = "PLACEHOLDER"
-            ErrorCatalog(0, 0052) = 1000: ErrorCatalog(1, 0052) = "PLACEHOLDER"
-            ErrorCatalog(0, 0053) = 1000: ErrorCatalog(1, 0053) = "PLACEHOLDER"
-            ErrorCatalog(0, 0054) = 1000: ErrorCatalog(1, 0054) = "PLACEHOLDER"
-            ErrorCatalog(0, 0055) = 1000: ErrorCatalog(1, 0055) = "PLACEHOLDER"
-            ErrorCatalog(0, 0056) = 1000: ErrorCatalog(1, 0056) = "PLACEHOLDER"
-            ErrorCatalog(0, 0057) = 1000: ErrorCatalog(1, 0057) = "PLACEHOLDER"
-            ErrorCatalog(0, 0058) = 1000: ErrorCatalog(1, 0058) = "PLACEHOLDER"
-            ErrorCatalog(0, 0059) = 1000: ErrorCatalog(1, 0059) = "PLACEHOLDER"
-            ErrorCatalog(0, 0060) = 1000: ErrorCatalog(1, 0060) = "PLACEHOLDER"
-            ErrorCatalog(0, 0061) = 1000: ErrorCatalog(1, 0061) = "PLACEHOLDER"
-            ErrorCatalog(0, 0062) = 1000: ErrorCatalog(1, 0062) = "PLACEHOLDER"
-            ErrorCatalog(0, 0063) = 1000: ErrorCatalog(1, 0063) = "PLACEHOLDER"
-            ErrorCatalog(0, 0064) = 1000: ErrorCatalog(1, 0064) = "PLACEHOLDER"
-            ErrorCatalog(0, 0065) = 1000: ErrorCatalog(1, 0065) = "PLACEHOLDER"
-            ErrorCatalog(0, 0066) = 1000: ErrorCatalog(1, 0066) = "PLACEHOLDER"
-            ErrorCatalog(0, 0067) = 1000: ErrorCatalog(1, 0067) = "PLACEHOLDER"
-            ErrorCatalog(0, 0068) = 1000: ErrorCatalog(1, 0068) = "PLACEHOLDER"
-            ErrorCatalog(0, 0069) = 1000: ErrorCatalog(1, 0069) = "PLACEHOLDER"
-            ErrorCatalog(0, 0070) = 1000: ErrorCatalog(1, 0070) = "PLACEHOLDER"
-            ErrorCatalog(0, 0071) = 1000: ErrorCatalog(1, 0071) = "PLACEHOLDER"
-            ErrorCatalog(0, 0072) = 1000: ErrorCatalog(1, 0072) = "PLACEHOLDER"
-            ErrorCatalog(0, 0073) = 1000: ErrorCatalog(1, 0073) = "PLACEHOLDER"
-            ErrorCatalog(0, 0074) = 1000: ErrorCatalog(1, 0074) = "PLACEHOLDER"
-            ErrorCatalog(0, 0075) = 1000: ErrorCatalog(1, 0075) = "PLACEHOLDER"
-            ErrorCatalog(0, 0076) = 1000: ErrorCatalog(1, 0076) = "PLACEHOLDER"
-            ErrorCatalog(0, 0077) = 1000: ErrorCatalog(1, 0077) = "PLACEHOLDER"
-            ErrorCatalog(0, 0078) = 1000: ErrorCatalog(1, 0078) = "PLACEHOLDER"
-            ErrorCatalog(0, 0079) = 1000: ErrorCatalog(1, 0079) = "PLACEHOLDER"
-            ErrorCatalog(0, 0080) = 1000: ErrorCatalog(1, 0080) = "PLACEHOLDER"
-            ErrorCatalog(0, 0081) = 1000: ErrorCatalog(1, 0081) = "PLACEHOLDER"
-            ErrorCatalog(0, 0082) = 1000: ErrorCatalog(1, 0082) = "PLACEHOLDER"
-            ErrorCatalog(0, 0083) = 1000: ErrorCatalog(1, 0083) = "PLACEHOLDER"
-            ErrorCatalog(0, 0084) = 1000: ErrorCatalog(1, 0084) = "PLACEHOLDER"
-            ErrorCatalog(0, 0085) = 1000: ErrorCatalog(1, 0085) = "PLACEHOLDER"
-            ErrorCatalog(0, 0086) = 1000: ErrorCatalog(1, 0086) = "PLACEHOLDER"
-            ErrorCatalog(0, 0087) = 1000: ErrorCatalog(1, 0087) = "PLACEHOLDER"
-            ErrorCatalog(0, 0088) = 1000: ErrorCatalog(1, 0088) = "PLACEHOLDER"
-            ErrorCatalog(0, 0089) = 1000: ErrorCatalog(1, 0089) = "PLACEHOLDER"
-            ErrorCatalog(0, 0090) = 1000: ErrorCatalog(1, 0090) = "PLACEHOLDER"
-            ErrorCatalog(0, 0091) = 1000: ErrorCatalog(1, 0091) = "PLACEHOLDER"
-            ErrorCatalog(0, 0092) = 1000: ErrorCatalog(1, 0092) = "PLACEHOLDER"
-            ErrorCatalog(0, 0093) = 1000: ErrorCatalog(1, 0093) = "PLACEHOLDER"
-            ErrorCatalog(0, 0094) = 1000: ErrorCatalog(1, 0094) = "PLACEHOLDER"
-            ErrorCatalog(0, 0095) = 1000: ErrorCatalog(1, 0095) = "PLACEHOLDER"
-            ErrorCatalog(0, 0096) = 1000: ErrorCatalog(1, 0096) = "PLACEHOLDER"
-            ErrorCatalog(0, 0097) = 1000: ErrorCatalog(1, 0097) = "PLACEHOLDER"
-            ErrorCatalog(0, 0098) = 1000: ErrorCatalog(1, 0098) = "PLACEHOLDER"
-            ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
-            Initialized = True
-        End If
-
+        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_VBProject"
+        ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not import"
+        ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could import"
+        ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Could not include file"
+        ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Could include file"
+        ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "String empty"
+        ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "String invalid"
+        ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "could not import temporary"
+        ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "could import temporary"
+        ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "could not include temporary file"
+        ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "could include temporary file"
+        ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Component already exists"
+        ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Component doesnt exist"
+        ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Unknown error"
+        ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "could not declude"
+        ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "could not declude file"
+        ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "wrong file format. It needs to be .cls, .bas or .frm"
+        ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "This Component cant be removed, as this code needs it to run"
+        ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "Could not include file, no ComponentName"
+        ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "could not create Component"
+        ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "componentType is invalid"
+        ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "could not open file"
+        ErrorCatalog(0, 0022) = 1000: ErrorCatalog(1, 0022) = "could not add line of code"
+        ErrorCatalog(0, 0023) = 1000: ErrorCatalog(1, 0023) = "could not add reference via AddFromFile"
+        ErrorCatalog(0, 0024) = 1000: ErrorCatalog(1, 0024) = "could not add reference via AddFromGui"
+        ErrorCatalog(0, 0025) = 1000: ErrorCatalog(1, 0025) = "invalid value"
+        ErrorCatalog(0, 0026) = 1000: ErrorCatalog(1, 0026) = "could not remove reference"
+        ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "could not delete code from module"
+        ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "could not include component"
+        ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "could not include folder"
+        ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "PLACEHOLDER"
+        ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
+        ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
+        ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"
+        ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "PLACEHOLDER"
+        ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
+        ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
+        ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
+        ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
+        ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
+        ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
+        ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
+        ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
+        ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"
+        ErrorCatalog(0, 0044) = 1000: ErrorCatalog(1, 0044) = "PLACEHOLDER"
+        ErrorCatalog(0, 0045) = 1000: ErrorCatalog(1, 0045) = "PLACEHOLDER"
+        ErrorCatalog(0, 0046) = 1000: ErrorCatalog(1, 0046) = "PLACEHOLDER"
+        ErrorCatalog(0, 0047) = 1000: ErrorCatalog(1, 0047) = "PLACEHOLDER"
+        ErrorCatalog(0, 0048) = 1000: ErrorCatalog(1, 0048) = "PLACEHOLDER"
+        ErrorCatalog(0, 0049) = 1000: ErrorCatalog(1, 0049) = "PLACEHOLDER"
+        ErrorCatalog(0, 0050) = 1000: ErrorCatalog(1, 0050) = "PLACEHOLDER"
+        ErrorCatalog(0, 0051) = 1000: ErrorCatalog(1, 0051) = "PLACEHOLDER"
+        ErrorCatalog(0, 0052) = 1000: ErrorCatalog(1, 0052) = "PLACEHOLDER"
+        ErrorCatalog(0, 0053) = 1000: ErrorCatalog(1, 0053) = "PLACEHOLDER"
+        ErrorCatalog(0, 0054) = 1000: ErrorCatalog(1, 0054) = "PLACEHOLDER"
+        ErrorCatalog(0, 0055) = 1000: ErrorCatalog(1, 0055) = "PLACEHOLDER"
+        ErrorCatalog(0, 0056) = 1000: ErrorCatalog(1, 0056) = "PLACEHOLDER"
+        ErrorCatalog(0, 0057) = 1000: ErrorCatalog(1, 0057) = "PLACEHOLDER"
+        ErrorCatalog(0, 0058) = 1000: ErrorCatalog(1, 0058) = "PLACEHOLDER"
+        ErrorCatalog(0, 0059) = 1000: ErrorCatalog(1, 0059) = "PLACEHOLDER"
+        ErrorCatalog(0, 0060) = 1000: ErrorCatalog(1, 0060) = "PLACEHOLDER"
+        ErrorCatalog(0, 0061) = 1000: ErrorCatalog(1, 0061) = "PLACEHOLDER"
+        ErrorCatalog(0, 0062) = 1000: ErrorCatalog(1, 0062) = "PLACEHOLDER"
+        ErrorCatalog(0, 0063) = 1000: ErrorCatalog(1, 0063) = "PLACEHOLDER"
+        ErrorCatalog(0, 0064) = 1000: ErrorCatalog(1, 0064) = "PLACEHOLDER"
+        ErrorCatalog(0, 0065) = 1000: ErrorCatalog(1, 0065) = "PLACEHOLDER"
+        ErrorCatalog(0, 0066) = 1000: ErrorCatalog(1, 0066) = "PLACEHOLDER"
+        ErrorCatalog(0, 0067) = 1000: ErrorCatalog(1, 0067) = "PLACEHOLDER"
+        ErrorCatalog(0, 0068) = 1000: ErrorCatalog(1, 0068) = "PLACEHOLDER"
+        ErrorCatalog(0, 0069) = 1000: ErrorCatalog(1, 0069) = "PLACEHOLDER"
+        ErrorCatalog(0, 0070) = 1000: ErrorCatalog(1, 0070) = "PLACEHOLDER"
+        ErrorCatalog(0, 0071) = 1000: ErrorCatalog(1, 0071) = "PLACEHOLDER"
+        ErrorCatalog(0, 0072) = 1000: ErrorCatalog(1, 0072) = "PLACEHOLDER"
+        ErrorCatalog(0, 0073) = 1000: ErrorCatalog(1, 0073) = "PLACEHOLDER"
+        ErrorCatalog(0, 0074) = 1000: ErrorCatalog(1, 0074) = "PLACEHOLDER"
+        ErrorCatalog(0, 0075) = 1000: ErrorCatalog(1, 0075) = "PLACEHOLDER"
+        ErrorCatalog(0, 0076) = 1000: ErrorCatalog(1, 0076) = "PLACEHOLDER"
+        ErrorCatalog(0, 0077) = 1000: ErrorCatalog(1, 0077) = "PLACEHOLDER"
+        ErrorCatalog(0, 0078) = 1000: ErrorCatalog(1, 0078) = "PLACEHOLDER"
+        ErrorCatalog(0, 0079) = 1000: ErrorCatalog(1, 0079) = "PLACEHOLDER"
+        ErrorCatalog(0, 0080) = 1000: ErrorCatalog(1, 0080) = "PLACEHOLDER"
+        ErrorCatalog(0, 0081) = 1000: ErrorCatalog(1, 0081) = "PLACEHOLDER"
+        ErrorCatalog(0, 0082) = 1000: ErrorCatalog(1, 0082) = "PLACEHOLDER"
+        ErrorCatalog(0, 0083) = 1000: ErrorCatalog(1, 0083) = "PLACEHOLDER"
+        ErrorCatalog(0, 0084) = 1000: ErrorCatalog(1, 0084) = "PLACEHOLDER"
+        ErrorCatalog(0, 0085) = 1000: ErrorCatalog(1, 0085) = "PLACEHOLDER"
+        ErrorCatalog(0, 0086) = 1000: ErrorCatalog(1, 0086) = "PLACEHOLDER"
+        ErrorCatalog(0, 0087) = 1000: ErrorCatalog(1, 0087) = "PLACEHOLDER"
+        ErrorCatalog(0, 0088) = 1000: ErrorCatalog(1, 0088) = "PLACEHOLDER"
+        ErrorCatalog(0, 0089) = 1000: ErrorCatalog(1, 0089) = "PLACEHOLDER"
+        ErrorCatalog(0, 0090) = 1000: ErrorCatalog(1, 0090) = "PLACEHOLDER"
+        ErrorCatalog(0, 0091) = 1000: ErrorCatalog(1, 0091) = "PLACEHOLDER"
+        ErrorCatalog(0, 0092) = 1000: ErrorCatalog(1, 0092) = "PLACEHOLDER"
+        ErrorCatalog(0, 0093) = 1000: ErrorCatalog(1, 0093) = "PLACEHOLDER"
+        ErrorCatalog(0, 0094) = 1000: ErrorCatalog(1, 0094) = "PLACEHOLDER"
+        ErrorCatalog(0, 0095) = 1000: ErrorCatalog(1, 0095) = "PLACEHOLDER"
+        ErrorCatalog(0, 0096) = 1000: ErrorCatalog(1, 0096) = "PLACEHOLDER"
+        ErrorCatalog(0, 0097) = 1000: ErrorCatalog(1, 0097) = "PLACEHOLDER"
+        ErrorCatalog(0, 0098) = 1000: ErrorCatalog(1, 0098) = "PLACEHOLDER"
+        ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
     End Sub
 '

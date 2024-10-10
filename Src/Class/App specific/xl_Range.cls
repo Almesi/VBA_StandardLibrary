@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "xl_Workbook"
+Attribute VB_Name = "xl_Range"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -11,10 +11,9 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private WB As Workbook
+Private Rng As Range
 Private ErrorCatalog(1, 99) As Variant
 Private Handler As New std_Error
-
 
     Public Property Set SetHandler(n_Handler As std_Error)
         Set Handler = n_Handler
@@ -24,75 +23,13 @@ Private Handler As New std_Error
         IS_ERROR = Handler.IS_ERROR
     End Property
 
-    Public Property Set Workbook(n_Workbook As Workbook)
-        Set WB = n_Workbook
+    Public Property Set Range(n_Range As Range)
+        Set Rng = n_Range
     End Property
 
-    Public Property Get Workbook() As Workbook
-        Set Workbook = WB
+    Public Property Get Range() As Range
+        Set Range = Rng
     End Property
-
-    Public Property Set WorkbookViaName(Name As String)
-        Dim Temp As Workbook
-        Set Temp = Exists(Name, True, False)
-        If Temp Is Nothing Then
-        Else
-            Set WB = Temp
-        End If
-    End Property
-
-    Public Function Open(FilePath As Variant, Optional UpdateLinks As Variant = Empty, Optional ReadOnly As Variant = Empty, Optional Format As Variant = Empty, Optional Password As Variant = Empty, Optional WriteResPassword As Variant = Empty, Optional IgnoreReadOnlyRecommende As Variant = Empty, Optional Origin As Variant = Empty, Optional Delimiter As Variant = Empty, Optional Editable As Variant = Empty, Optional Notify As Variant = Empty, Optional Converter As Variant = Empty, Optional AddToMru As Variant = Empty, Optional Local As Variant = Empty, Optional CorruptLoad As Variant = Empty, Optional ThrowError As Boolean = True) As Variant
-        On Error GoTo Error
-        Workbooks.Open FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad
-        Set WB = ActiveWorkbook
-        Exit Function
-
-        Error:
-        Open = Handler.Handle(ErrorCatalog, 1, ThrowError, FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad)
-    End Function
-
-    Public Function Close(Optional Name As String = "", Optional ThrowError As Boolean = True) As Boolean
-        Dim Temp As Workbook
-        Dim ErrorValue As String
-
-        On Error GoTo Error
-        If Name = "" Then
-            ErrorValue = WB.Name
-            WB.Close
-        Else
-            Set Temp = Exists(Name)
-            If Temp Is Nothing Then
-                ErrorValue = Name
-                GoTo Error
-            Else
-                ErrorValue = Temp.Name
-                Temp.Close
-            End If 
-        End If
-        Exit Function
-
-        Error:
-        Close = Handler.Handle(ErrorCatalog, 2, ThrowError, ErrorValue)
-        
-    End Function
-
-    Public Function Exists(Name As String, Optional ShouldExist As Boolean = True, Optional ReturnAsBoolean As Boolean = True) As Variant
-        Dim WBs As Workbook
-        Dim Found As Boolean
-
-        For Each WBs In Workbooks
-            If WBs.Name = Name Then Found = True: Exit For
-        Next WBs
-        If ReturnAsBoolean Then
-            Exists = Not (Found Xor ShouldExist)
-        Else
-            If Found Then
-                Set Exists = WBs
-            Else
-                Set Exists = Nothing
-            End If
-        End If
-    End Function
 
     Private Sub Class_Initialize()
         ProtInit
@@ -101,11 +38,10 @@ Private Handler As New std_Error
     Private Sub Class_Terminate()
     End Sub
         
-    ' Runs once to Initialize all Errormessages
     Private Sub ProtInit()
-        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "xl_Workbook"
-        ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not open workbook"
-        ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could not close workbook"
+        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "xl_Range"
+        ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "PLACEHOLDER"
+        ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "PLACEHOLDER"
         ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "PLACEHOLDER"
         ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "PLACEHOLDER"
         ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "PLACEHOLDER"

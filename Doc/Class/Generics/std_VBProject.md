@@ -61,11 +61,8 @@ Private Handler As New std_Error       ' Handles the errors
 ' Public Procedures
 
     ' Used to Setup the Errorhandler
-        ' n_ShowError          = if true it will show error
-        ' n_LogError           = if true it will log error
-        ' n_LoggingDestination = if nothing it will use standarddestination
-        ' n_ShowDestination    = if nothing it will use standarddestination
-    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
+        ' n_Handler is a pre-defined std_Error
+    Public Property Set SetHandler(n_Handler As std_Error)
 
 
     ' Creates a new Object and assignes a VBProject to it

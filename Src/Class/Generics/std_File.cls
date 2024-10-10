@@ -10,22 +10,14 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private Initialized As Boolean
 Private ErrorCatalog(1, 99) As Variant
 Private FSO As New FileSystemObject
 Private Handler As New std_Error
 
 ' Public Procedures
 
-    Public Function AssignHandler(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As Boolean
-        On Error GoTo Error
-        Let Handler.ShowError = n_ShowError
-        Let Handler.LogError = n_LogError
-        Set Handler.ShowDestination = n_ShowDestination
-        Set Handler.LoggingDestination = n_LoggingDestination
-        AssignHandler = True
-        Exit Function
-        Error:
+    Public Property Set SetHandler(n_Handler As std_Error)
+        Set Handler = n_Handler
     End Function
 
     Public Property Get IS_ERROR() As Boolean
@@ -82,11 +74,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            GetDriveValue = Handler.Handle(ErrorCatalog, ErrorCatalog, SearchValue, SearchProperty, ReturnProperty)
-        Else
-            GetDriveValue = Handler.IS_ERROR
-        End If
+        GetDriveValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, SearchValue, SearchProperty, ReturnProperty)
 
     End Function
 
@@ -119,11 +107,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            GetFolderValue = Handler.Handle(ErrorCatalog, ErrorCode, FolderPath, ReturnProperty)
-        Else
-            GetFolderValue = Handler.IS_ERROR
-        End If
+        GetFolderValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FolderPath, ReturnProperty)
             
     End Function
 
@@ -161,11 +145,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        If ThrowError Then
-            GetFileValue = Handler.Handle(ErrorCatalog, ErrorCode, FilePath, ReturnProperty)
-        Else
-            GetFileValue = Handler.IS_ERROR
-        End If
+        GetFileValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath, ReturnProperty)
             
     End Function
 
@@ -219,11 +199,7 @@ Private Handler As New std_Error
         End If
 
         Error:
-        If ThrowError Then
-            Exists = Handler.Handle(ErrorCatalog, ErrorCode, Path, ExistsAs, ShouldExist)
-        Else
-            Exists = Handler.IS_ERROR
-        End If
+        Exists = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Path, ExistsAs, ShouldExist)
 
     End Function
 
@@ -255,7 +231,7 @@ Private Handler As New std_Error
 
         Error:
         If ThrowError Then
-            Call Handler.Handle(ErrorCatalog, 8, Path, Name, Unique, ThrowError)
+            Call Handler.Handle(ErrorCatalog, 8, ThrowError, Path, Name, Unique, ThrowError)
         End If
         Set CreateFolderObj = Nothing
 
@@ -296,7 +272,7 @@ Private Handler As New std_Error
 
         Error:
         If ThrowError Then
-            Call Handler.Handle(ErrorCatalog, 15, FolderPath, FileName, Unique, ThrowError)
+            Call Handler.Handle(ErrorCatalog, 15, FolderPath, ThrowError, FileName, Unique, ThrowError)
         End If
         Set CreateFileObj = Nothing
 
@@ -320,111 +296,105 @@ Private Handler As New std_Error
 
 
     Private Sub ProtInit()
-
-        If Initialized = False Then
-        ' System-Errors
-            ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_File"
-            ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Drive exists"
-            ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Drive doesnt exist"
-            ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Drive Property exists"
-            ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Drive Property doesnt exist"
-            ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "Drive Property equals"
-            ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "Drive Property does not equal"
-            ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "Could not change Drive Properties"
-            ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "Folder exists"
-            ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "Folder doesnt exist"
-            ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "Folder Property exists"
-            ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Folder Property doesnt exist"
-            ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Folder Property equals"
-            ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Folder Property does not equal"
-            ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "Could not change Folder Properties"
-            ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "File exists"
-            ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "File doesnt exist"
-            ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "File Property exists"
-            ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "File Property doesnt exist"
-            ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "File Property equals"
-            ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "File Property does not equal"
-            ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "Could not change File Properties"
-            ErrorCatalog(0, 0022) = 1000: ErrorCatalog(1, 0022) = "Textstram exists"
-            ErrorCatalog(0, 0023) = 1000: ErrorCatalog(1, 0023) = "Textstram doesnt exist"
-            ErrorCatalog(0, 0024) = 1000: ErrorCatalog(1, 0024) = "Textstram Property exists"
-            ErrorCatalog(0, 0025) = 1000: ErrorCatalog(1, 0025) = "Textstram Property doesnt exist"
-            ErrorCatalog(0, 0026) = 1000: ErrorCatalog(1, 0026) = "Textstram Property equals"
-            ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "Textstram Property does not equal"
-            ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "Could not change Textstram Properties"
-            ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "value invalid"
-            ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "PLACEHOLDER"
-            ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
-            ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
-            ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"
-            ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "PLACEHOLDER"
-            ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
-            ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
-            ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
-            ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
-            ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
-            ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
-            ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
-            ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
-            ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"
-            ErrorCatalog(0, 0044) = 1000: ErrorCatalog(1, 0044) = "PLACEHOLDER"
-            ErrorCatalog(0, 0045) = 1000: ErrorCatalog(1, 0045) = "PLACEHOLDER"
-            ErrorCatalog(0, 0046) = 1000: ErrorCatalog(1, 0046) = "PLACEHOLDER"
-            ErrorCatalog(0, 0047) = 1000: ErrorCatalog(1, 0047) = "PLACEHOLDER"
-            ErrorCatalog(0, 0048) = 1000: ErrorCatalog(1, 0048) = "PLACEHOLDER"
-            ErrorCatalog(0, 0049) = 1000: ErrorCatalog(1, 0049) = "PLACEHOLDER"
-            ErrorCatalog(0, 0050) = 1000: ErrorCatalog(1, 0050) = "PLACEHOLDER"
-            ErrorCatalog(0, 0051) = 1000: ErrorCatalog(1, 0051) = "PLACEHOLDER"
-            ErrorCatalog(0, 0052) = 1000: ErrorCatalog(1, 0052) = "PLACEHOLDER"
-            ErrorCatalog(0, 0053) = 1000: ErrorCatalog(1, 0053) = "PLACEHOLDER"
-            ErrorCatalog(0, 0054) = 1000: ErrorCatalog(1, 0054) = "PLACEHOLDER"
-            ErrorCatalog(0, 0055) = 1000: ErrorCatalog(1, 0055) = "PLACEHOLDER"
-            ErrorCatalog(0, 0056) = 1000: ErrorCatalog(1, 0056) = "PLACEHOLDER"
-            ErrorCatalog(0, 0057) = 1000: ErrorCatalog(1, 0057) = "PLACEHOLDER"
-            ErrorCatalog(0, 0058) = 1000: ErrorCatalog(1, 0058) = "PLACEHOLDER"
-            ErrorCatalog(0, 0059) = 1000: ErrorCatalog(1, 0059) = "PLACEHOLDER"
-            ErrorCatalog(0, 0060) = 1000: ErrorCatalog(1, 0060) = "PLACEHOLDER"
-            ErrorCatalog(0, 0061) = 1000: ErrorCatalog(1, 0061) = "PLACEHOLDER"
-            ErrorCatalog(0, 0062) = 1000: ErrorCatalog(1, 0062) = "PLACEHOLDER"
-            ErrorCatalog(0, 0063) = 1000: ErrorCatalog(1, 0063) = "PLACEHOLDER"
-            ErrorCatalog(0, 0064) = 1000: ErrorCatalog(1, 0064) = "PLACEHOLDER"
-            ErrorCatalog(0, 0065) = 1000: ErrorCatalog(1, 0065) = "PLACEHOLDER"
-            ErrorCatalog(0, 0066) = 1000: ErrorCatalog(1, 0066) = "PLACEHOLDER"
-            ErrorCatalog(0, 0067) = 1000: ErrorCatalog(1, 0067) = "PLACEHOLDER"
-            ErrorCatalog(0, 0068) = 1000: ErrorCatalog(1, 0068) = "PLACEHOLDER"
-            ErrorCatalog(0, 0069) = 1000: ErrorCatalog(1, 0069) = "PLACEHOLDER"
-            ErrorCatalog(0, 0070) = 1000: ErrorCatalog(1, 0070) = "PLACEHOLDER"
-            ErrorCatalog(0, 0071) = 1000: ErrorCatalog(1, 0071) = "PLACEHOLDER"
-            ErrorCatalog(0, 0072) = 1000: ErrorCatalog(1, 0072) = "PLACEHOLDER"
-            ErrorCatalog(0, 0073) = 1000: ErrorCatalog(1, 0073) = "PLACEHOLDER"
-            ErrorCatalog(0, 0074) = 1000: ErrorCatalog(1, 0074) = "PLACEHOLDER"
-            ErrorCatalog(0, 0075) = 1000: ErrorCatalog(1, 0075) = "PLACEHOLDER"
-            ErrorCatalog(0, 0076) = 1000: ErrorCatalog(1, 0076) = "PLACEHOLDER"
-            ErrorCatalog(0, 0077) = 1000: ErrorCatalog(1, 0077) = "PLACEHOLDER"
-            ErrorCatalog(0, 0078) = 1000: ErrorCatalog(1, 0078) = "PLACEHOLDER"
-            ErrorCatalog(0, 0079) = 1000: ErrorCatalog(1, 0079) = "PLACEHOLDER"
-            ErrorCatalog(0, 0080) = 1000: ErrorCatalog(1, 0080) = "PLACEHOLDER"
-            ErrorCatalog(0, 0081) = 1000: ErrorCatalog(1, 0081) = "PLACEHOLDER"
-            ErrorCatalog(0, 0082) = 1000: ErrorCatalog(1, 0082) = "PLACEHOLDER"
-            ErrorCatalog(0, 0083) = 1000: ErrorCatalog(1, 0083) = "PLACEHOLDER"
-            ErrorCatalog(0, 0084) = 1000: ErrorCatalog(1, 0084) = "PLACEHOLDER"
-            ErrorCatalog(0, 0085) = 1000: ErrorCatalog(1, 0085) = "PLACEHOLDER"
-            ErrorCatalog(0, 0086) = 1000: ErrorCatalog(1, 0086) = "PLACEHOLDER"
-            ErrorCatalog(0, 0087) = 1000: ErrorCatalog(1, 0087) = "PLACEHOLDER"
-            ErrorCatalog(0, 0088) = 1000: ErrorCatalog(1, 0088) = "PLACEHOLDER"
-            ErrorCatalog(0, 0089) = 1000: ErrorCatalog(1, 0089) = "PLACEHOLDER"
-            ErrorCatalog(0, 0090) = 1000: ErrorCatalog(1, 0090) = "PLACEHOLDER"
-            ErrorCatalog(0, 0091) = 1000: ErrorCatalog(1, 0091) = "PLACEHOLDER"
-            ErrorCatalog(0, 0092) = 1000: ErrorCatalog(1, 0092) = "PLACEHOLDER"
-            ErrorCatalog(0, 0093) = 1000: ErrorCatalog(1, 0093) = "PLACEHOLDER"
-            ErrorCatalog(0, 0094) = 1000: ErrorCatalog(1, 0094) = "PLACEHOLDER"
-            ErrorCatalog(0, 0095) = 1000: ErrorCatalog(1, 0095) = "PLACEHOLDER"
-            ErrorCatalog(0, 0096) = 1000: ErrorCatalog(1, 0096) = "PLACEHOLDER"
-            ErrorCatalog(0, 0097) = 1000: ErrorCatalog(1, 0097) = "PLACEHOLDER"
-            ErrorCatalog(0, 0098) = 1000: ErrorCatalog(1, 0098) = "PLACEHOLDER"
-            ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
-            Initialized = True
-        End If
-
+        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_File"
+        ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Drive exists"
+        ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Drive doesnt exist"
+        ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Drive Property exists"
+        ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Drive Property doesnt exist"
+        ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "Drive Property equals"
+        ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "Drive Property does not equal"
+        ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "Could not change Drive Properties"
+        ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "Folder exists"
+        ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "Folder doesnt exist"
+        ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "Folder Property exists"
+        ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Folder Property doesnt exist"
+        ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Folder Property equals"
+        ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Folder Property does not equal"
+        ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "Could not change Folder Properties"
+        ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "File exists"
+        ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "File doesnt exist"
+        ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "File Property exists"
+        ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "File Property doesnt exist"
+        ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "File Property equals"
+        ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "File Property does not equal"
+        ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "Could not change File Properties"
+        ErrorCatalog(0, 0022) = 1000: ErrorCatalog(1, 0022) = "Textstram exists"
+        ErrorCatalog(0, 0023) = 1000: ErrorCatalog(1, 0023) = "Textstram doesnt exist"
+        ErrorCatalog(0, 0024) = 1000: ErrorCatalog(1, 0024) = "Textstram Property exists"
+        ErrorCatalog(0, 0025) = 1000: ErrorCatalog(1, 0025) = "Textstram Property doesnt exist"
+        ErrorCatalog(0, 0026) = 1000: ErrorCatalog(1, 0026) = "Textstram Property equals"
+        ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "Textstram Property does not equal"
+        ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "Could not change Textstram Properties"
+        ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "value invalid"
+        ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "PLACEHOLDER"
+        ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
+        ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
+        ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"
+        ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "PLACEHOLDER"
+        ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
+        ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
+        ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
+        ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
+        ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
+        ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
+        ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
+        ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
+        ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"
+        ErrorCatalog(0, 0044) = 1000: ErrorCatalog(1, 0044) = "PLACEHOLDER"
+        ErrorCatalog(0, 0045) = 1000: ErrorCatalog(1, 0045) = "PLACEHOLDER"
+        ErrorCatalog(0, 0046) = 1000: ErrorCatalog(1, 0046) = "PLACEHOLDER"
+        ErrorCatalog(0, 0047) = 1000: ErrorCatalog(1, 0047) = "PLACEHOLDER"
+        ErrorCatalog(0, 0048) = 1000: ErrorCatalog(1, 0048) = "PLACEHOLDER"
+        ErrorCatalog(0, 0049) = 1000: ErrorCatalog(1, 0049) = "PLACEHOLDER"
+        ErrorCatalog(0, 0050) = 1000: ErrorCatalog(1, 0050) = "PLACEHOLDER"
+        ErrorCatalog(0, 0051) = 1000: ErrorCatalog(1, 0051) = "PLACEHOLDER"
+        ErrorCatalog(0, 0052) = 1000: ErrorCatalog(1, 0052) = "PLACEHOLDER"
+        ErrorCatalog(0, 0053) = 1000: ErrorCatalog(1, 0053) = "PLACEHOLDER"
+        ErrorCatalog(0, 0054) = 1000: ErrorCatalog(1, 0054) = "PLACEHOLDER"
+        ErrorCatalog(0, 0055) = 1000: ErrorCatalog(1, 0055) = "PLACEHOLDER"
+        ErrorCatalog(0, 0056) = 1000: ErrorCatalog(1, 0056) = "PLACEHOLDER"
+        ErrorCatalog(0, 0057) = 1000: ErrorCatalog(1, 0057) = "PLACEHOLDER"
+        ErrorCatalog(0, 0058) = 1000: ErrorCatalog(1, 0058) = "PLACEHOLDER"
+        ErrorCatalog(0, 0059) = 1000: ErrorCatalog(1, 0059) = "PLACEHOLDER"
+        ErrorCatalog(0, 0060) = 1000: ErrorCatalog(1, 0060) = "PLACEHOLDER"
+        ErrorCatalog(0, 0061) = 1000: ErrorCatalog(1, 0061) = "PLACEHOLDER"
+        ErrorCatalog(0, 0062) = 1000: ErrorCatalog(1, 0062) = "PLACEHOLDER"
+        ErrorCatalog(0, 0063) = 1000: ErrorCatalog(1, 0063) = "PLACEHOLDER"
+        ErrorCatalog(0, 0064) = 1000: ErrorCatalog(1, 0064) = "PLACEHOLDER"
+        ErrorCatalog(0, 0065) = 1000: ErrorCatalog(1, 0065) = "PLACEHOLDER"
+        ErrorCatalog(0, 0066) = 1000: ErrorCatalog(1, 0066) = "PLACEHOLDER"
+        ErrorCatalog(0, 0067) = 1000: ErrorCatalog(1, 0067) = "PLACEHOLDER"
+        ErrorCatalog(0, 0068) = 1000: ErrorCatalog(1, 0068) = "PLACEHOLDER"
+        ErrorCatalog(0, 0069) = 1000: ErrorCatalog(1, 0069) = "PLACEHOLDER"
+        ErrorCatalog(0, 0070) = 1000: ErrorCatalog(1, 0070) = "PLACEHOLDER"
+        ErrorCatalog(0, 0071) = 1000: ErrorCatalog(1, 0071) = "PLACEHOLDER"
+        ErrorCatalog(0, 0072) = 1000: ErrorCatalog(1, 0072) = "PLACEHOLDER"
+        ErrorCatalog(0, 0073) = 1000: ErrorCatalog(1, 0073) = "PLACEHOLDER"
+        ErrorCatalog(0, 0074) = 1000: ErrorCatalog(1, 0074) = "PLACEHOLDER"
+        ErrorCatalog(0, 0075) = 1000: ErrorCatalog(1, 0075) = "PLACEHOLDER"
+        ErrorCatalog(0, 0076) = 1000: ErrorCatalog(1, 0076) = "PLACEHOLDER"
+        ErrorCatalog(0, 0077) = 1000: ErrorCatalog(1, 0077) = "PLACEHOLDER"
+        ErrorCatalog(0, 0078) = 1000: ErrorCatalog(1, 0078) = "PLACEHOLDER"
+        ErrorCatalog(0, 0079) = 1000: ErrorCatalog(1, 0079) = "PLACEHOLDER"
+        ErrorCatalog(0, 0080) = 1000: ErrorCatalog(1, 0080) = "PLACEHOLDER"
+        ErrorCatalog(0, 0081) = 1000: ErrorCatalog(1, 0081) = "PLACEHOLDER"
+        ErrorCatalog(0, 0082) = 1000: ErrorCatalog(1, 0082) = "PLACEHOLDER"
+        ErrorCatalog(0, 0083) = 1000: ErrorCatalog(1, 0083) = "PLACEHOLDER"
+        ErrorCatalog(0, 0084) = 1000: ErrorCatalog(1, 0084) = "PLACEHOLDER"
+        ErrorCatalog(0, 0085) = 1000: ErrorCatalog(1, 0085) = "PLACEHOLDER"
+        ErrorCatalog(0, 0086) = 1000: ErrorCatalog(1, 0086) = "PLACEHOLDER"
+        ErrorCatalog(0, 0087) = 1000: ErrorCatalog(1, 0087) = "PLACEHOLDER"
+        ErrorCatalog(0, 0088) = 1000: ErrorCatalog(1, 0088) = "PLACEHOLDER"
+        ErrorCatalog(0, 0089) = 1000: ErrorCatalog(1, 0089) = "PLACEHOLDER"
+        ErrorCatalog(0, 0090) = 1000: ErrorCatalog(1, 0090) = "PLACEHOLDER"
+        ErrorCatalog(0, 0091) = 1000: ErrorCatalog(1, 0091) = "PLACEHOLDER"
+        ErrorCatalog(0, 0092) = 1000: ErrorCatalog(1, 0092) = "PLACEHOLDER"
+        ErrorCatalog(0, 0093) = 1000: ErrorCatalog(1, 0093) = "PLACEHOLDER"
+        ErrorCatalog(0, 0094) = 1000: ErrorCatalog(1, 0094) = "PLACEHOLDER"
+        ErrorCatalog(0, 0095) = 1000: ErrorCatalog(1, 0095) = "PLACEHOLDER"
+        ErrorCatalog(0, 0096) = 1000: ErrorCatalog(1, 0096) = "PLACEHOLDER"
+        ErrorCatalog(0, 0097) = 1000: ErrorCatalog(1, 0097) = "PLACEHOLDER"
+        ErrorCatalog(0, 0098) = 1000: ErrorCatalog(1, 0098) = "PLACEHOLDER"
+        ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
     End Sub
 '
