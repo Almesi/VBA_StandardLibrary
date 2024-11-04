@@ -449,4 +449,106 @@ Script    : See Point 6
     Private Sub InitScope(ByRef Arr() As Long)
 ```
 
+
+### Functions
+```vb
+' Get/Set Values
+
+    ' The highest ConsoleText.SelStart <> Len(ConsoleText.Text)
+    ' For that reason this Function will return the highest ConsoleText.SelStart 
+    Private Function GetMaxSelStart() As Long
+
+    ' Will Print Workbook directory (if existing) and the recognizer
+    Private Function PrintStarter() As Variant
+
+    ' The Text printed at Initialization
+    Private Function GetStartText() As String
+
+    ' Will get Charlength of a specified amount of lines.
+    ' Mainly used to find the startpoint for coloring and PreviousCommands
+    Private Function GetTextLength(Text As String, Seperator As String, Optional IndexBreakPoint As Long = -2) As Long
+
+    ' Gets Text to the right side of the recognizer at any given Line of ConsoleText.text
+    Private Function GetLine(Text As String, Index As Long) As String
+
+    ' Gets Words of a Line with Index
+    ' Mainly used for coloring and Intellisense
+    Private Function GetWord(Text As String, Optional Index As Long = -1) As String
+
+    ' Basically just Split(), but will return an empty array if it cant split the Text
+    ' Used when a Split is needed for example see GetFunctionArgs
+    Private Function SplitString(Text As String, SplitText As String) As String()
+
+    ' Used to Keep CurrentLineIndex up to date
+    Private Sub SetUpNewLine()
+
+    ' Will find all Positions of all Occurences of a String in a Text between defined Points
+    ' One Element with Value 0 means nothing was found
+    Private Function InStrAll(Text As String, SearchText As String, Optional StartIndex As Long = 1, Optional EndIndex As Long = 0, Optional StartFinding As Long = 0, Optional ReturnCount As Long = 255, Optional Line As Long = 0, Optional BreakText As String = Empty) As Long()
+
+    '                        |--|  |--------|                  Returns Array of Length -1                    
+    ' ExampleString=Function(Arg1, Arg2(Arg3))                 ExampleString=Function()
+    Private Function GetFunctionArgs(Line As String) As Variant()
+
+    '               |------|                        AS TREE POSITION LIKE eg. 1, 3
+    ' ExampleString=Function(Arg1, Arg2(Arg3))
+    Private Function GetFuncTreePosition(Line As String) As Long()
+
+    '               |------|
+    ' ExampleString=Function(Arg1, Arg2(Arg3))
+    Private Function GetFunctionName(Line As String) As Variant
+
+    ' Mid, but with EndPoint instead of Length
+    Private Function MidP(Text As String, StartPoint As Long, EndPoint As Long) As String
+
+    '                        |--------------|
+    ' ExampleString=Function(Arg1, Arg2(Arg3))
+    Private Function GetParanthesesText(Line As String) As String
+
+    ' Searches Text for """ at the defined Points and return true if it is a String
+    Private Function InString(Text As String, StartPoint As Long, EndPoint As Long) As Boolean
+
+    ' Will Split all Elements down to a big array with the pattern:    Variable1, Operator2, Variable2, Operator2  ...
+    ' Used to pass it to HandleReturnOperators
+    Private Function GetAllOperators(Variable() As Variant) As Variant()
+```
+
+
+### Array
+
+```vb
+
+    '        ___________________________    
+    '        |                          |__________|
+    ' (1, 4, [], 3, 7, 4, 7, 2)         (1, 2, 7, 3)
+    Private Sub MergeArray(ByRef Goal() As Variant, Adder() As Variant, Position As Long)
+
+    '      ___________________________    
+    '      |                          |__________|
+    ' (1, [4], 3, 7, 4, 7, 2)         (1, 2, 7, 3)
+    Private Sub ReplaceArrayPoint(ByRef Goal() As Variant, Adder() As Variant, Position As Long)
+
+    '      _________________________
+    '     |                         |______|
+    ' (1, 4, 3, 7, 4, 7, 2)         (remove)
+    Private Sub StitchArray(ByRef Arr() As Variant, StartPosition As Long, EndPosition As Long)
+
+    '      _________________________________________________
+    '     |      |      |      |      |      |              |_|
+    ' (1, [], 4, [], 3, [], 7, [], 4, [], 7, [], 2)         (+)
+    Private Sub InsertElements(ByRef Goal() As Variant, Value As Variant)
+
+    ' Returns Ubound, if not possible returns -1
+    ' This is needed, because some Variant may be an Array, but dont need to be. In that Case Ubound would throw an Error
+    Private Function UboundK(Arr As Variant) As Long
+
+    ' Same reason as UbounK, but just for cCollection, because UDT dont work with Variant
+    Private Function UboundN(Arr As cCollection) As Long
+
+    '                        ____________    
+    '                       |           |_|
+    ' (1, 4, 3, 7, 4, 7, 2, [])         (6)
+    Private Sub PushArray(Byref Arr As Variant, Value As Variant)
+```
+
 The other Code as of now should be understandable

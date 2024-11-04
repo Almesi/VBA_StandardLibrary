@@ -51,21 +51,14 @@ Option Explicit
         ScriptMode = 3
     End Enum
 
-    
-
     Private Const Intellisense_Active As Boolean = True
-
-    ' Dependenant on Microsoft Visual Studio Extensebility 5.3
     Private Const Extensebility_Active As Boolean = True
-
-    ' Dependant on sancarn´s stdLambda class
     Private Const stdLambda_Active    As Boolean = True
 
-    'Intellisense Colors
     Private in_Basic       As Long
     Private in_System      As Long
     Private in_Procedure   As Long
-    Private in_Operator    As Long 'smooooooth operatooooor
+    Private in_Operator    As Long
     Private in_Datatype    As Long
     Private in_Value       As Long
     Private in_String      As Long
