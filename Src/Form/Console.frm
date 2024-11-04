@@ -16,33 +16,33 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
+
 Option Explicit
 
 ' Private Variables
     
-    Private       CurrentLineIndex     As Long              ' Index of the CurrentLine
-    Private Const Recognizer           As String = "\>>>"   ' Used to recognize when CurrentLine should start
-    Private Const ArgSeperator         As String = ", " 
-    Private Const AsgOperator          As String = " = "
-    PRivate Const LineSeperator        As String = "LINEBREAK/()\"
-    Private       PasteStarter         As Boolean           ' Determines if starter should be printed or not
-    Private       UserInput            As Variant           ' Value the user put in
-    Private       LastError            As Variant           ' Used for more information about last Error
-    Private       CurrentChar          As Long
+    Private       CurrentLineIndex      As Long
+    Private Const Recognizer            As String = "\>>>"
+    Private Const ArgSeperator          As String = ", " 
+    Private Const AsgOperator           As String = " = "
+    Private Const LineSeperator         As String = "LINEBREAK/()\"
+    Private       PasteStarter          As Boolean
+    Private       UserInput             As Variant
+    Private       LastError             As Variant
 
-    Private       Intellisense_Index   As Long
-    Private       ConsVarIndex         As Long
+    Private       Intellisense_Index    As Long
+    Private       ConsVarIndex          As Long
 
-    Private       p_Password           As String
-    Private       PasswordActive       As Boolean
-    Private       PasswordMode         As Boolean
+    Private       PreviousCommands()    As Variant
+    Private       PreviousCommandsIndex As Long
 
-    Private DimVariables(255) As Long
-    Private DimIndex As Long
+    Private       p_Password            As String
+    Private       PasswordActive        As Boolean
+    Private       PasswordMode          As Boolean
 
-    
+    Private       DimVariables(255)     As Long
+    Private       DimIndex              As Long
 
-    ' Check if the console awaits pre-declared answer, user input or just logging
     Private WorkMode As Long
     Private Enum WorkModeEnum
         Logging = 0
@@ -77,14 +77,6 @@ Option Explicit
     Private in_Lambda      As Long
 '
 
-
-
-'######################################################
-'TODO´S
-' Fix Keyboard Positions
-'
-'
-'######################################################
 
 ' Tree
     Private Type Node
@@ -356,6 +348,7 @@ Option Explicit
 
     Public Function GetUserInput(Message As Variant, Optional InputType As Long = 12) As Variant
 
+        If HandlePassword = False Then Set GetUserInput = Nothing Exit Sub
         Call PrintConsole(Message, in_System)
         WorkMode = WorkModeEnum.UserInputt
         PasteStarter = False
@@ -382,6 +375,7 @@ Option Explicit
         Dim Found As Boolean
         Dim Index As Long
 
+        If HandlePassword = False Then Set CheckPredeclaredAnswer = Nothing Exit Sub
         Message = Message & "("
         For i = 0 To UBoundK(AllowedValues)
             Message = Message & AllowedValues(i) & "|"
@@ -460,7 +454,6 @@ Option Explicit
         Next
         Call SetUpNewLine
         ConsoleText.SelStart = StartPoint
-        CurrentChar = GetMaxSelStart
 
     End Sub
 
@@ -477,13 +470,13 @@ Option Explicit
     End Function
 
     Public Function GetPublicVariable(Name As String) As Variant
-        Dim Pos() As Variant
+        Dim Pos() As Long
         Dim Temp(0) As Variant
         Pos = GetFuncTreePosition(Name)
         If UboundK(Pos) <> -1 Then
-            Temp(0) = CLng(Pos(1))
-            If UCase(ReturnVariableValue(CLng(Pos(0)), Temp, 0)) Like "PUBLIC*" Then
-                GetPublicVariable = ReturnVariableValue(CLng(Pos(0)), Temp, 2)
+            Temp(0) = Pos(1)
+            If UCase(ReturnVariableValue(Pos(0), Temp, 0)) Like "PUBLIC*" Then
+                GetPublicVariable = ReturnVariableValue(Pos(0), Temp, 2)
             Else
                 Set GetPublicVariable = Nothing
             End If
@@ -504,7 +497,6 @@ Option Explicit
         ConsoleText.SelLength = Len(ConsoleText.Text)
         ConsoleText.SelColor = in_System
         ConsoleText.SelStart = Len(ConsoleText.Text)
-        CurrentChar = GetMaxSelStart
 
         CurrentLineIndex = UBoundK(Split(ConsoleText.Text, vbCrLf))
         ScrollHeight = 5000
@@ -586,7 +578,7 @@ Option Explicit
         Dim Temp() As String
         Dim ReturnArray() As String
         Dim i As Long
-
+        
         If Text = "" Then
         ElseIf InStr(1, Text, SplitText) <> 0 Then
             Temp = Split(Text, SplitText)
@@ -667,12 +659,12 @@ Option Explicit
 
     '               |------|                        AS TREE POSITION LIKE eg. 1, 3
     ' ExampleString=Function(Arg1, Arg2(Arg3))
-    Private Function GetFuncTreePosition(Line As String) As Variant()
+    Private Function GetFuncTreePosition(Line As String) As Long()
 
         Dim CurrentWord As String
         Dim i As Long
         Dim j As Long
-        Dim ReturnArray() As Variant
+        Dim ReturnArray() As Long
 
         CurrentWord = GetFunctionName(Line)
         For i = 0 To ConsVarIndex
@@ -728,8 +720,6 @@ Option Explicit
 
     End Function
 
-    
-
     Private Function InString(Text As String, StartPoint As Long, EndPoint As Long) As Boolean
         Dim Quotes() As Long
         Dim i As Long
@@ -738,12 +728,12 @@ Option Explicit
         Select Case UboundK(Quotes)
             Case 0
                 If Quotes(0) = 0 Then
-                    InString = True
+                    InString = False
                 ElseIf Quotes(0) =< StartPoint Then
                     InString = True
                 End If
             Case >0
-                If IsEven(UboundK(Quotes)) Then
+                If (UboundK(Quotes) + 1) Mod 2 = 0 Then
                     EndIndex = UboundK(Quotes)
                 Else
                     EndIndex = UboundK(Quotes) - 1
@@ -759,24 +749,30 @@ Option Explicit
     Private Function GetAllOperators(Variable() As Variant) As Variant()
 
         Dim Operators() As Variant
+        Dim FoundOperators() As Variant
         Dim Temp() As Variant
         Dim TempStr() As String
         Dim i As Long
         Dim j As Long
         Dim k As Long
-        Operators = Array(" IS ", "==", "<>", " NOT ", " AND ", " OR ", " XOR ", "!=", "++", "||", "&&", "&", "=>", "=<", "<=", ">=", "?", "+", "*", "/", "-", "^", ":", ";", "<<", ">>", "!", "|", "?", ",", " = ")
+        Operators = Array(" IS ", "==", "<>", "=>", "=<", "<=", ">=", "<", ">", " NOT ", " AND ", " OR ", " XOR ", "!=", "||", "&&", "//", "**", "++", "--", "^^",  "+", "-", "*", "/", "^", "?", ":", ";", "!", "|", "?", ",", "&")
         For i = 0 To UboundK(Operators)
             For j = 0 To UboundK(Variable)
                 If InStr(1, Variable(j), Operators(i)) > 1 Then
+                    For k = 0 To UBoundK(FoundOperators)
+                        If InStr(1, FoundOperators(k), Operators(i)) Then GoTo Skip
+                    Next
+                    Call PushArray(FoundOperators, Operators(i))
                     TempStr = Split(CStr(Variable(j)), CStr(Operators(i)))
                     ReDim Temp(UboundK(TempStr))
                     For k = 0 To UboundK(TempStr)
-                        Temp(k) = TempStr(k)
+                        Temp(k) = Replace(TempStr(k), " ", "")
                     Next
                     Call InsertElements(Temp, Operators(i))
                     Call ReplaceArrayPoint(Variable, Temp, j)
                 End If
             Next j
+            Skip:
         Next i
         GetAllOperators = Variable
 
@@ -789,23 +785,23 @@ Option Explicit
 
         Dim Temp() As Variant
         Dim i As Long
-        Dim TempVal As Long
+        Dim j As Long
 
         Temp = Goal
         If UboundK(Temp) = -1 Then
             Redim Goal(UboundK(Adder))
         Else
-            Redim Goal(UboundK(Temp) + UboundK(Adder) + 1)
+            Redim Goal((UboundK(Temp) + 1) + (UboundK(Adder) + 1) - 1)
         End If
         For i = 0 To Position - 1
             Goal(i) = Temp(i)
         Next
-        For i = Position To UboundK(Adder)
-            Goal(i) = Adder(i - Position)
+        For j = 0 To UboundK(Adder)
+            Goal(i + j) = Adder(j)
         Next
-        TempVal = i
-        For i = TempVal To UboundK(Goal)
-            Goal(i) = Temp(Position + i)
+        j = i + j
+        For i = j To UboundK(Goal)
+            Goal(j + i) = Temp(i)
         Next
 
     End Sub
@@ -815,12 +811,12 @@ Option Explicit
         Dim i As Long
         Temp = Goal
         If (UboundK(Goal) - 1) <> -1 Then
-            ReDim Goal(UboundK(Goal) - 1 + UboundK(Adder))
+            ReDim Goal(UboundK(Goal) - 1)
             For i = 0 To Position - 1
                 Goal(i) = Temp(i)
             Next i
-            For i = Position To UBoundK(Temp)
-                Goal(i + 1) = Temp(i)
+            For i = Position To UBoundK(Goal)
+                Goal(i) = Temp(i + 1)
             Next
             Call MergeArray(Goal, Adder, Position)
         Else
@@ -854,10 +850,9 @@ Option Explicit
 
         Temp = Goal
         ReDim Goal((2 * (1 + UboundK(Temp))) - 2)
-        For i = 0 To UboundK(Temp) Step 2
+        For i = 0 To UboundK(Temp)
             Goal(i * 2 + 0) = Temp(i)
-            Goal(i * 2 + 1) = Value
-            Goal(i * 2 + 2) = Temp(i + 1)
+            If i * 2 + 1 < UboundK(Goal) Then Goal(i * 2 + 1) = Value
         Next
 
     End Sub
@@ -873,6 +868,11 @@ Option Explicit
         UboundN = -1
         UboundN = Ubound(Arr.Nodes)
     End Function
+
+    Private Sub PushArray(Byref Arr As Variant, Value As Variant)
+        ReDim Preserve Arr(UboundK(Arr) + 1)
+        Arr(UboundK(Arr)) = Value
+    End Sub
 '
 
 ' Handle Input
@@ -902,61 +902,60 @@ Option Explicit
         
         Dim Lines As Variant
         Lines = Split(ConsoleText.Text, vbCrLf)
-            Select Case pKey
-                Case vbKeyReturn
-                    Call HandleEnter
+        Call SetUpNewLine
+        Select Case pKey
+            Case vbKeyReturn
+                If PasswordMode = False Then
+                    Call PushArray(PreviousCommands, GetLine(ConsoleText.Text, UboundK(Lines) - 1))
+                    PreviousCommandsIndex = UboundK(PreviousCommands) + 1
+                End If
+                If HandleEnter <> "EXIT()/\" Then
                     Call SetPositions
                     ConsoleText.SelStart = GetMaxSelStart
                     ConsoleText.Sellength = 0
                     ConsoleText.SelColor = in_Basic
-                Case vbKeyUp
-                    If PasswordMode Then Exit Sub
-                    If Workmode = WorkModeEnum.Logging Then
-                        If CurrentLineIndex > 1 Then
-                            CurrentLineIndex = CurrentLineIndex - 1
-                            ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbCrLf, UboundK(Lines) - 1)
-                            ConsoleText.SelLength = Len(ConsoleText.Text)
-                            ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex)
-                        End If
-                    End If
-                Case vbKeyDown
-                    If PasswordMode Then Exit Sub
-                    If Workmode = WorkModeEnum.Logging Then
-                        If CurrentLineIndex < UBoundK(Lines) Then
-                            CurrentLineIndex = CurrentLineIndex + 1
-                            ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbCrLf, UboundK(Lines) - 1)
-                            ConsoleText.SelLength = Len(ConsoleText.Text)
-                            ConsoleText.SelText = PrintStarter & GetLine(ConsoleText.Text, CurrentLineIndex)
-                        End If
-                    End If
-                Case Else
-                    CurrentChar = CurrentChar + 1
-                    If CurrentChar > GetMaxSelStart Then ConsoleText.SelStart = GetMaxSelStart: CurrentChar = GetMaxSelStart
-                    Call HandleOtherKeys(pKey, ShiftKey)
-            End Select
+                Else
+                    Unload Console
+                End If
+            Case vbKeyUp
+                If PasswordMode Then Exit Sub
+                If Workmode = WorkModeEnum.Logging Then
+                    PreviousCommandsIndex = PreviousCommandsIndex - 1
+                    If PreviousCommandsIndex < 0 Then PreviousCommandsIndex = UboundK(PreviousCommands)
+                    ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbCrLf, UboundK(Lines) - 1)
+                    ConsoleText.SelLength = Len(ConsoleText.Text)
+                    ConsoleText.SelText = PrintStarter & PreviousCommands(PreviousCommandsIndex)
+                End If
+            Case vbKeyDown
+                If PasswordMode Then Exit Sub
+                If Workmode = WorkModeEnum.Logging Then
+                    PreviousCommandsIndex = PreviousCommandsIndex + 1
+                    If PreviousCommandsIndex > UboundK(PreviousCommands) Then PreviousCommandsIndex = 0
+                    ConsoleText.SelStart = GetTextLength(ConsoleText.Text, vbCrLf, UboundK(Lines) - 1)
+                    ConsoleText.SelLength = Len(ConsoleText.Text)
+                    ConsoleText.SelText = PrintStarter & PreviousCommands(PreviousCommandsIndex)
+                End If
+            Case Else
+                Call HandleOtherKeys(pKey, ShiftKey)
+        End Select
 
     End Sub
 
-    Private Sub HandleEnter()
+    Private Function HandleEnter() As Variant
 
         Dim i As Long
         Dim Line As String
         Dim Value As Variant
-        Call SetUpNewLine
         If PasswordActive = False Then
-            If HandlePassword Then
-                Call PrintEnter("Password accepted", in_System)
-                Call PrintConsole(PrintStarter, in_System)
-            Else
-                Call PrintEnter("Enter Password", in_System)
-            End If
-            Exit Sub
+            Call HandlePassword
+            Exit Function
         End If
         Line = GetLine(ConsoleText.Text, CurrentLineIndex - 1)
         MulitlineEnd:
         Select Case WorkMode
             Case WorkModeEnum.Logging
                 Value = HandleCode(Line)
+                If CStr(Value) = "EXIT()/\" Then HandleEnter = Value: Exit Function
                 If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
                     Call HandleDimVariable(-1, CLng(Replace(CStr(Value), "DIMVARIABLE", "")))
                 End If
@@ -1003,97 +1002,154 @@ Option Explicit
             Call PrintConsole(PrintStarter, in_System)
         End If
 
-    End Sub
+    End Function
 
     Private Function HandleCode(Line As String) As Variant
+
+        Dim AssignOperator  As Long
+        Dim LeftSide        As String
+        Dim LeftSidePos()   As Long
+        Dim RightSide       As String
+        Dim RightSidePos()  As Long
+        Dim Value           As Variant
+
+        AssignOperator = InStr(1, Line, AsgOperator)
+        If AssignOperator <> 0 Then LeftSide = Mid(Line, 1, AssignOperator - 1) Else LeftSide = Empty
+        LeftSidePos   = GetFuncTreePosition(LeftSide)
+        If AssignOperator <> 0 Then RightSide = Mid(Line, AssignOperator + Len(AsgOperator), Len(Line)) Else RightSide = Mid(Line, 1, Len(Line))
+        RightSidePos  = GetFuncTreePosition(RightSide)
+
         Select Case True
-            Case UCase(Line) Like "HELP"           : HandleCode = HandleHelp
-            Case UCase(Line) Like "CLEAR"          : HandleCode = HandleClear
-            Case UCase(Line) Like "MULTILINE"      : HandleCode = "": Workmode = WorkModeEnum.MultilineMode
-            Case UCase(Line) Like "INFO"           : HandleCode = HandleLastError
-            Case UCase(Line) Like "EXIT"           : HandleCode = HandleClear: Me.Hide
-            Case UCase(Line) Like "SCRIPT"         : HandleCode = "": Workmode = WorkModeEnum.ScriptMode
-            Case UCase(Line) Like "FOR(*)"         : HandleCode = HandleLoop(Line)
-            Case UCase(Line) Like "UNTIL(*)"       : HandleCode = HandleLoop(Line)
-            Case UCase(Line) Like "WHILE(*)"       : HandleCode = HandleLoop(Line)
-            Case UCase(Line) Like "IF(*)"          : HandleCode = HandleCondition(Line)
-            Case UCase(Line) Like "SELECT(*)"      : HandleCode = HandleCondition(Line)
-            Case UCase(Line) Like "DIM * AS *"     : HandleCode = HandleNewVariable(Line)
-            Case UCase(Line) Like "PUBLIC * AS *"  : HandleCode = HandleNewVariable(Line)
-            Case UCase(Line) Like "PRIVATE * AS *" : HandleCode = HandleNewVariable(Line)
-            Case Else                              : HandleCode = HandleConsoleVariable(Line)
+            Case UboundK(RightSidePos) <> -1
+                Dim Args() As Variant
+                Dim Pos(0) As Long
+                Args = GetFunctionArgs(RightSide)
+                If UboundK(Args) = -1 And GetParanthesesText(RightSide) <> "" Then
+                    ReDim Args(0)
+                    Args(0) = GetParanthesesText(RightSide)
+                End If
+                Call RecursiveReturnVariable(Args)
+                Pos(0) = RightSidePos(1)
+                If UboundK(Args) <> -1 Then
+                    Value = ReturnVariable(RightSidePos(0), Pos, True, Args)
+                Else
+                    Value = ReturnVariable(RightSidePos(0), Pos, True)
+                End If
+            Case IsNumeric(RightSide), IsDate(RightSide)
+                Value = InterpretVariable(RightSide)
+            Case InString(RightSide, 1, Len(RightSide))
+                Value = MidP(CStr(RightSide), 2, Len(CStr(RightSide)) - 1)
+            Case Mid(RightSide, 1, 1) Like "[?]*"
+                If stdLambda_Active Then
+                    If CreateLambda(LeftSide, Mid(RightSide, 2, Len(RightSide)), False, False) Then
+                        HandleCode = "Lambda created successfully"
+                        Exit Function
+                    Else
+                        HandleCode = "Could not create Lambda"
+                        Exit Function
+                    End If
+                Else
+                    HandleCode = "stdLambda is deactivated"
+                    Exit Function
+                End If
+            Case Else
+                Value = HandleSpecial(RightSide)
+                If CStr(Value) = "NOSPECIAL" Then
+                    Value = HandleReturnOperator(RightSide)
+                    If Value = "could not handle operator" Then
+                        Dim Temp As Variant
+                        Value = RunApplication(RightSide, Temp)
+                    End If
+                ElseIf CStr(Value) = "EXIT()/\" Then
+                    HandleCode = Value
+                    Exit Function
+                Else
+                End If
+        End Select
+
+        If LeftSide = Empty Then
+            HandleCode = Value
+        Else
+            Call SetVariable(ConsVarIndex, 0, LeftSide, "Public ConsoleVariable As Variant", "No Arguments", Value)
+            If UboundK(LeftSidePos) = -1 Then
+                HandleCode = "New Variable " & LeftSide & " was created with Value: " & Value
+            Else
+                HandleCode = "New Value assigned to Variable "
+            End If
+        End If
+
+    End Function
+
+    Private Function HandleSpecial(Line As String) As Variant
+        Select Case True
+            Case UCase(Line) Like "HELP"           : HandleSpecial = HandleHelp
+            Case UCase(Line) Like "CLEAR"          : HandleSpecial = HandleClear
+            Case UCase(Line) Like "MULTILINE"      : HandleSpecial = "": Workmode = WorkModeEnum.MultilineMode
+            Case UCase(Line) Like "INFO"           : HandleSpecial = HandleLastError
+            Case UCase(Line) Like "EXIT"           : HandleSpecial = "EXIT()/\": Call HandleClear
+            Case UCase(Line) Like "SCRIPT"         : HandleSpecial = "": Workmode = WorkModeEnum.ScriptMode
+            Case UCase(Line) Like "FOR(*)"         : HandleSpecial = HandleLoop(Line)
+            Case UCase(Line) Like "UNTIL(*)"       : HandleSpecial = HandleLoop(Line)
+            Case UCase(Line) Like "WHILE(*)"       : HandleSpecial = HandleLoop(Line)
+            Case UCase(Line) Like "IF(*)"          : HandleSpecial = HandleCondition(Line)
+            Case UCase(Line) Like "SELECT(*)"      : HandleSpecial = HandleCondition(Line)
+            Case UCase(Line) Like "DIM * AS *"     : HandleSpecial = HandleNewVariable(Line)
+            Case UCase(Line) Like "PUBLIC * AS *"  : HandleSpecial = HandleNewVariable(Line)
+            Case UCase(Line) Like "PRIVATE * AS *" : HandleSpecial = HandleNewVariable(Line)
+            Case Else                              : HandleSpecial = "NOSPECIAL"
         End Select
     End Function
 
-    Private Function HandleConsoleVariable(Line As String) As Variant
+    Private Function HandleLastError() As String
+        Select Case LastError
+        Case Empty:
+            HandleLastError = "No previous Error detected"
+        Case 1
+            HandleLastError = "The last run line was executed without problems"
+        Case 2
+            HandleLastError = "The last run line couldnt be executed. Some Problems could be:" & vbCrLf & _
+                      "    1. Line wasnt written correctly"                                    & vbCrLf & _
+                      "    2. Code doesnt exist"                                               & vbCrLf & _
+                      "    3. There exists more than one publ1c procedure with the same name"  & vbCrLf & _
+                      "    4. The Procedure has the same name as the component it sits in"     & vbCrLf & _
+                      "    5. The Workbook with its VBProject isnt open"                       & vbCrLf & _
+                      "    6. The parameters were passed wrong"                                & vbCrLf '1 in publ1c to not mess with GetAllProcedures
+        Case 3
+            HandleLastError = " You passed too many arguments, VBA limits ParamArray Arguments to 30"
+        End Select
+    End Function
 
-        Dim AssignOperator  As Long    : AssignOperator = InStr(1, Line, AsgOperator)
-        Dim LeftSide        As String  : If AssignOperator <> 0 Then LeftSide = Mid(Line, 1, AssignOperator - 1) Else LeftSide = Empty
-        Dim LeftSideName()  As Variant : LeftSideName   = GetFuncTreePosition(LeftSide)
-        Dim RightSide       As String  : If AssignOperator <> 0 Then RightSide = Mid(Line, AssignOperator + Len(AsgOperator), Len(Line)) Else RightSide = Mid(Line, 1, Len(Line))
-        Dim RightSideName() As Variant : RightSideName  = GetFuncTreePosition(RightSide)
-        Dim Quotes()        As Long    : Quotes         = InStrAll(CStr(RightSide), Chr(34))
-        Dim Value           As Variant
-        Dim Args() As Variant
-        Dim Pos(0) As Long
+    Private Function HandleClear() As String
+        ConsoleText.Text = ""
+        ConsoleText.SelStart = 0
+        ConsoleText.SelLength = Len(ConsoleText.Text)
+        ConsoleText.SelColor = in_Basic
+        Call SetUpNewLine
+        HandleClear = " "
+    End Function
 
-        If UboundK(RightSideName) <> -1 Then
-            Args = GetFunctionArgs(RightSide)
-            If UboundK(Args) = -1 And GetParanthesesText(RightSide) <> "" Then
-                ReDim Args(0)
-                Args(0) = GetParanthesesText(RightSide)
-            End If
-            Call RecursiveReturnVariable(Args)
-            Pos(0) = Clng(RightSideName(1))
-            If UboundK(Args) <> -1 Then
-                Value = ReturnVariable(Clng(RightSideName(0)), Pos, True, Args)
-            Else
-                Value = ReturnVariable(Clng(RightSideName(0)), Pos, True)
-            End If
-        Else
-            Select Case True
-                Case IsNumeric(RightSide)
-                    Value = CLng(RightSide)
-                Case IsDate(RightSide)
-                    Value = CDate(RightSide)
-                Case UboundK(Quotes) >= 1
-                    Value = MidP(CStr(RightSide), 2, Len(CStr(RightSide)) - 1)
-                Case Mid(RightSide, 1, 1) Like "[?]*"
-                    If stdLambda_Active Then
-                        If CreateLambda(LeftSide, Mid(RightSide, 2, Len(RightSide)), False, False) Then
-                            HandleConsoleVariable = "Lambda created successfully"
-                            Exit Function
-                        Else
-                            HandleConsoleVariable = "Could not create Lambda"
-                            Exit Function
-                        End If
-                    Else
-                        HandleConsoleVariable = "stdLambda is deactivated"
-                        Exit Function
-                    End If
-                Case Else
-                    Dim Condition As Variant
-                    Condition = HandleReturnOperator(RightSide)
-                    If Condition = "could not handle operator" Then
-                        Dim Temp As Variant
-                        Value = RunApplication(RightSide, Temp)
-                    Else
-                        Value = Condition
-                    End If
-            End Select
-        End If
-
-        If LeftSide = Empty Then
-            HandleConsoleVariable = Value
-        Else
-            Call SetVariable(ConsVarIndex, 0, LeftSide, "Public ConsoleVariable As Variant", "No Arguments", Value)
-            If UboundK(LeftSideName) = -1 Then
-                HandleConsoleVariable = "New Variable " & LeftSide & " was created with Value: " & Value
-            Else
-                HandleConsoleVariable = "New Value assigned to Variable "
-            End If
-        End If
-
+    Private Function HandleHelp() As String
+        HandleHelp = _
+        "--------------------------------------------------"                                           & vbCrLf & _
+        "This Console can do the following:"                                                           & vbCrLf & _
+        "1. It can be used as a form to show messages, ask questions to the user or get a user input"  & vbCrLf & _
+        "2. It can be used to show and log errors and handle them by user input"                       & vbCrLf & _
+        "3. It can run Procedures with up to 29 arguments"                                             & vbCrLf & _
+        ""                                                                                             & vbCrLf & _
+        "HOW TO USE IT:"                                                                               & vbCrLf & _
+        "   Run a Procedure:"                                                                          & vbCrLf & _
+        "       To run a procedure you have to write the name of said procedure (Case sensitive)"      & vbCrLf & _
+        "       If you want to pass parameters you have to write    |; | between every parameter"      & vbCrLf & _
+        "       Example:"                                                                              & vbCrLf & _
+        "           Say; THIS IS A PARAMETER; THIS IS ANOTHER PARAMETER"                               & vbCrLf & _
+        ""                                                                                             & vbCrLf & _
+        "   Ask a question:"                                                                           & vbCrLf & _
+        "       Use CheckPredeclaredAnswer"                                                            & vbCrLf & _
+        "           Param1 = Message to be showwn"                                                     & vbCrLf & _
+        "           Param2 = Array of Values, which are acceptable answers"                            & vbCrLf & _
+        "           Param3 = Array of Messages, which show a text according to answer in Param2"       & vbCrLf & _
+        "       The Function will loop until one of the acceptable answers is typed"                   & vbCrLf & _
+        "--------------------------------------------------"                                           & vbCrLf
     End Function
 
     Private Function RunApplication(Name As String, Arguments As Variant) As Variant
@@ -1150,6 +1206,7 @@ Option Explicit
         Dim AsciiChar As String
         Dim CurrentWord As String
         Dim CurrentLine As String
+        Dim CurrentSelection(1) As Long
         
         ' Adjust for Shift key (Uppercase letters, special characters)
         CurrentLine = GetLine(ConsoleText.Text, CurrentLineIndex)
@@ -1210,85 +1267,31 @@ Option Explicit
         Select Case AsciiChar
             Case "RIGHT"
                 If PasswordMode Then Exit Function
-                If CurrentChar = GetMaxSelStart Then
+                If ConsoleText.SelStart = GetMaxSelStart Then
                     If Intellisense_Active = True Then
                         If IntellisenseList.ListCount > 0 Then IntellisenseList.SetFocus
                     End If
                 End If
-            Case "LEFT"
-                If PasswordMode Then Exit Function
-                CurrentChar = CurrentChar - 2 ' 2, because 1 was added one level up, to counter that -2
-                If CurrentChar < 0 Then CurrentChar = 0
             Case Else
                 Call SetUp_IntelliSenseList(CurrentWord)
         End Select
         SkipKey:
         Call SetPositions
+        CurrentSelection(0) = ConsoleText.SelStart
+        CurrentSelection(1) = ConsoleText.Sellength
         Call ColorWord
-        ConsoleText.SelStart = CurrentChar
-        ConsoleText.SelLength = 0
+        ConsoleText.SelStart = CurrentSelection(0)
+        ConsoleText.SelLength = CurrentSelection(1)
         ConsoleText.SelColor = in_Basic
         HandleOtherKeys = AsciiChar
 
-    End Function
-
-    Private Function HandleLastError() As String
-        Select Case LastError
-        Case Empty:
-            HandleLastError = "No previous Error detected"
-        Case 1
-            HandleLastError = "The last run line was executed without problems"
-        Case 2
-            HandleLastError = "The last run line couldnt be executed. Some Problems could be:" & vbCrLf & _
-                      "    1. Line wasnt written correctly"                                    & vbCrLf & _
-                      "    2. Code doesnt exist"                                               & vbCrLf & _
-                      "    3. There exists more than one publ1c procedure with the same name"  & vbCrLf & _
-                      "    4. The Procedure has the same name as the component it sits in"     & vbCrLf & _
-                      "    5. The Workbook with its VBProject isnt open"                       & vbCrLf & _
-                      "    6. The parameters were passed wrong"                                & vbCrLf '1 in publ1c to not mess with GetAllProcedures
-        Case 3
-            HandleLastError = " You passed too many arguments, VBA limits ParamArray Arguments to 30"
-        End Select
-    End Function
-
-    Private Function HandleClear() As String
-        ConsoleText.Text = ""
-        ConsoleText.SelStart = 0
-        ConsoleText.SelLength = Len(ConsoleText.Text)
-        ConsoleText.SelColor = in_Basic
-        Call SetUpNewLine
-        HandleClear = " "
-    End Function
-
-    Private Function HandleHelp() As String
-        HandleHelp = _
-        "--------------------------------------------------"                                           & vbCrLf & _
-        "This Console can do the following:"                                                           & vbCrLf & _
-        "1. It can be used as a form to show messages, ask questions to the user or get a user input"  & vbCrLf & _
-        "2. It can be used to show and log errors and handle them by user input"                       & vbCrLf & _
-        "3. It can run Procedures with up to 29 arguments"                                             & vbCrLf & _
-        ""                                                                                             & vbCrLf & _
-        "HOW TO USE IT:"                                                                               & vbCrLf & _
-        "   Run a Procedure:"                                                                          & vbCrLf & _
-        "       To run a procedure you have to write the name of said procedure (Case sensitive)"      & vbCrLf & _
-        "       If you want to pass parameters you have to write    |; | between every parameter"      & vbCrLf & _
-        "       Example:"                                                                              & vbCrLf & _
-        "           Say; THIS IS A PARAMETER; THIS IS ANOTHER PARAMETER"                               & vbCrLf & _
-        ""                                                                                             & vbCrLf & _
-        "   Ask a question:"                                                                           & vbCrLf & _
-        "       Use CheckPredeclaredAnswer"                                                            & vbCrLf & _
-        "           Param1 = Message to be showwn"                                                     & vbCrLf & _
-        "           Param2 = Array of Values, which are acceptable answers"                            & vbCrLf & _
-        "           Param3 = Array of Messages, which show a text according to answer in Param2"       & vbCrLf & _
-        "       The Function will loop until one of the acceptable answers is typed"                   & vbCrLf & _
-        "--------------------------------------------------"                                           & vbCrLf
     End Function
 
     Private Sub RecursiveReturnVariable(ByRef Arguments() As Variant)
         
         Dim i As Long
 
-        Dim CurrentArgPos() As Variant
+        Dim CurrentArgPos() As Long
         Dim CurrentArguments() As Variant
         Dim Quotes() As Long
         Dim TempVar() As Variant
@@ -1310,13 +1313,13 @@ Option Explicit
                         CurrentArgPos = GetFuncTreePosition(CStr(Arguments(i)))
                         If UboundK(CurrentArgPos) <> -1 Then
                             Dim Tempp(0) As Long
-                            Tempp(0) = CLng(CurrentArgPos(1))
+                            Tempp(0) = CurrentArgPos(1)
                             CurrentArguments = GetFunctionArgs(CStr(Arguments(i)))
                             Call RecursiveReturnVariable(CurrentArguments)
                             If UboundK(CurrentArguments) > 0 Then
-                                Arguments(i) = ReturnVariable(CLng(CurrentArgPos(0)), Tempp, True, CurrentArguments)
+                                Arguments(i) = ReturnVariable(CurrentArgPos(0), Tempp, True, CurrentArguments)
                             Else
-                                Arguments(i) = ReturnVariable(CLng(CurrentArgPos(0)), Tempp, True)
+                                Arguments(i) = ReturnVariable(CurrentArgPos(0), Tempp, True)
                             End If
                         End If
                     If UboundK(CurrentArgPos) = -1 Then Arguments(i) = "Could not handle Argument"
@@ -1346,8 +1349,8 @@ Option Explicit
                     Case "||", " OR "        : If(PassValue1   Or  PassValue2) Then Values(0) = True Else Values(0) = False
                     Case "&&", " AND "       : If(PassValue1   And PassValue2) Then Values(0) = True Else Values(0) = False
                     Case "", "", " XOR "     : If(PassValue1   Xor PassValue2) Then Values(0) = True Else Values(0) = False
-                    Case "<<"                : If(PassValue1    <  PassValue2) Then Values(0) = True Else Values(0) = False
-                    Case ">>"                : If(PassValue1    >  PassValue2) Then Values(0) = True Else Values(0) = False
+                    Case "<"                 : If(PassValue1    <  PassValue2) Then Values(0) = True Else Values(0) = False
+                    Case ">"                 : If(PassValue1    >  PassValue2) Then Values(0) = True Else Values(0) = False
                     Case "=<", "<="          : If(PassValue1    =< PassValue2) Then Values(0) = True Else Values(0) = False
                     Case ">=", "=>"          : If(PassValue1    >= PassValue2) Then Values(0) = True Else Values(0) = False
                     Case Else                : Values(0) = HandleCalcOperator(Values(0), Values(1), Values(2))
@@ -1364,47 +1367,49 @@ Option Explicit
         HandleReturnOperator = "could not handle operator"
     End Function
 
-    Private Function HandleCalcOperator(Value1 As Variant, Operator As Variant, Value2 As Variant) As Variant
-        Dim VariablePos() As Variant
+    Private Function HandleCalcOperator(ByRef Value1 As Variant, Operator As Variant, Value2 As Variant) As Variant
+        Dim VariablePos() As Long
         Dim Name As String
         VariablePos = GetFuncTreePosition(CStr(Value1))
         If UboundK(VariablePos) <> -1 Then Name = Value1
         Value1 = InterpretVariableTEMP(Value1)
         Value2 = InterpretVariableTEMP(Value2)
         Select Case UCase(Operator)
-            Case "++"                : HandleCalcOperator = CLng(Value1)  +   CLng(Value2)
-            Case "--"                : HandleCalcOperator = CLng(Value1)  -   CLng(Value2)
-            Case "**"                : HandleCalcOperator = CLng(Value1)  *   CLng(Value2)
-            Case "//"                : HandleCalcOperator = CLng(Value1)  /   CLng(Value2)
-            Case "^^"                : HandleCalcOperator = CLng(Value1)  ^   CLng(Value2)
-            Case "+="                : HandleCalcOperator = CLng(Value1)  +   CLng(Value2)
-            Case "-="                : HandleCalcOperator = CLng(Value1)  -   CLng(Value2)
-            Case "*="                : HandleCalcOperator = CLng(Value1)  *   CLng(Value2)
-            Case "/="                : HandleCalcOperator = CLng(Value1)  /   CLng(Value2)
+            Case "++"                : HandleCalcOperator = CLng(Value1)  +   CLng(Value2): Value1 = CLng(Value1) + CLng(Value2)
+            Case "--"                : HandleCalcOperator = CLng(Value1)  -   CLng(Value2): Value1 = CLng(Value1) - CLng(Value2)
+            Case "**"                : HandleCalcOperator = CLng(Value1)  *   CLng(Value2): Value1 = CLng(Value1) * CLng(Value2)
+            Case "//"                : HandleCalcOperator = CLng(Value1)  /   CLng(Value2): Value1 = CLng(Value1) / CLng(Value2)
+            Case "^^"                : HandleCalcOperator = CLng(Value1)  ^   CLng(Value2): Value1 = CLng(Value1) ^ CLng(Value2)
+            Case "+="                : HandleCalcOperator = CLng(Value1)  +   CLng(Value2): Value1 = CLng(Value1) + CLng(Value2)
+            Case "-="                : HandleCalcOperator = CLng(Value1)  -   CLng(Value2): Value1 = CLng(Value1) - CLng(Value2)
+            Case "*="                : HandleCalcOperator = CLng(Value1)  *   CLng(Value2): Value1 = CLng(Value1) * CLng(Value2)
+            Case "/="                : HandleCalcOperator = CLng(Value1)  /   CLng(Value2): Value1 = CLng(Value1) / CLng(Value2)
             Case "+"                 : HandleCalcOperator = CLng(Value1)  +   CLng(Value2)
             Case "-"                 : HandleCalcOperator = CLng(Value1)  -   CLng(Value2)
             Case "*"                 : HandleCalcOperator = CLng(Value1)  *   CLng(Value2)
             Case "/"                 : HandleCalcOperator = CLng(Value1)  /   CLng(Value2)
             Case "^"                 : HandleCalcOperator = CLng(Value1)  ^   CLng(Value2)
-            Case "&"                 : HandleCalcOperator = CLng(Value1)  &   CLng(Value2)
+            Case "&"                 : HandleCalcOperator = CStr(Value1)  &   CStr(Value2)
             Case Else                : HandleCalcOperator = "No valid Operator"
         End Select
-        If UboundK(VariablePos) <> -1 Then Call SetVariable(CLng(VariablePos(0)), CLng(VariablePos(1)), Name, "NOCHANGE", "NOCHANGE", HandleCalcOperator)
+        If UboundK(VariablePos) <> -1 Then Call SetVariable(VariablePos(0), VariablePos(1), Name, "NOCHANGE", "NOCHANGE", HandleCalcOperator)
     End Function
 
     Private Function HandlePassword() As Boolean
-        If PasswordActive = True Then
+        If PasswordActive Then
             HandlePassword = True
-            PasswordActive = True
         Else
             If UserInput = p_Password Then
                 HandlePassword = True
                 PasswordActive = True
                 UserInput = ""
                 PasswordMode = False
+                Call PrintEnter("Password accepted", in_System)
+                Call PrintConsole(PrintStarter, in_System)
             Else
                 UserInput = ""
                 PasswordMode = True
+                Call PrintEnter("Enter Password", in_System)
             End If
         End If
     End Function
@@ -1434,6 +1439,11 @@ Option Explicit
         Lines = SplitString(CStr(Script), LineSeperator)
         For i = 0 To UboundK(Lines) - 1
             Value = HandleCode(Lines(i))
+            If CStr(Value) = "EXIT()/\" Then RunScript = Value: Exit Function
+            If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
+                Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
+                ScopeIndex = ScopeIndex + 1
+            End If
             Call PrintEnter(Value, in_System)
         Next
         Call DeleteScope(Scope)
@@ -1453,6 +1463,7 @@ Option Explicit
                 Else 
                     InterpretVariable = CDbl(Value)
                 End If
+            Case IsDate(Value)                      : InterpretVariable = Cdate(Value)
             Case VarType(Value) = vbEmpty           : InterpretVariable = Empty
             Case VarType(Value) = vbNull            : InterpretVariable = Null
             Case VarType(Value) = vbInteger         : InterpretVariable = CInt(Value)
@@ -1460,7 +1471,6 @@ Option Explicit
             Case VarType(Value) = vbSingle          : InterpretVariable = CSng(Value)
             Case VarType(Value) = vbDouble          : InterpretVariable = CDbl(Value)
             Case VarType(Value) = vbCurrency        : InterpretVariable = Ccur(Value)
-            Case VarType(Value) = vbDate            : InterpretVariable = Cdate(Value)
             Case VarType(Value) = vbString          : InterpretVariable = CStr(Value)
             Case VarType(Value) = vbObject          : InterpretVariable = "Object"
             Case VarType(Value) = vbError           : InterpretVariable = "Error"
@@ -1476,12 +1486,12 @@ Option Explicit
     End Function
 
     Private Function InterpretVariableTEMP(Value As Variant) As Variant
-        Dim VariablePos() As Variant
+        Dim VariablePos() As Long
         Dim Temp(0) As Long
         VariablePos = GetFuncTreePosition(CStr(Value))
         If UboundK(VariablePos) <> -1 Then
             Temp(0) = CLng(VariablePos(1))
-            InterpretVariableTEMP = ReturnVariable(CLng(VariablePos(0)), Temp, True)
+            InterpretVariableTEMP = ReturnVariable(VariablePos(0), Temp, True)
         Else
             InterpretVariableTEMP = InterpretVariable(CStr(Value))
         End If
@@ -1527,6 +1537,7 @@ Option Explicit
                 Do Until HandleReturnOperator(Arguments(1))
                     For i = 3 To UboundK(Arguments)
                         Value = HandleCode(Arguments(i))
+                        If CStr(Value) = "EXIT()/\" Then HandleLoop = Value: Exit Function
                         If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
                             Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
                             ScopeIndex = ScopeIndex + 1
@@ -1539,6 +1550,7 @@ Option Explicit
                 Do Until HandleReturnOperator(Arguments(0))
                     For i = 1 To UboundK(Arguments)
                         Value = HandleCode(Arguments(i))
+                        If CStr(Value) = "EXIT()/\" Then HandleLoop = Value: Exit Function
                         If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
                             Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
                             ScopeIndex = ScopeIndex + 1
@@ -1547,7 +1559,7 @@ Option Explicit
                     Next
                 Loop
         End Select
-        Call DeleteScope(Arr)
+        Call DeleteScope(Scope)
     End Function
 
     Private Function HandleCondition(Line As String) As Variant
@@ -1572,6 +1584,7 @@ Option Explicit
             If HandleReturnOperator(Condition) Then
                 For i = 0 To UboundK(ArgumentsThen)
                     Value = HandleCode(ArgumentsThen(i))
+                    If CStr(Value) = "EXIT()/\" Then HandleCondition = Value: Exit Function
                     If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
                         Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
                         ScopeIndex = ScopeIndex + 1
@@ -1582,6 +1595,7 @@ Option Explicit
             Else
                 For i = 0 To UboundK(ArgumentsElse)
                     Value = HandleCode(ArgumentsElse(i))
+                    If CStr(Value) = "EXIT()/\" Then HandleCondition = Value: Exit Function
                     If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
                         Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
                         ScopeIndex = ScopeIndex + 1
@@ -1599,9 +1613,10 @@ Option Explicit
                 If UCase(ArgumentsCase(0)) = "ELSE" Or HandleReturnOperator(Condition & ArgumentsCase(0)) Then
                     For j = 1 To UboundK(ArgumentsCase)
                         Value = HandleCode(ArgumentsCase(j))
+                        If CStr(Value) = "EXIT()/\" Then HandleCondition = Value: Exit Function
                         If Value Like "DIMVARIABLE*" And Not Value Like "DIMVARIABLE-1" Then
-                            ReDim DimVariables(UboundK(DimVariables) + 1)
-                            DimVariables(UboundK(DimVariables)) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
+                            Scope(ScopeIndex) = CLng(Replace(CStr(Value), "DIMVARIABLE", ""))
+                            ScopeIndex = ScopeIndex + 1
                         End If
                         Call PrintEnter(Value, in_System)
                     Next
@@ -1704,7 +1719,7 @@ Option Explicit
                     ElseIf IsNumeric(UCase(Words(i))) Then
                         Color = in_Value
                     Else
-                        Dim Temp() As Variant
+                        Dim Temp() As Long
                         Dim TreeIndex As Long
                         Dim Position As Long
                         Dim VariableType As Variant
@@ -1788,7 +1803,7 @@ Option Explicit
     End Function
 '
 
-' Following Part is Intellisense, which is dependant on Microsoft Visual Studio extensability 5.3
+' Intellisense
 
     Private Sub SetPositions()
         Dim Temp()       As String: Temp = Split(ConsoleText.Text, vbCrLf)
@@ -2063,7 +2078,7 @@ Option Explicit
     End Sub
 '
 
-'Following Part is stdLambda
+' stdLambda
 
     Private Function RunLambda(Lambda As Variant, Arguments As Variant) As Variant
         On Error GoTo Error
