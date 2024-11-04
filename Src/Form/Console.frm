@@ -341,7 +341,7 @@ Option Explicit
 
     Public Function GetUserInput(Message As Variant, Optional InputType As Long = 12) As Variant
 
-        If HandlePassword = False Then Set GetUserInput = Nothing Exit Sub
+        If HandlePassword = False Then Set GetUserInput = Nothing: Exit Function
         Call PrintConsole(Message, in_System)
         WorkMode = WorkModeEnum.UserInputt
         PasteStarter = False
@@ -368,7 +368,7 @@ Option Explicit
         Dim Found As Boolean
         Dim Index As Long
 
-        If HandlePassword = False Then Set CheckPredeclaredAnswer = Nothing Exit Sub
+        If HandlePassword = False Then Set CheckPredeclaredAnswer = Nothing: Exit Function
         Message = Message & "("
         For i = 0 To UBoundK(AllowedValues)
             Message = Message & AllowedValues(i) & "|"
@@ -634,8 +634,6 @@ Option Explicit
 
     End Function
 
-    '                        |--|  |--------|                  Returns Array of Length -1                    
-    ' ExampleString=Function(Arg1, Arg2(Arg3))                 ExampleString=Function()
     Private Function GetFunctionArgs(Line As String) As Variant()
         Dim Temp() As String
         Dim Tempp() As Variant
@@ -650,8 +648,6 @@ Option Explicit
         GetFunctionArgs = Tempp
     End Function
 
-    '               |------|                        AS TREE POSITION LIKE eg. 1, 3
-    ' ExampleString=Function(Arg1, Arg2(Arg3))
     Private Function GetFuncTreePosition(Line As String) As Long()
 
         Dim CurrentWord As String
@@ -689,13 +685,10 @@ Option Explicit
         End If
     End Function
 
-    ' Mid, but with EndPoint instead of Length
     Private Function MidP(Text As String, StartPoint As Long, EndPoint As Long) As String
         MidP = Mid(Text, StartPoint, (EndPoint - StartPoint) + 1)
     End Function
 
-    '                        |--------------|
-    ' ExampleString=Function(Arg1, Arg2(Arg3))
     Private Function GetParanthesesText(Line As String) As String
 
         Dim OpenPos() As Long: OpenPos = InStrAll(Line, "(") 
