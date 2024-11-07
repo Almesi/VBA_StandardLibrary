@@ -39,4 +39,3 @@ Beyond VBA:
 ## Structure
 All components will be prefixed by `std_` if they are generic libraries.
 Application specific libraries to be prefixed by their name like `xl_` for excel.
-Commonly implementations will use the factory class design pattern:

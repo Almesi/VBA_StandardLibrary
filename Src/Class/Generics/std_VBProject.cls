@@ -15,6 +15,25 @@ Private ErrorCatalog(1, 99) As Variant
 Private TempIncludes() As String
 Private Handler As New std_Error
 
+Public Enum VBProjPasteType
+    NormalInclude = 0
+    NormalReplace = 1
+    ForceInclude = 2
+End Enum
+
+Public Enum VBProjReferenceType
+    FullPath = 0
+    Name = 1
+    Major = 2
+    Minor = 3
+    Description = 4
+    Typee = 5
+    BuiltIn = 6
+    GUID = 7
+    IsBroken = 8
+    All = 9
+End Enum
+
 
 ' Public Procedures
 
@@ -35,7 +54,7 @@ Private Handler As New std_Error
         Set VBProj = Project
     End Property
 
-    Public Function Include(FilePath As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    Public Function Include(FilePath As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As vbext_ComponentType = vbext_ct_StdModule, Optional ThrowError As Boolean = True) As Boolean
     
         Dim Temp() As String
         Dim CompName As String
@@ -90,7 +109,7 @@ Private Handler As New std_Error
     
     End Function
     
-    Public Function AddComponent(Name As String, ComponentType As Long, Optional PasteType As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    Public Function AddComponent(Name As String, ComponentType As vbext_ComponentType, Optional PasteType As VBProjPasteType = NormalInclude, Optional ThrowError As Boolean = True) As Boolean
     
         Dim VBComp As VBComponent
         Dim i As Long
@@ -203,13 +222,13 @@ Private Handler As New std_Error
 
     End Function
     
-    Public Function IncludeFolder(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
+    Public Function IncludeFolder(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
         IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
     End Function
 
-    Public Function IncludeFolderArr(FolderPath As String, PasteType As Long, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore As Variant) As Boolean
+    Public Function IncludeFolderArr(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore As Variant) As Boolean
     
         Dim fso As Object
         Dim Folder As Object
@@ -307,10 +326,10 @@ Private Handler As New std_Error
     
     End Function
 
-    Public Function GetReferenceProperties(Ref As VBIDE.Reference, Optional Property As String = "ALL") As String
+    Public Function GetReferenceProperties(Ref As VBIDE.Reference, Optional Property As VBProjReferenceType = ALL) As String
 
         If Ref Is Nothing Then GetReferenceProperties = "": Exit Function
-        If Property = "ALL" Then
+        If Property = VBProjReferenceType.ALL Then
             GetReferenceProperties  = Ref.FullPath    & vbcrlf & _ 
                                       Ref.Name        & vbcrlf & _ 
                                       Ref.Major       & vbcrlf & _ 
@@ -322,15 +341,15 @@ Private Handler As New std_Error
                                       Ref.IsBroken    & vbcrlf
         Else
             Select Case UCase(Property)
-                Case "FULLPATH"   : GetReferenceProperties = Ref.FullPath
-                Case "NAME"       : GetReferenceProperties = Ref.Name
-                Case "MAJOR"      : GetReferenceProperties = Ref.Major
-                Case "MINOR"      : GetReferenceProperties = Ref.Minor
-                Case "DESCRIPTION": GetReferenceProperties = Ref.Description
-                Case "TYPE"       : GetReferenceProperties = Ref.Type
-                Case "BUILTIN"    : GetReferenceProperties = Ref.BuiltIn
-                Case "GUID"       : GetReferenceProperties = Ref.GUID
-                Case "ISBROKEN"   : GetReferenceProperties = Ref.IsBroken
+                Case VBProjReferenceType.FullPath    : GetReferenceProperties = Ref.FullPath
+                Case VBProjReferenceType.Name        : GetReferenceProperties = Ref.Name
+                Case VBProjReferenceType.Major       : GetReferenceProperties = Ref.Major
+                Case VBProjReferenceType.Minor       : GetReferenceProperties = Ref.Minor
+                Case VBProjReferenceType.Description : GetReferenceProperties = Ref.Description
+                Case VBProjReferenceType.Typee       : GetReferenceProperties = Ref.Type
+                Case VBProjReferenceType.BuiltIn     : GetReferenceProperties = Ref.BuiltIn
+                Case VBProjReferenceType.GUID        : GetReferenceProperties = Ref.GUID
+                Case VBProjReferenceType.IsBroken    : GetReferenceProperties = Ref.IsBroken
             End Select
         End If
 
@@ -362,13 +381,13 @@ Private Handler As New std_Error
 
     End Function
 
-    Public Function IncludeWorkbook(WB As Workbook, PasteType As Long, Temporary As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
+    Public Function IncludeWorkbook(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
         IncludeWorkbook = IncludeWorkbookArr(WB, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
     End Function
 
-    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As Long, Temporary As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
+    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
         Dim WBProject As VBProject
         Dim VBComp As VBComponent
         Dim Existing As Boolean
@@ -385,7 +404,7 @@ Private Handler As New std_Error
         Next VBComp
     End Function
 
-    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As Long, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As VBProjPasteType, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
         Dim VBComp As VBComponent
 
         Set VBComp = Exists(CompName, WB.VBProject, True, False)
@@ -448,7 +467,7 @@ Private Handler As New std_Error
 '
 
 ' Private Procedures
-    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As Long = 0, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
 
         Dim VBComp As VBIDE.VBComponent
         Dim Found As Boolean
@@ -493,7 +512,7 @@ Private Handler As New std_Error
 
     End Function
 
-    Private Function RecursiveInclude(Folder As Object, PasteType As Long, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Private Function RecursiveInclude(Folder As Object, PasteType As VBProjPasteType, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
 
         Dim File As Object
         Dim SubFolder As Object

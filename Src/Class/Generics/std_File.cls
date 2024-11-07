@@ -14,6 +14,69 @@ Private ErrorCatalog(1, 99) As Variant
 Private FSO As New FileSystemObject
 Private Handler As New std_Error
 
+Public Enum std_FileDrive
+    Availablespace = 0
+    Driveletter = 1
+    Drivetype = 2
+    Filesystem = 3
+    Freespace = 4
+    Isready = 5
+    Path = 6
+    Rootfolder = 7
+    Serialnumber = 8
+    Sharename = 9
+    Totalsize = 10
+    Volumename = 11
+End Enum
+
+Public Enum std_FileFolder
+    Attributes = 0
+    Datecreated = 1
+    Datelastaccessed = 2
+    Datelastmodified = 3
+    Drive = 4
+    Files = 5
+    Isrootfolder = 6
+    Name = 7
+    Parentfolder = 8
+    Path = 9
+    Shortname = 10
+    Shortpath = 11
+    Size = 12
+    Subfolders = 13
+    Typee = 14
+End Enum
+
+Public Enum std_FileFile
+    Attributes = 0
+    Datecreated = 1
+    Datelastaccessed = 2
+    Datelastmodified = 3
+    Drive = 4
+    Name = 5
+    Openastextstream = 6
+    Parentfolder = 7
+    Path = 8
+    Shortname = 9
+    Shortpath = 10
+    Size = 11
+    Typee = 12
+    Atendofline = 13
+    Atendofstream = 14
+    Column = 15
+    Line = 16
+    Read = 17
+    Readall = 18
+    Readline = 19
+End Enum
+
+Public Enum std_FileType
+    All = 0
+    Drive = 1
+    Folder = 2
+    File = 3
+End Enum
+
 ' Public Procedures
 
     Public Property Set SetHandler(n_Handler As std_Error)
@@ -28,43 +91,43 @@ Private Handler As New std_Error
         Set Create = New std_File
     End Function
 
-    Public Function GetDriveValue(SearchValue As Variant, SearchProperty As String, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
+    Public Function GetDriveValue(SearchValue As Variant, SearchProperty As std_FileDrive, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
 
         Dim Drive As Drive
         Dim Found As Boolean
         Dim ErrorCode As Long
         For Each Drive In FSO.Drives
-            Select Case UCase(SearchProperty)
-                Case "AVAILABLESPACE": If SearchValue = Drive.AvailableSpace Then Found = True: Exit For
-                Case "DRIVELETTER"   : If SearchValue = Drive.DriveLetter    Then Found = True: Exit For
-                Case "DRIVETYPE"     : If SearchValue = Drive.DriveType      Then Found = True: Exit For
-                Case "FILESYSTEM"    : If SearchValue = Drive.FileSystem     Then Found = True: Exit For
-                Case "FREESPACE"     : If SearchValue = Drive.FreeSpace      Then Found = True: Exit For
-                Case "ISREADY"       : If SearchValue = Drive.IsReady        Then Found = True: Exit For
-                Case "PATH"          : If SearchValue = Drive.Path           Then Found = True: Exit For
-                Case "ROOTFOLDER"    : If SearchValue = Drive.RootFolder     Then Found = True: Exit For
-                Case "SERIALNUMBER"  : If SearchValue = Drive.SerialNumber   Then Found = True: Exit For
-                Case "SHARENAME"     : If SearchValue = Drive.ShareName      Then Found = True: Exit For
-                Case "TOTALSIZE"     : If SearchValue = Drive.TotalSize      Then Found = True: Exit For
-                Case "VOLUMENAME"    : If SearchValue = Drive.VolumeName     Then Found = True: Exit For
+            Select Case SearchProperty
+                Case std_FileDrive.Availablespace: If SearchValue = Drive.AvailableSpace Then Found = True: Exit For
+                Case std_FileDrive.Driveletter   : If SearchValue = Drive.DriveLetter    Then Found = True: Exit For
+                Case std_FileDrive.Drivetype     : If SearchValue = Drive.DriveType      Then Found = True: Exit For
+                Case std_FileDrive.Filesystem    : If SearchValue = Drive.FileSystem     Then Found = True: Exit For
+                Case std_FileDrive.Freespace     : If SearchValue = Drive.FreeSpace      Then Found = True: Exit For
+                Case std_FileDrive.Isready       : If SearchValue = Drive.IsReady        Then Found = True: Exit For
+                Case std_FileDrive.Path          : If SearchValue = Drive.Path           Then Found = True: Exit For
+                Case std_FileDrive.Rootfolder    : If SearchValue = Drive.RootFolder     Then Found = True: Exit For
+                Case std_FileDrive.Serialnumber  : If SearchValue = Drive.SerialNumber   Then Found = True: Exit For
+                Case std_FileDrive.Sharename     : If SearchValue = Drive.ShareName      Then Found = True: Exit For
+                Case std_FileDrive.Totalsize     : If SearchValue = Drive.TotalSize      Then Found = True: Exit For
+                Case std_FileDrive.Volumename    : If SearchValue = Drive.VolumeName     Then Found = True: Exit For
                 Case Else
                     ErrorCode = 4: GoTo Error
             End Select
         Next Drive
         If Found = True Then
             Select Case UCase(ReturnProperty)
-                Case "AVAILABLESPACE": GetDriveValue = Drive.AvailableSpace
-                Case "DRIVELETTER"   : GetDriveValue = Drive.DriveLetter
-                Case "DRIVETYPE"     : GetDriveValue = Drive.DriveType
-                Case "FILESYSTEM"    : GetDriveValue = Drive.FileSystem
-                Case "FREESPACE"     : GetDriveValue = Drive.FreeSpace
-                Case "ISREADY"       : GetDriveValue = Drive.IsReady
-                Case "PATH"          : GetDriveValue = Drive.Path
-                Case "ROOTFOLDER"    : GetDriveValue = Drive.RootFolder
-                Case "SERIALNUMBER"  : GetDriveValue = Drive.SerialNumber
-                Case "SHARENAME"     : GetDriveValue = Drive.ShareName
-                Case "TOTALSIZE"     : GetDriveValue = Drive.TotalSize
-                Case "VOLUMENAME"    : GetDriveValue = Drive.VolumeName
+                Case std_FileDrive.Availablespace: GetDriveValue = Drive.AvailableSpace
+                Case std_FileDrive.Driveletter   : GetDriveValue = Drive.DriveLetter
+                Case std_FileDrive.Drivetype     : GetDriveValue = Drive.DriveType
+                Case std_FileDrive.Filesystem    : GetDriveValue = Drive.FileSystem
+                Case std_FileDrive.Freespace     : GetDriveValue = Drive.FreeSpace
+                Case std_FileDrive.Isready       : GetDriveValue = Drive.IsReady
+                Case std_FileDrive.Path          : GetDriveValue = Drive.Path
+                Case std_FileDrive.Rootfolder    : GetDriveValue = Drive.RootFolder
+                Case std_FileDrive.Serialnumber  : GetDriveValue = Drive.SerialNumber
+                Case std_FileDrive.Sharename     : GetDriveValue = Drive.ShareName
+                Case std_FileDrive.Totalsize     : GetDriveValue = Drive.TotalSize
+                Case std_FileDrive.Volumename    : GetDriveValue = Drive.VolumeName
                 Case Else
                     ErrorCode = 4: GoTo Error
             End Select
@@ -78,29 +141,29 @@ Private Handler As New std_Error
 
     End Function
 
-    Public Function GetFolderValue(FolderPath As String, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
+    Public Function GetFolderValue(FolderPath As String, ReturnProperty As std_FileFolder, Optional ThrowError As Boolean = True) As Variant
 
         Dim Folder As Folder
         Dim ErrorCode As Long
         On Error GoTo Error
         ErrorCode = 9
         Set Folder = FSO.GetFolder(FolderPath)
-        Select Case UCase(ReturnProperty)
-            Case "ATTRIBUTES"       : GetFolderValue = Folder.Attributes
-            Case "DATECREATED"      : GetFolderValue = Folder.DateCreated
-            Case "DATELASTACCESSED" : GetFolderValue = Folder.DateLastAccessed
-            Case "DATELASTMODIFIED" : GetFolderValue = Folder.DateLastModified
-            Case "DRIVE"            : GetFolderValue = Folder.Drive
-            Case "FILES"            : GetFolderValue = Folder.Files
-            Case "ISROOTFOLDER"     : GetFolderValue = Folder.IsRootFolder
-            Case "NAME"             : GetFolderValue = Folder.Name
-            Case "PARENTFOLDER"     : GetFolderValue = Folder.ParentFolder
-            Case "PATH"             : GetFolderValue = Folder.Path
-            Case "SHORTNAME"        : GetFolderValue = Folder.ShortName
-            Case "SHORTPATH"        : GetFolderValue = Folder.ShortPath
-            Case "SIZE"             : GetFolderValue = Folder.Size
-            Case "SUBFOLDERS"       : GetFolderValue = Folder.SubFolders
-            Case "TYPE"             : GetFolderValue = Folder.Type
+        Select Case ReturnProperty
+            Case std_FileFolder.Attributes       : GetFolderValue = Folder.Attributes
+            Case std_FileFolder.Datecreated      : GetFolderValue = Folder.DateCreated
+            Case std_FileFolder.Datelastaccessed : GetFolderValue = Folder.DateLastAccessed
+            Case std_FileFolder.Datelastmodified : GetFolderValue = Folder.DateLastModified
+            Case std_FileFolder.Drive            : GetFolderValue = Folder.Drive
+            Case std_FileFolder.Files            : GetFolderValue = Folder.Files
+            Case std_FileFolder.Isrootfolder     : GetFolderValue = Folder.IsRootFolder
+            Case std_FileFolder.Name             : GetFolderValue = Folder.Name
+            Case std_FileFolder.Parentfolder     : GetFolderValue = Folder.ParentFolder
+            Case std_FileFolder.Path             : GetFolderValue = Folder.Path
+            Case std_FileFolder.Shortname        : GetFolderValue = Folder.ShortName
+            Case std_FileFolder.Shortpath        : GetFolderValue = Folder.ShortPath
+            Case std_FileFolder.Size             : GetFolderValue = Folder.Size
+            Case std_FileFolder.Subfolders       : GetFolderValue = Folder.SubFolders
+            Case std_FileFolder.Typee             : GetFolderValue = Folder.Typee
             Case Else
                 ErrorCode = 11: GoTo Error
         End Select
@@ -111,34 +174,34 @@ Private Handler As New std_Error
             
     End Function
 
-    Public Function GetFileValue(FilePath As String, ReturnProperty As String, Optional ReturnCharacters As Long = 0, Optional ThrowError As Boolean = True) As Variant
+    Public Function GetFileValue(FilePath As String, ReturnProperty As std_FileFile, Optional ReturnCharacters As Long = 0, Optional ThrowError As Boolean = True) As Variant
 
         Dim File As File
         Dim ErrorCode As Long
         On Error GoTo Error
         ErrorCode = 16
         Set File = FSO.GetFile(FilePath)
-        Select Case UCase(ReturnProperty)
-            Case "ATTRIBUTES"       : GetFileValue = File.Attributes
-            Case "DATECREATED"      : GetFileValue = File.DateCreated
-            Case "DATELASTACCESSED" : GetFileValue = File.DateLastAccessed
-            Case "DATELASTMODIFIED" : GetFileValue = File.DateLastModified
-            Case "DRIVE"            : GetFileValue = File.Drive
-            Case "NAME"             : GetFileValue = File.Name
-            Case "OPENASTEXTSTREAM" : GetFileValue = File.OpenAsTextStream
-            Case "PARENTFOLDER"     : GetFileValue = File.ParentFolder
-            Case "PATH"             : GetFileValue = File.Path
-            Case "SHORTNAME"        : GetFileValue = File.ShortName
-            Case "SHORTPATH"        : GetFileValue = File.ShortPath
-            Case "SIZE"             : GetFileValue = File.Size
-            Case "TYPE"             : GetFileValue = File.Type
-            Case "ATENDOFLINE"      : GetFileValue = File.OpenAsTextStream().AtEndOfLine
-            Case "ATENDOFSTREAM"    : GetFileValue = File.OpenAsTextStream().AtEndOfStream
-            Case "COLUMN"           : GetFileValue = File.OpenAsTextStream().Column
-            Case "LINE"             : GetFileValue = File.OpenAsTextStream().Line
-            Case "READ"             : GetFileValue = File.OpenAsTextStream().Read(ReturnCharacters)
-            Case "READALL"          : GetFileValue = File.OpenAsTextStream().ReadAll
-            Case "READLINE"         : GetFileValue = File.OpenAsTextStream().ReadLine()
+        Select Case ReturnProperty
+            Case std_FileFile.Attributes       : GetFileValue = File.Attributes
+            Case std_FileFile.Datecreated      : GetFileValue = File.DateCreated
+            Case std_FileFile.Datelastaccessed : GetFileValue = File.DateLastAccessed
+            Case std_FileFile.Datelastmodified : GetFileValue = File.DateLastModified
+            Case std_FileFile.Drive            : GetFileValue = File.Drive
+            Case std_FileFile.Name             : GetFileValue = File.Name
+            Case std_FileFile.Openastextstream : GetFileValue = File.OpenAsTextStream
+            Case std_FileFile.Parentfolder     : GetFileValue = File.ParentFolder
+            Case std_FileFile.Path             : GetFileValue = File.Path
+            Case std_FileFile.Shortname        : GetFileValue = File.ShortName
+            Case std_FileFile.Shortpath        : GetFileValue = File.ShortPath
+            Case std_FileFile.Size             : GetFileValue = File.Size
+            Case std_FileFile.Typee             : GetFileValue = File.Typee
+            Case std_FileFile.Atendofline      : GetFileValue = File.OpenAsTextStream().AtEndOfLine
+            Case std_FileFile.Atendofstream    : GetFileValue = File.OpenAsTextStream().AtEndOfStream
+            Case std_FileFile.Column           : GetFileValue = File.OpenAsTextStream().Column
+            Case std_FileFile.Line             : GetFileValue = File.OpenAsTextStream().Line
+            Case std_FileFile.Read             : GetFileValue = File.OpenAsTextStream().Read(ReturnCharacters)
+            Case std_FileFile.Readall          : GetFileValue = File.OpenAsTextStream().ReadAll
+            Case std_FileFile.Readline         : GetFileValue = File.OpenAsTextStream().ReadLine()
             Case Else
                 ErrorCode = 18: GoTo Error
         End Select
@@ -166,26 +229,26 @@ Private Handler As New std_Error
 
     End Sub
 
-    Public Function Exists(Path As String, Optional ExistsAs As String = "", Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
+    Public Function Exists(Path As String, Optional ExistsAs As std_FileType = std_FileType.All, Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
 
         Dim Returns As Boolean
         Dim ErrorCode As Long
 
-        Select Case UCase(ExistsAs)
-            Case ""
+        Select Case std_FileType
+            Case std_FileType.All
                 ErrorCode = 1
                 If Returns = False Then Returns = FSO.DriveExists(Path)
                 ErrorCode = 8
                 If Returns = False Then Returns = FSO.FolderExists(Path)
                 ErrorCode = 15
                 If Returns = False Then Returns = FSO.FileExists(Path)
-            Case "DRIVE"
+            Case std_FileType.Drive
                 ErrorCode = 1
                 If Returns = False Then Returns = FSO.DriveExists(Path)
-            Case "FOLDER"
+            Case std_FileType.Folder
                 ErrorCode = 8
                 If Returns = False Then Returns = FSO.FolderExists(Path)
-            Case "FILE"
+            Case std_FileType.File
                 ErrorCode = 15
                 If Returns = False Then Returns = FSO.FileExists(Path)
             Case Else
