@@ -1,4 +1,4 @@
-Attribute VB_Name = "std_Workbook"
+Attribute VB_Name = "std_Validation"
 
 
 Option Explicit
@@ -6,20 +6,22 @@ Option Explicit
 
 Private ErrorCatalog(1, 99) As Variant
 Private Initialized As Boolean
-Private Handler As New std_Error
+Private p_Handler As New std_Error
+
+Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (ByRef dwflags As Long, ByVal dwReserved As Long ) As Long
 
 
-Public Property Set SetHandler(n_Handler As std_Error)
-    Set Handler = n_Handler
+Public Property Let std_Validation_Handler(n_Handler As std_Error)
+    Set p_Handler = n_Handler
 End Function
 
-Public Property Get IS_ERROR() As Boolean
-    IS_ERROR = Handler.IS_ERROR
+Public Property Get std_Validation_IS_ERROR() As Boolean
+    std_Validation_IS_ERROR = p_Handler.IS_ERROR
 End Property
 
-Public Function Variable(FirstValue As Variant, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Variant = EMPTY_ERROR, Optional MinValue As Variant = EMPTY_ERROR, Optional MaxValue As Variant = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Variable(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
-    If Operator <> EMPTY_ERROR Then
+    If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"         : If FirstValue =  SecondValue Then ErrorCode = 16: GoTo Error
             Case "<>", "NOT", "!=" : If FirstValue <> SecondValue Then ErrorCode = 07: GoTo Error
@@ -36,12 +38,12 @@ Public Function Variable(FirstValue As Variant, Optional Operator As String = EM
     If MaxValue <> Empty Then         If FirstValue > MaxValue    Then ErrorCode = 11: GoTo Error
     Exit Function
     Error:
-    Variable = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
+    std_Validation_Variable = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
 End Function
 
-Public Function Object(FirstValue As Object, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Object = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Object(FirstValue As Object, Optional Operator As String = Empty, Optional SecondValue As Object = Empty, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
-    If Operator <> EMPTY_ERROR Then
+    If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"        : If FirstValue     IS SecondValue Then ErrorCode = 16: GoTo Error
             Case "<>", "NOT", "!=": If Not FirstValue IS SecondValue Then ErrorCode = 07: GoTo Error
@@ -50,12 +52,12 @@ Public Function Object(FirstValue As Object, Optional Operator As String = EMPTY
     If FirstValue Is Nothing                                         Then ErrorCode = 03: GoTo Error
     Exit Function
     Error:
-    Object = Handler.Handle(ErrorCatalog, 04, ThrowError, "FirstValue", Operator, "SecondValue")
+    std_Validation_Object = p_Handler.Handle(ErrorCatalog, 04, ThrowError, "FirstValue", Operator, "SecondValue")
 End Function
 
-Public Function Strings(Text As String, Optional Operator As String = EMPTY_ERROR, Optional SecondText As String = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Strings(Text As String, Optional Operator As String = Empty, Optional SecondText As String = Empty, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
-    If Operator <> EMPTY_ERROR Then
+    If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"           : If Text =        SecondText Then ErrorCode = 16: GoTo Error
             Case "<>", "NOT", "!="   : If Text <>       SecondText Then ErrorCode = 07: GoTo Error
@@ -71,27 +73,27 @@ Public Function Strings(Text As String, Optional Operator As String = EMPTY_ERRO
     If Text = Empty                                                Then ErrorCode = 03: GoTo Error
     Exit Function
     Error:
-    Strings = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Text, Operator, SecondText)
+    std_Validation_Strings = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Text, Operator, SecondText)
 End Function
 
-Public Function Number(FirstValue As Variant, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Variant = EMPTY_ERROR, Optional MinValue As Variant = EMPTY_ERROR, Optional MaxValue As Variant = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Number(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
     If IsNumeric(FirstValue) = False Then
-        Number = Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        std_Validation_Number = p_Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
-        Number = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        std_Validation_Number = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
     Exit Function
 End Function
 
-Public Function Dates(FirstValue As Variant, Optional Operator As String = EMPTY_ERROR, Optional SecondValue As Variant = EMPTY_ERROR, Optional MinValue As Variant = EMPTY_ERROR, Optional MaxValue As Variant = EMPTY_ERROR, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Dates(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
     If IsDate(FirstValue) = False Then
-        Dates = Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        std_Validation_Dates = p_Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
-        Dates = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        std_Validation_Dates = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
 End Function
 
-Public Function File(FilePath As String, Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_File(FilePath As String, Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
     If ShouldExist = True Then
         If Dir(FilePath) =  "" Then ErrorCode = 20: GoTo Error
@@ -100,10 +102,10 @@ Public Function File(FilePath As String, Optional ShouldExist As Boolean = True,
     End If
     Exit Function
     Error:
-    File = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath)
+    std_Validation_File = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath)
 End Function
 
-Public Function Connection(Optional Computer As String = ".", Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Connection(Optional Computer As String = ".", Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
 
     Dim objWMIService As Object
     Dim colItems As Object
@@ -132,7 +134,7 @@ Public Function Connection(Optional Computer As String = ".", Optional ShouldExi
         End If
     End If
     Exit Function
-    Connection = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Computer)
+    std_Validation_Connection = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Computer)
 
 End Function
 
@@ -141,7 +143,7 @@ End Function
     ' INTERNET_CONNECTION_PROXY   = &H4
     ' INTERNET_CONNECTION_OFFLINE = &H20
 
-Public Function InternetConnection(Optional ConnectType As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_InternetConnection(Optional ConnectType As Long = 0, Optional ThrowError As Boolean = True) As Boolean
     Dim L As Long
     Dim R As Long
     Dim ErrorCode As Long
@@ -156,13 +158,13 @@ Public Function InternetConnection(Optional ConnectType As Long = 0, Optional Th
     End Select
     Exit Function
     Error:
-    InternetConnection = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ConnectType)
+    std_Validation_InternetConnection = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ConnectType)
 
 End Function
                 
             
 
-Public Function ConnectToDatabase(DataBasePath As String, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_ConnectToDatabase(DataBasePath As String, Optional ThrowError As Boolean = True) As Boolean
     On Error GoTo Error
     Dim Conn As Object
     Dim ErrorCode As Long
@@ -172,10 +174,10 @@ Public Function ConnectToDatabase(DataBasePath As String, Optional ThrowError As
     If Conn.State <> 1 Then ErrorCode = 27: GoTo Error
     Exit Function
     Error:
-    ConnectToDatabase = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, "ConnectToDatabase", DataBasePath)
+    std_Validation_ConnectToDatabase = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, "ConnectToDatabase", DataBasePath)
 End Function
 
-Public Function DataType(Value As Variant, InputType As String, Optional ShouldBe As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_DataType(Value As Variant, InputType As String, Optional ShouldBe As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
     Dim Inputt As Boolean
     Dim ErrorCode As Long
     Select Case UCase(InputType)
@@ -201,13 +203,13 @@ Public Function DataType(Value As Variant, InputType As String, Optional ShouldB
     Exit Function
 
     Error:
-    DataType = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Value, InputType, ShouldBe)
+    std_Validation_DataType = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Value, InputType, ShouldBe)
 End Function
 
 
 Private Sub ProtInit()
     If Initialized = False Then
-        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_Misc"
+        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_Validation"
         ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "ErrorCategory doesnt exist"
         ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Value isnt available"
         ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Value is Empty"

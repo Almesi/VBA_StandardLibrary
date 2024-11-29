@@ -12,7 +12,7 @@ Option Explicit
 
 Private ErrorCatalog(1, 99) As Variant
 Private FSO As New FileSystemObject
-Private Handler As New std_Error
+Private p_Handler As New std_Error
 
 Public Enum std_FileDrive
     Availablespace = 0
@@ -79,12 +79,12 @@ End Enum
 
 ' Public Procedures
 
-    Public Property Set SetHandler(n_Handler As std_Error)
-        Set Handler = n_Handler
+    Public Property Let Handler(n_Handler As std_Error)
+        Set p_Handler = n_Handler
     End Function
 
     Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = Handler.IS_ERROR
+        IS_ERROR = p_Handler.IS_ERROR
     End Property
 
     Public Function Create() As std_File
@@ -137,7 +137,7 @@ End Enum
         Exit Function
 
         Error:
-        GetDriveValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, SearchValue, SearchProperty, ReturnProperty)
+        GetDriveValue = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, SearchValue, SearchProperty, ReturnProperty)
 
     End Function
 
@@ -170,7 +170,7 @@ End Enum
         Exit Function
 
         Error:
-        GetFolderValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FolderPath, ReturnProperty)
+        GetFolderValue = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FolderPath, ReturnProperty)
             
     End Function
 
@@ -208,7 +208,7 @@ End Enum
         Exit Function
 
         Error:
-        GetFileValue = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath, ReturnProperty)
+        GetFileValue = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath, ReturnProperty)
             
     End Function
 
@@ -262,7 +262,7 @@ End Enum
         End If
 
         Error:
-        Exists = Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Path, ExistsAs, ShouldExist)
+        Exists = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Path, ExistsAs, ShouldExist)
 
     End Function
 
@@ -294,7 +294,7 @@ End Enum
 
         Error:
         If ThrowError Then
-            Call Handler.Handle(ErrorCatalog, 8, ThrowError, Path, Name, Unique, ThrowError)
+            Call p_Handler.Handle(ErrorCatalog, 8, ThrowError, Path, Name, Unique, ThrowError)
         End If
         Set CreateFolderObj = Nothing
 
@@ -303,7 +303,7 @@ End Enum
     Public Function CreateFolder(Path As String, Name As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As Folder
         Set Temp = CreateFolderObj(Path, Name, Unique, ThrowError)
-        If Temp Is Nothing Then CreateFolder = Handler.IS_ERROR
+        If Temp Is Nothing Then CreateFolder = p_Handler.IS_ERROR
     End Function
 
     Public Function CreateFileObj(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As File
@@ -335,7 +335,7 @@ End Enum
 
         Error:
         If ThrowError Then
-            Call Handler.Handle(ErrorCatalog, 15, FolderPath, ThrowError, FileName, Unique, ThrowError)
+            Call p_Handler.Handle(ErrorCatalog, 15, FolderPath, ThrowError, FileName, Unique, ThrowError)
         End If
         Set CreateFileObj = Nothing
 
@@ -344,7 +344,7 @@ End Enum
     Public Function CreateFile(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As File
         Set Temp = CreateFileObj(FolderPath, FileName, Unique, ThrowError)
-        If Temp Is Nothing Then CreateFile = Handler.IS_ERROR
+        If Temp Is Nothing Then CreateFile = p_Handler.IS_ERROR
     End Function
 '
 

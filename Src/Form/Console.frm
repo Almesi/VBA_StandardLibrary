@@ -324,6 +324,7 @@ Option Explicit
         If FindNodeAll <> -1 Then Exit Function
 
         For i = 3 To UboundK(Trees(TreeIndex).Nodes(Positions(0)).Branches)
+            If FindNodeAll <> -1 Then Exit Function
             NewIndex(0) = Trees(TreeIndex).Nodes(Positions(0)).Branches(i)
             FindNodeAll = FindNodeAll(TreeIndex, Value, NewIndex)
         Next
@@ -1856,19 +1857,20 @@ Option Explicit
                     CurrentRow = CodeMod.Lines(i, 1)
                     AsProcedure = ""
                     If UCase(CurrentRow) Like "*PUBLIC *" And InStr(1, CurrentRow, "'") = 0 And Not UCase(CurrentRow) Like "*" & Chr(34) & "*PUBLIC*" & Chr(34) & "*" Then
-                        If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *" Or UCase(CurrentRow) Like "* SET *" Or UCase(CurrentRow) Like "* LET *" Or UCase(CurrentRow) Like "* GET *") Then
+                        If (UCase(CurrentRow) Like "* FUNCTION *" Or UCase(CurrentRow) Like "* SUB *" Or UCase(CurrentRow) Like "* SET *" Or UCase(CurrentRow) Like "* LET *" Or UCase(CurrentRow) Like "* GET *" Or UCase(CurrentRow) Like "* EVENT *") Then
                             ' A Procedure
                             '                          |----------|
                             '   Public Static Function VariableName(Arg1 As Variant, Arg2 As Variant) As Variant
                             AsProcedure = "Public Procedure "
                             Select Case True
-                                Case UCase(CurrentRow) Like "*PUBLIC STATIC SUB *(*)*"      : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC SUB ")      + Len("PUBLIC STATIC SUB ")      : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC SUB *(*)*"             : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC SUB ")             + Len("PUBLIC SUB ")             : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC STATIC FUNCTION *(*)*" : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC FUNCTION ") + Len("PUBLIC STATIC FUNCTION ") : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC FUNCTION *(*)*"        : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC FUNCTION ")        + Len("PUBLIC FUNCTION ")        : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY GET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY GET ")    + Len("PUBLIC PROPERTY GET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY SET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY SET ")    + Len("PUBLIC PROPERTY SET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
-                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY LET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY LET ")    + Len("PUBLIC PROPERTY LET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = Mid(CurrentRow, StartPoint, EndPoint - StartPoint)
+                                Case UCase(CurrentRow) Like "*PUBLIC STATIC SUB *(*)*"      : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC SUB ")      + Len("PUBLIC STATIC SUB ")      : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC SUB *(*)*"             : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC SUB ")             + Len("PUBLIC SUB ")             : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC STATIC FUNCTION *(*)*" : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC STATIC FUNCTION ") + Len("PUBLIC STATIC FUNCTION ") : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC FUNCTION *(*)*"        : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC FUNCTION ")        + Len("PUBLIC FUNCTION ")        : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC EVENT *(*)*"           : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC EVENT ")           + Len("PUBLIC EVENT ")           : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY GET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY GET ")    + Len("PUBLIC PROPERTY GET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY SET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY SET ")    + Len("PUBLIC PROPERTY SET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC PROPERTY LET *(*)*"    : StartPoint = InStr(1, UCase(CurrentRow), "PUBLIC PROPERTY LET ")    + Len("PUBLIC PROPERTY LET ")    : EndPoint = InStr(1, UCase(CurrentRow), "("): Name = MidP(CurrentRow, StartPoint, EndPoint - 1)
                                 Case Else
                             End Select
                             '                                       |------------------------------|
@@ -1887,8 +1889,9 @@ Option Explicit
                             '          |----------|
                             '   Public VariableName As Variant
                             Select Case True
-                                Case UCase(CurrentRow) Like "*PUBLIC CONST *": StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC CONST *") + Len("PUBLIC CONST "): EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1)
-                                Case UCase(CurrentRow) Like "*PUBLIC *":       StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC *")       + Len("PUBLIC "):       EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = Mid(CurrentRow, StartPoint + 1, EndPoint - StartPoint - 1)
+                                Case UCase(CurrentRow) Like "*PUBLIC CONST *": StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC CONST *") + Len("PUBLIC CONST "): EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
+                                Case UCase(CurrentRow) Like "*PUBLIC ENUM *":  StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC ENUM *")  + Len("PUBLIC ENUM "):  EndPoint = Len(CurrentRow)                    : Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
+                                Case UCase(CurrentRow) Like "*PUBLIC *":       StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC *")       + Len("PUBLIC "):       EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
                                 Case Else
                             End Select
                         End If
@@ -1902,6 +1905,9 @@ Option Explicit
                             Call AddNode(k,  CurrentProcedurePos, ReturnType)
                             Call AddNode(k,  CurrentProcedurePos, Arguments)
                             Call AddNode(k,  CurrentProcedurePos, "No Value")
+                            Name = Empty
+                            ReturnType = Empty
+                            Arguments = Empty
                     End If
                     NoLines:
                 Next

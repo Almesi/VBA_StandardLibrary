@@ -13,18 +13,17 @@ Option Explicit
 
 Private WB As Workbook
 Private ErrorCatalog(1, 99) As Variant
-Private Handler As New std_Error
+Private p_Handler As New std_Error
 
-
-    Public Property Set SetHandler(n_Handler As std_Error)
-        Set Handler = n_Handler
-    End Function
-
-    Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = Handler.IS_ERROR
+    Public Property Let Handler(n_Handler As std_Error)
+        Set p_Handler = n_Handler
     End Property
 
-    Public Property Set Workbook(n_Workbook As Workbook)
+    Public Property Get IS_ERROR() As Boolean
+        IS_ERROR = p_Handler.IS_ERROR
+    End Property
+
+    Public Property Let Workbook(n_Workbook As Workbook)
         Set WB = n_Workbook
     End Property
 
@@ -32,7 +31,7 @@ Private Handler As New std_Error
         Set Workbook = WB
     End Property
 
-    Public Property Set WorkbookViaName(Name As String)
+    Public Property Let WorkbookViaName(Name As String)
         Dim Temp As Workbook
         Set Temp = Exists(Name, True, False)
         If Temp Is Nothing Then
@@ -41,17 +40,17 @@ Private Handler As New std_Error
         End If
     End Property
 
-    Public Function Open(FilePath As Variant, Optional UpdateLinks As Variant = Empty, Optional ReadOnly As Variant = Empty, Optional Format As Variant = Empty, Optional Password As Variant = Empty, Optional WriteResPassword As Variant = Empty, Optional IgnoreReadOnlyRecommende As Variant = Empty, Optional Origin As Variant = Empty, Optional Delimiter As Variant = Empty, Optional Editable As Variant = Empty, Optional Notify As Variant = Empty, Optional Converter As Variant = Empty, Optional AddToMru As Variant = Empty, Optional Local As Variant = Empty, Optional CorruptLoad As Variant = Empty, Optional ThrowError As Boolean = True) As Variant
+    Public Function Openn(FilePath As Variant, Optional UpdateLinks As Variant = Empty, Optional ReadOnly As Variant = Empty, Optional Format As Variant = Empty, Optional Password As Variant = Empty, Optional WriteResPassword As Variant = Empty, Optional IgnoreReadOnlyRecommende As Variant = Empty, Optional Origin As Variant = Empty, Optional Delimiter As Variant = Empty, Optional Editable As Variant = Empty, Optional Notify As Variant = Empty, Optional Converter As Variant = Empty, Optional AddToMru As Variant = Empty, Optional n_Local As Variant = Empty, Optional CorruptLoad As Variant = Empty, Optional ThrowError As Boolean = True) As Variant
         On Error GoTo Error
-        Workbooks.Open FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad
+        Workbooks.Open FilePath
         Set WB = ActiveWorkbook
         Exit Function
 
         Error:
-        Open = Handler.Handle(ErrorCatalog, 1, ThrowError, FilePath, UpdateLinks, ReadOnly, Format, Password, WriteResPassword, IgnoreReadOnlyRecommende, Origin, Delimiter, Editable, Notify, Converter, AddToMru, Local, CorruptLoad)
+        Openn = p_Handler.Handle(ErrorCatalog, 1, ThrowError, FilePath)
     End Function
 
-    Public Function Close(Optional Name As String = "", Optional ThrowError As Boolean = True) As Boolean
+    Public Function Closee(Optional Name As String = "", Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As Workbook
         Dim ErrorValue As String
 
@@ -72,7 +71,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        Close = Handler.Handle(ErrorCatalog, 2, ThrowError, ErrorValue)
+        Closee = p_Handler.Handle(ErrorCatalog, 2, ThrowError, ErrorValue)
         
     End Function
 
@@ -96,6 +95,7 @@ Private Handler As New std_Error
 
     Private Sub Class_Initialize()
         ProtInit
+        Set p_Handler = std_Error
     End Sub
 
     Private Sub Class_Terminate()

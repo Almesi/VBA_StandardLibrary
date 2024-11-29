@@ -23,7 +23,7 @@ Private Shader(2) As Long ' 0 = VertexShader, 1 = FragmentShader, 2 = Linked Sha
 
 ' Public Errormethods
 
-    Public Property Set SetHandler(n_Handler As std_Error)
+    Public Property Let SetHandler(n_Handler As std_Error)
         Set Handler = n_Handler
     End Function
 

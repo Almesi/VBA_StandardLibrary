@@ -25,8 +25,10 @@ Private       p_LogError            As Boolean
 Private       p_LoggingDestination  As Variant
 Private       p_ShowDestination     As Variant
 
-Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (ByRef dwflags As Long, ByVal dwReserved As Long) As Long
-
+Public Event  BeforeLog(Message As String)
+Public Event  AfterLog(Message As String)
+Public Event  BeforeShow(Message As String)
+Public Event  AfterShow(Message As String)
 
 ' Public Errormethods
     Public Property Get IS_ERROR()
@@ -36,18 +38,20 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
     Public Property Let ShowError(Value As Boolean)
         p_ShowError = Value
     End Property
+
     Public Property Let LogError(Value As Boolean)
         p_LogError = Value
     End Property
 
-    Public Property Set LoggingDestination(n_Destination As Variant)
+    Public Property Let LoggingDestination(n_Destination As Variant)
         If IsObject(n_Destination) Then
             Set p_LoggingDestination = n_Destination
         Else
             p_LoggingDestination = n_Destination
         End If
     End Property
-    Public Property Set ShowDestination(n_Destination As Variant)
+
+    Public Property Let ShowDestination(n_Destination As Variant)
         If IsObject(n_Destination) Then
             Set p_ShowDestination = n_Destination
         Else
@@ -55,13 +59,12 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
         End If
     End Property
 
-
     Public Function Create(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As std_Error
         Set Create = New std_Error
         Let Create.ShowError          = n_ShowError
         Let Create.LogError           = n_LogError
-        Set Create.LoggingDestination = n_LoggingDestination
-        Set Create.ShowDestination    = n_ShowDestination
+        Create.LoggingDestination = n_LoggingDestination
+        Create.ShowDestination    = n_ShowDestination
     End Function
 
     Public Function Handle(Catalog() As Variant, Index As Long, ThrowError As Boolean, ParamArray ErrorValues()) As Boolean
@@ -103,12 +106,12 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
             Dim fso As Object
             Dim TextStream As Object
             Dim Text As String
-            Dim ConsoleDestination As Object
             Text = GetMessage(Catalog, Index, ErrorValues)
+            RaiseEvent BeforeLog(Text)
             Set fso = CreateObject("Scripting.FileSystemObject")
             Select Case True
                 Case (p_LoggingDestination Is Nothing)         : Debug.Print Text
-                Case TypeName(p_LoggingDestination) = "Console": Set ConsoleDestination = Console: Call Console.PrintEnter(Text, (&H100000FF - &H10000000))
+                Case TypeName(p_LoggingDestination) = "Console": Call LoggingConsole(GetMessage(Catalog, Index, ErrorValues))
                 Case TypeName(p_LoggingDestination) = "Range"
                     Do Until p_LoggingDestination.Offset(i, 0).Formula = ""
                         i = i + 1
@@ -125,32 +128,46 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
                     TextStream.WriteLine Text
                     TextStream.Close
             End Select
+            RaiseEvent AfterLog(Text)
         End If
+    End Sub
+
+    Private Sub LoggingConsole(Text As String)
+        Call p_LoggingDestination.PrintEnter(Text, (&H100000FF - &H10000000))
     End Sub
     
     Private Sub Showing(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
+        Dim Text As String
+        Text = GetMessage(Catalog, Index, ErrorValues)
         If p_ShowError Then
             Dim Temp As Variant
+            RaiseEvent BeforeShow(Text)
             Select Case True
-                Case (p_ShowDestination Is Nothing): Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
+                Case (p_ShowDestination Is Nothing): Temp = MsgBox(Text, vbExclamation, "ERROR")
             End Select
+            RaiseEvent AfterShow(Text)
         End If
     End Sub
     
     Private Function Ask(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As Boolean
         If p_ShowError Then
             Dim Temp As Variant
-            Dim ArrayAnswer() As Variant
-            Dim ArrayMessage() As Variant
-            Dim ConsoleDestination As Object
-            ArrayAnswer = Array("y","n")
-            ArrayMessage = Array("Answer is Yes", "Answer is No")
+            RaiseEvent BeforeShow(Text)
             Select Case True
                 Case (p_ShowDestination Is Nothing)            : Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
-                Case TypeName(p_LoggingDestination) = "Console": Set ConsoleDestination = Console: Call Console.CheckInput(GetMessage(Catalog, Index, ErrorValues), ArrayAnswer, ArrayMessage)
+                Case TypeName(p_LoggingDestination) = "Console": Ask = AskConsole(GetMessage(Catalog, Index, ErrorValues))
             End Select
             If Temp = False Then Ask = IS_ERROR
+            RaiseEvent AfterShow(Text)
         End If
+    End Function
+
+    Private Function AskConsole(Text As String)
+        Dim ArrayAnswer() As Variant
+        Dim ArrayMessage() As Variant
+        ArrayAnswer = Array("y","n")
+        ArrayMessage = Array("Answer is Yes", "Answer is No")
+        AskConsole = p_LoggingDestination.CheckPredeclaredAnswer(Text, ArrayAnswer, ArrayMessage)
     End Function
 
     Private Function ValidateCatalog(Catalog() As Variant) As Boolean

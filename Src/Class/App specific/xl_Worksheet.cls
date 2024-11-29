@@ -13,18 +13,18 @@ Option Explicit
 
 Private WS As Worksheet
 Private ErrorCatalog(1, 99) As Variant
-Private Handler As New std_Error
+Private p_Handler As New std_Error
 
 
-    Public Property Set SetHandler(n_Handler As std_Error)
-        Set Handler = n_Handler
-    End Function
-
-    Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = Handler.IS_ERROR
+    Public Property Let Handler(n_Handler As std_Error)
+        p_Handler = n_Handler
     End Property
 
-    Public Property Set Worksheet(n_Worksheet As Worksheet)
+    Public Property Get IS_ERROR() As Boolean
+        IS_ERROR = p_Handler.IS_ERROR
+    End Property
+
+    Public Property Let Worksheet(n_Worksheet As Worksheet)
         Set WS = n_Worksheet
     End Property
 
@@ -53,7 +53,7 @@ Private Handler As New std_Error
         Exit Function
 
         Error:
-        Activate = Handler.Handle(ErrorCatalog, 1, ThrowError, WorksheetName)
+        Activate = p_Handler.Handle(ErrorCatalog, 1, ThrowError, WorksheetName)
 
     End Function
 
