@@ -49,6 +49,7 @@ Option Explicit
         UserInputt = 1
         MultilineMode = 2
         ScriptMode = 3
+        Idle = 4
     End Enum
 
     Private Const Intellisense_Active As Boolean = True
@@ -873,6 +874,7 @@ Option Explicit
     End Sub
     
     Private Sub ConsoleText_KeyPress(Char As Long)
+        If WorkMode = WorkModeEnum.Idle Then Char = 0: Exit Sub
         If PasswordMode Then 
             Select Case Char
                 Case 8
@@ -888,6 +890,7 @@ Option Explicit
     Private Sub ConsoleText_KeyUp(pKey As Long, ByVal ShiftKey As Integer)
         
         Dim Lines As Variant
+        If WorkMode = WorkModeEnum.Idle Then Exit Sub
         Lines = Split(ConsoleText.Text, vbCrLf)
         Call SetUpNewLine
         Select Case pKey
@@ -1069,6 +1072,7 @@ Option Explicit
 
     Private Function HandleSpecial(Line As String) As Variant
         Select Case True
+            Case UCase(Line) Like "IDLE"           : HandleSpecial = "": WorkMode = WorkModeEnum.Idle
             Case UCase(Line) Like "HELP"           : HandleSpecial = HandleHelp
             Case UCase(Line) Like "CLEAR"          : HandleSpecial = HandleClear
             Case UCase(Line) Like "MULTILINE"      : HandleSpecial = "": Workmode = WorkModeEnum.MultilineMode
