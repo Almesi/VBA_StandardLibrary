@@ -12,15 +12,53 @@ Private Declare PtrSafe Function InternetGetConnectedState Lib "wininet.dll" (By
 
 
 Public Property Let std_Validation_Handler(n_Handler As std_Error)
+    Call ProtInit()
     Set p_Handler = n_Handler
-End Function
+End Property
 
 Public Property Get std_Validation_IS_ERROR() As Boolean
+    Call ProtInit()
     std_Validation_IS_ERROR = p_Handler.IS_ERROR
 End Property
 
-Public Function std_Validation_Variable(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Array(Arr As Variant, Optional FirstValue As Variant, Optional Operator As String = Empty, Optional ThrowError As Boolean = True) As Boolean
+    Dim i As Long
+    Dim Element As Variant
+    Select Case True
+        Case TypeName(Arr) Like "*()"
+            For Each Element In Arr
+                std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Element, , , False)
+                If std_Validation_Array <> std_Validation_IS_ERROR Then Exit Function
+            Next Element
+            std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Element, , , True)
+        Case TypeName(Arr) = "Range"
+            Dim Cell As Range
+            For Each Cell In Arr
+                std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Cell.Value, , , False)
+                If std_Validation_Array <> std_Validation_IS_ERROR Then Exit Function
+            Next Cell
+            std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Cell.Value, , , True)
+        Case TypeName(Arr) = "ComboBox" 
+            For Each Element In Arr.List
+                std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Element, , , False)
+                If std_Validation_Array <> std_Validation_IS_ERROR Then
+                    Exit Function
+                End If
+            Next Element
+            std_Validation_Array = std_Validation_Variable(FirstValue, Operator, Element, , , True)
+        Case Else
+            GoTo Error
+    End Select
+    Exit Function
+
+    Error:
+    std_Validation_Array = p_Handler.Handle(ErrorCatalog, 40, ThrowError, TypeName(Arr))
+End Function
+
+Public Function std_Validation_Variable(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant, Optional MinValue As Variant, Optional MaxValue As Variant, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
+    Call ProtInit()
+    If IsMissing(FirstValue)                                      Then ErrorCode = 3: GoTo Error
     If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"         : If FirstValue =  SecondValue Then ErrorCode = 16: GoTo Error
@@ -31,18 +69,21 @@ Public Function std_Validation_Variable(FirstValue As Variant, Optional Operator
             Case ">=", "=>"        : If FirstValue >= SecondValue Then ErrorCode = 09: GoTo Error
             Case Else
         End Select
-    Else
-        If FirstValue = Empty                                     Then ErrorCode = 3: GoTo Error
     End If
-    If MinValue <> Empty Then         If FirstValue < MinValue    Then ErrorCode = 10: GoTo Error
-    If MaxValue <> Empty Then         If FirstValue > MaxValue    Then ErrorCode = 11: GoTo Error
+    If IsMissing(MinValue) = False Then         If FirstValue < MinValue    Then ErrorCode = 10: GoTo Error
+    If IsMissing(MaxValue) = False Then         If FirstValue > MaxValue    Then ErrorCode = 11: GoTo Error
     Exit Function
     Error:
+    If IsMissing(FirstValue) Then FirstValue = Empty
+    If IsMissing(SecondValue) Then SecondValue = Empty
+    If IsMissing(MinValue) Then MinValue = Empty
+    If IsMissing(MaxValue) Then MaxValue = Empty
     std_Validation_Variable = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
 End Function
 
 Public Function std_Validation_Object(FirstValue As Object, Optional Operator As String = Empty, Optional SecondValue As Object = Empty, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
+    Call ProtInit()
     If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"        : If FirstValue     IS SecondValue Then ErrorCode = 16: GoTo Error
@@ -57,6 +98,7 @@ End Function
 
 Public Function std_Validation_Strings(Text As String, Optional Operator As String = Empty, Optional SecondText As String = Empty, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
+    Call ProtInit()
     If Operator <> Empty Then
         Select Case UCase(Operator)
             Case "=", "IS"           : If Text =        SecondText Then ErrorCode = 16: GoTo Error
@@ -76,25 +118,36 @@ Public Function std_Validation_Strings(Text As String, Optional Operator As Stri
     std_Validation_Strings = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Text, Operator, SecondText)
 End Function
 
-Public Function std_Validation_Number(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Number(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant, Optional MinValue As Variant, Optional MaxValue As Variant, Optional ThrowError As Boolean = True) As Boolean
+    Call ProtInit()
     If IsNumeric(FirstValue) = False Then
+        If IsMissing(SecondValue) Then SecondValue = Empty
+        If IsMissing(MinValue) Then MinValue = Empty
+        If IsMissing(MaxValue) Then MaxValue = Empty
         std_Validation_Number = p_Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
-        std_Validation_Number = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        FirstValue = CNum(FirstValue)
+        std_Validation_Number = std_Validation_Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
     Exit Function
 End Function
 
-Public Function std_Validation_Dates(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant = Empty, Optional MinValue As Variant = Empty, Optional MaxValue As Variant = Empty, Optional ThrowError As Boolean = True) As Boolean
+Public Function std_Validation_Dates(FirstValue As Variant, Optional Operator As String = Empty, Optional SecondValue As Variant, Optional MinValue As Variant, Optional MaxValue As Variant, Optional ThrowError As Boolean = True) As Boolean
+    Call ProtInit()
     If IsDate(FirstValue) = False Then
+        If IsMissing(SecondValue) Then SecondValue = Empty
+        If IsMissing(MinValue) Then MinValue = Empty
+        If IsMissing(MaxValue) Then MaxValue = Empty
         std_Validation_Dates = p_Handler.Handle(ErrorCatalog, 19, ThrowError, FirstValue, Operator, SecondValue, MinValue, MaxValue)
     Else
-        std_Validation_Dates = Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
+        FirstValue = CNum(FirstValue)
+        std_Validation_Dates = std_Validation_Variable(FirstValue, Operator, SecondValue, MinValue, MaxValue)
     End If
 End Function
 
 Public Function std_Validation_File(FilePath As String, Optional ShouldExist As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
     Dim ErrorCode As Long
+    Call ProtInit()
     If ShouldExist = True Then
         If Dir(FilePath) =  "" Then ErrorCode = 20: GoTo Error
     Else
@@ -114,6 +167,7 @@ Public Function std_Validation_Connection(Optional Computer As String = ".", Opt
     Set objWMIService = GetObject("winmgmts:\\" & Computer & "\root\cimv2")
     Set colItems = objWMIService.ExecQuery("Select * from Win32_NetworkAdapterConfiguration Where IPEnabled = True")
 
+    Call ProtInit()
     If ShouldExist  Then
         If colItems.Count = 0 Then
             ErrorCode = 22: GoTo Error
@@ -147,6 +201,7 @@ Public Function std_Validation_InternetConnection(Optional ConnectType As Long =
     Dim L As Long
     Dim R As Long
     Dim ErrorCode As Long
+    Call ProtInit()
     R = InternetGetConnectedState(L, 0&)
     Select Case R
         Case &H00:                         ErrorCode = 35: GoTo Error
@@ -180,6 +235,7 @@ End Function
 Public Function std_Validation_DataType(Value As Variant, InputType As String, Optional ShouldBe As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
     Dim Inputt As Boolean
     Dim ErrorCode As Long
+    Call ProtInit()
     Select Case UCase(InputType)
         Case "VARIANT":         If VarType(Value)                                                 = vbVariant  Then Inputt = True
         Case "STRING":          If VarType(Value)                                                 = vbString   Then Inputt = True
@@ -207,6 +263,18 @@ Public Function std_Validation_DataType(Value As Variant, InputType As String, O
 End Function
 
 
+Public Function CNum(Value As Variant) As Variant
+    On Error Resume Next
+    CNum = "x"
+    CNum = CDbl(Value)   : If CNum <> "x" Then Exit Function
+    CNum = CSng(Value)   : If CNum <> "x" Then Exit Function
+    CNum = ClngLng(Value): If CNum <> "x" Then Exit Function
+    CNum = CLng(Value)   : If CNum <> "x" Then Exit Function
+    CNum = CInt(Value)   : If CNum <> "x" Then Exit Function
+    CNum = CByte(Value)  : If CNum <> "x" Then Exit Function
+    CNum = Empty
+End Function
+
 Private Sub ProtInit()
     If Initialized = False Then
         ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_Validation"
@@ -216,18 +284,18 @@ Private Sub ProtInit()
         ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Value is Nothing"
         ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "Value Overflow"
         ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "Value Underflow"
-        ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "Value1 doesnt equal Value2"
-        ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "Value1 is smaller than or equal to Value2"
-        ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "Value1 is bigger than or equal to Value2"
-        ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "Value1 is smaller than Value2"
-        ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Value1 is bigger than Value2"
-        ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Value1 is Value2"
+        ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "One Value doesnt equal another Value"
+        ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "One Value is smaller than or equal to another Value"
+        ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "One Value is bigger than or equal to another Value"
+        ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "One Value is smaller than another Value"
+        ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "One Value is bigger than another Value"
+        ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "One Value is another Value"
         ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Several Values are Empty"
         ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "To many Values arent Empty"
         ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "Value Is Something"
-        ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "Value1 equals Value2"
-        ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "Value1 is not like Value2"
-        ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "Value1 is like Value2"
+        ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "One Value equals another Value"
+        ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "One Value is not like another Value"
+        ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "One Value is like another Value"
         ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "Value is not a Number"
         ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "File does not exist"
         ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "File exists"
@@ -249,7 +317,7 @@ Private Sub ProtInit()
         ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "Internet Connection is Lan"
         ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "Internet Connection is Proxy"
         ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "Internet Connection is Offline"
-        ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
+        ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "Set not allowed"
         ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
         ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
         ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"

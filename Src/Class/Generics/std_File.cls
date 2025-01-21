@@ -81,19 +81,24 @@ End Enum
 
     Public Property Let Handler(n_Handler As std_Error)
         Set p_Handler = n_Handler
-    End Function
+    End Property
 
     Public Property Get IS_ERROR() As Boolean
         IS_ERROR = p_Handler.IS_ERROR
     End Property
 
-    Public Function Create() As std_File
+    Public Function Create(Optional n_Handler As std_Error = Nothing) As std_File
         Set Create = New std_File
+        If n_Handler Is Nothing Then
+            Create.Handler = std_Error
+        Else
+            Create.Handler = n_Handler
+        End If
     End Function
 
     Public Function GetDriveValue(SearchValue As Variant, SearchProperty As std_FileDrive, ReturnProperty As String, Optional ThrowError As Boolean = True) As Variant
 
-        Dim Drive As Drive
+        Dim Drive As Scripting.Drive
         Dim Found As Boolean
         Dim ErrorCode As Long
         For Each Drive In FSO.Drives
@@ -143,7 +148,7 @@ End Enum
 
     Public Function GetFolderValue(FolderPath As String, ReturnProperty As std_FileFolder, Optional ThrowError As Boolean = True) As Variant
 
-        Dim Folder As Folder
+        Dim Folder As Scripting.Folder
         Dim ErrorCode As Long
         On Error GoTo Error
         ErrorCode = 9
@@ -163,7 +168,7 @@ End Enum
             Case std_FileFolder.Shortpath        : GetFolderValue = Folder.ShortPath
             Case std_FileFolder.Size             : GetFolderValue = Folder.Size
             Case std_FileFolder.Subfolders       : GetFolderValue = Folder.SubFolders
-            Case std_FileFolder.Typee             : GetFolderValue = Folder.Typee
+            Case std_FileFolder.Typee             : GetFolderValue = Folder.Type
             Case Else
                 ErrorCode = 11: GoTo Error
         End Select
@@ -176,7 +181,7 @@ End Enum
 
     Public Function GetFileValue(FilePath As String, ReturnProperty As std_FileFile, Optional ReturnCharacters As Long = 0, Optional ThrowError As Boolean = True) As Variant
 
-        Dim File As File
+        Dim File As Scripting.File
         Dim ErrorCode As Long
         On Error GoTo Error
         ErrorCode = 16
@@ -194,7 +199,7 @@ End Enum
             Case std_FileFile.Shortname        : GetFileValue = File.ShortName
             Case std_FileFile.Shortpath        : GetFileValue = File.ShortPath
             Case std_FileFile.Size             : GetFileValue = File.Size
-            Case std_FileFile.Typee             : GetFileValue = File.Typee
+            Case std_FileFile.Typee            : GetFileValue = File.Type
             Case std_FileFile.Atendofline      : GetFileValue = File.OpenAsTextStream().AtEndOfLine
             Case std_FileFile.Atendofstream    : GetFileValue = File.OpenAsTextStream().AtEndOfStream
             Case std_FileFile.Column           : GetFileValue = File.OpenAsTextStream().Column
@@ -212,7 +217,7 @@ End Enum
             
     End Function
 
-    Public Sub GetAllFileValues(FolderPath As String, ReturnProperty As String, ByRef ReturnArray() As Variant, Optional ReturnCharacters As Long = 0)
+    Public Sub GetAllFileValues(FolderPath As String, ReturnProperty As std_FileFile, ByRef ReturnArray() As Variant, Optional ReturnCharacters As Long = 0)
         
         Dim Folder As Scripting.Folder
         Dim SubFolder As Scripting.Folder
@@ -234,7 +239,7 @@ End Enum
         Dim Returns As Boolean
         Dim ErrorCode As Long
 
-        Select Case std_FileType
+        Select Case ExistsAs
             Case std_FileType.All
                 ErrorCode = 1
                 If Returns = False Then Returns = FSO.DriveExists(Path)
@@ -259,14 +264,16 @@ End Enum
         Else
             If Returns Then
                 If ThrowError Then GoTo Error
+            End If
         End If
+        Exit Function
 
         Error:
         Exists = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, Path, ExistsAs, ShouldExist)
 
     End Function
 
-    Public Function CreateFolderObj(Path As String, Name As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Folder
+    Public Function CreateFolderObj(Path As String, Name As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Scripting.Folder
 
         Dim Found As Boolean
         Dim Number As Long
@@ -301,12 +308,12 @@ End Enum
     End Function
 
     Public Function CreateFolder(Path As String, Name As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
-        Dim Temp As Folder
+        Dim Temp As Scripting.Folder
         Set Temp = CreateFolderObj(Path, Name, Unique, ThrowError)
         If Temp Is Nothing Then CreateFolder = p_Handler.IS_ERROR
     End Function
 
-    Public Function CreateFileObj(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As File
+    Public Function CreateFileObj(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Scripting.File
 
         Dim Found As Boolean
         Dim Number As Long
@@ -342,7 +349,7 @@ End Enum
     End Function
 
     Public Function CreateFile(FolderPath As String, FileName As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
-        Dim Temp As File
+        Dim Temp As Scripting.File
         Set Temp = CreateFileObj(FolderPath, FileName, Unique, ThrowError)
         If Temp Is Nothing Then CreateFile = p_Handler.IS_ERROR
     End Function

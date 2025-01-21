@@ -866,6 +866,7 @@ Option Explicit
 ' Handle Input
 
     Private Sub ConsoleText_KeyDown(pKey As Long, ByVal ShiftKey As Integer)
+        If WorkMode = WorkModeEnum.Idle Then pKey = 0: Exit Sub
         If pKey = 13 Then
             ConsoleText.SelStart = GetMaxSelStart
             ConsoleText.Sellength = 0
@@ -874,7 +875,7 @@ Option Explicit
     End Sub
     
     Private Sub ConsoleText_KeyPress(Char As Long)
-        If WorkMode = WorkModeEnum.Idle Then Char = 0: Exit Sub
+        If WorkMode = WorkModeEnum.Idle Then Exit Sub
         If PasswordMode Then 
             Select Case Char
                 Case 8
@@ -1895,6 +1896,7 @@ Option Explicit
                             Select Case True
                                 Case UCase(CurrentRow) Like "*PUBLIC CONST *": StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC CONST *") + Len("PUBLIC CONST "): EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
                                 Case UCase(CurrentRow) Like "*PUBLIC ENUM *":  StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC ENUM *")  + Len("PUBLIC ENUM "):  EndPoint = Len(CurrentRow)                    : Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
+                                Case UCase(CurrentRow) Like "*PUBLIC TYPE *":  StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC TYPE *")  + Len("PUBLIC TYPE "):  EndPoint = Len(CurrentRow)                    : Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
                                 Case UCase(CurrentRow) Like "*PUBLIC *":       StartPoint = InStr(1, UCase(CurrentRow), "*PUBLIC *")       + Len("PUBLIC "):       EndPoint = InStr(1, UCase(CurrentRow), " AS "): Name = MidP(CurrentRow, StartPoint + 1, EndPoint)
                                 Case Else
                             End Select

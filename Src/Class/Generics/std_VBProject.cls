@@ -419,13 +419,13 @@ End Enum
 
     Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As VBProjPasteType, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
         Dim VBComp As VBComponent
-
+ 
         Set VBComp = Exists(CompName, WB.VBProject, True, False)
         If Not VBComp Is Nothing Then
-            If AddComponent(VBComp.Name, VBComp.Type, PasteType, False, ThrowError) <> p_Handler.IS_ERROR Then
-                If PasteType = 1 Then Call DeleteCode(VBComp.Name, ThrowError)
-                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), ThrowError)
-                Call AddTemporary(Temporary, VBComp.Name, ThrowError)
+            If AddComponent(VBComp.Name, VBComp.Type, PasteType, ThrowError) <> p_Handler.IS_ERROR Then
+                If PasteType = 1 Then Call DeleteCode(VBComp.Name, , , ThrowError)
+                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), , ThrowError)
+                Call AddTemporary(Temporary, VBComp.Name)
             End If
         Else
             IncludeWorkbookSingle = p_Handler.Handle(ErrorCatalog, 28, ThrowError, WB.Name, CompName, PasteType, Temporary)

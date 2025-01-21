@@ -50,14 +50,14 @@ Private p_Handler As New std_Error
         Openn = p_Handler.Handle(ErrorCatalog, 1, ThrowError, FilePath)
     End Function
 
-    Public Function Closee(Optional Name As String = "", Optional ThrowError As Boolean = True) As Boolean
+    Public Function Closee(Optional Name As String = "", Optional SaveChanges As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
         Dim Temp As Workbook
         Dim ErrorValue As String
 
         On Error GoTo Error
         If Name = "" Then
             ErrorValue = WB.Name
-            WB.Close
+            WB.Close SaveChanges
         Else
             Set Temp = Exists(Name)
             If Temp Is Nothing Then
@@ -75,13 +75,18 @@ Private p_Handler As New std_Error
         
     End Function
 
-    Public Function Exists(Name As String, Optional ShouldExist As Boolean = True, Optional ReturnAsBoolean As Boolean = True) As Variant
+    Public Function Exists(NameOrPath As String, Optional ShouldExist As Boolean = True, Optional ReturnAsBoolean As Boolean = True) As Variant
         Dim WBs As Workbook
         Dim Found As Boolean
+        Dim FSO As Object
+
+        Set FSO = CreateObject("Scripting.FileSystemObject")
+        If FSO.FileExists(NameOrPath) Then Found = True: GoTo SkipWB
 
         For Each WBs In Workbooks
-            If WBs.Name = Name Then Found = True: Exit For
+            If WBs.Name = NameOrPath Then Found = True: Exit For
         Next WBs
+        SkipWB:
         If ReturnAsBoolean Then
             Exists = Not (Found Xor ShouldExist)
         Else
@@ -91,6 +96,39 @@ Private p_Handler As New std_Error
                 Set Exists = Nothing
             End If
         End If
+    End Function
+
+    Public Function Add(FilePath As String, Optional Unique As Boolean = True, Optional ThrowError As Boolean = True) As Boolean
+        Dim i As Long, j As Long
+        Dim FolderSplit() As String
+        Dim FileEnding As String
+        On Error GoTo Error
+        If Exists(FilePath) Then
+            If Unique Then
+                Add = p_Handler.Handle(ErrorCatalog, 3, ThrowError, FilePath)
+            Else
+                Set WB = Workbooks.Add
+                FileEnding = Mid(FolderSplit(Ubound(FolderSplit)), 1, InStr(1, FolderSplit(Ubound(FolderSplit)), ".") - 1)
+                FolderSplit = Split(Replace(FilePath, "/", "\"), "\")
+                FolderSplit(Ubound(FolderSplit) - 1) = FolderSplit(Ubound(FolderSplit) - 1) & i
+                Do Until Exists(FilePath)
+                    i = i + 1
+                    For j = 0 To Ubound(FolderSplit) - 2
+                        FilePath = FilePath & FolderSplit(j)
+                    Next j
+                    FilePath = FilePath & Mid(FolderSplit(j), 1, Len(FolderSplit(j - 1))) & i
+                    FilePath = FilePath & FolderSplit(j + 1)
+                Loop
+                WB.SaveAs(FilePath)
+            End If
+        Else
+            Set WB = Workbooks.Add
+            WB.SaveAs(FilePath)
+        End If
+        Exit Function
+
+        Error:
+        Add = p_Handler.Handle(ErrorCatalog, 4, ThrowError, FilePath)
     End Function
 
     Private Sub Class_Initialize()
@@ -106,8 +144,8 @@ Private p_Handler As New std_Error
         ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "xl_Workbook"
         ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not open workbook"
         ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could not close workbook"
-        ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "PLACEHOLDER"
-        ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "PLACEHOLDER"
+        ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "File already exists"
+        ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Couldnt add and save Workbook"
         ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "PLACEHOLDER"
         ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "PLACEHOLDER"
         ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "PLACEHOLDER"
