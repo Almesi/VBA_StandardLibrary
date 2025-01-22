@@ -23,13 +23,13 @@ Private Shader(2) As Long ' 0 = VertexShader, 1 = FragmentShader, 2 = Linked Sha
 
 ' Public Errormethods
 
-    Public Property Let SetHandler(n_Handler As std_Error)
-        Set Handler = n_Handler
-    End Function
+Public Property Let SetHandler(n_Handler As std_Error)
+    Set Handler = n_Handler
+End Function
 
-    Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = Handler.IS_ERROR
-    End Property
+Public Property Get IS_ERROR() As Boolean
+    IS_ERROR = Handler.IS_ERROR
+End Property
 
     Public Function CreateFromString(VertexShaderSource As String, FragmentShaderSource As String, Optional ThrowError As Boolean = True) As Boolean
 

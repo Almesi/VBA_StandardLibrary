@@ -22,8 +22,8 @@ Private Const ERROR_CATEGORY        As Long    = 0002
 
 Private       p_ShowError           As Boolean
 Private       p_LogError            As Boolean
-Private       p_LoggingDestination  As Variant
-Private       p_ShowDestination     As Variant
+Private       p_LoggingDestination  As New std_Destination
+Private       p_ShowDestination     As New std_Destination
 
 Public Event  BeforeLog(Message As String)
 Public Event  AfterLog(Message As String)
@@ -44,19 +44,11 @@ Public Event  AfterShow(Message As String)
     End Property
 
     Public Property Let LoggingDestination(n_Destination As Variant)
-        If IsObject(n_Destination) Then
-            Set p_LoggingDestination = n_Destination
-        Else
-            p_LoggingDestination = n_Destination
-        End If
+        p_LoggingDestination.Destination = n_Destination
     End Property
 
     Public Property Let ShowDestination(n_Destination As Variant)
-        If IsObject(n_Destination) Then
-            Set p_ShowDestination = n_Destination
-        Else
-            p_ShowDestination = n_Destination
-        End If
+        p_ShowDestination.Destination = n_Destination
     End Property
 
     Public Function Create(Optional n_ShowError As Boolean = True, Optional n_LogError As Boolean = True, Optional n_LoggingDestination As Variant, Optional n_ShowDestination As Variant) As std_Error
@@ -100,64 +92,37 @@ Public Event  AfterShow(Message As String)
 
 ' Private Errormethods
     Private Sub Logging(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
-
         If p_LogError Then
-            Dim i As Long
-            Dim fso As Object
-            Dim TextStream As Object
             Dim Text As String
             Text = GetMessage(Catalog, Index, ErrorValues)
             RaiseEvent BeforeLog(Text)
-            Set fso = CreateObject("Scripting.FileSystemObject")
-            Select Case True
-                Case (p_LoggingDestination Is Nothing)         : Debug.Print Text
-                Case TypeName(p_LoggingDestination) = "Console": Call LoggingConsole(GetMessage(Catalog, Index, ErrorValues))
-                Case TypeName(p_LoggingDestination) = "Range"
-                    Do Until p_LoggingDestination.Offset(i, 0).Formula = ""
-                        i = i + 1
-                    Loop
-                    p_LoggingDestination.Offset(i, 0).Formula = Text
-                Case TypeName(p_LoggingDestination) = "File", TypeName(p_LoggingDestination) = "String"
-                    If TypeName(p_LoggingDestination) = "String" Then
-                        If fso.FileExists(p_LoggingDestination) Then
-                            Set TextStream = fso.GetFile(p_LoggingDestination).OpenAsTextStream(2, 2)
-                        End If
-                    Else
-                        Set TextStream = p_LoggingDestination.OpenAsTextStream(2, 2) '(ForWriting, TristateUseDefault)
-                    End If
-                    TextStream.WriteLine Text
-                    TextStream.Close
-            End Select
+            Call p_LoggingDestination.Add(Text)
             RaiseEvent AfterLog(Text)
         End If
-    End Sub
-
-    Private Sub LoggingConsole(Text As String)
-        Call p_LoggingDestination.PrintEnter(Text, (&H100000FF - &H10000000))
     End Sub
     
     Private Sub Showing(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty)
         Dim Text As String
         Text = GetMessage(Catalog, Index, ErrorValues)
         If p_ShowError Then
-            Dim Temp As Variant
             RaiseEvent BeforeShow(Text)
-            Select Case True
-                Case (p_ShowDestination Is Nothing): Temp = MsgBox(Text, vbExclamation, "ERROR")
-            End Select
+            Call p_ShowDestination.Add(Text)
             RaiseEvent AfterShow(Text)
         End If
     End Sub
     
     Private Function Ask(Catalog() As Variant, Index As Long, Optional ErrorValues As Variant = Empty) As Boolean
+        Dim Text As String
+        Dim Temp As Variant
+        Text = GetMessage(Catalog, Index, ErrorValues)
         If p_ShowError Then
-            Dim Temp As Variant
             RaiseEvent BeforeShow(Text)
-            Select Case True
-                Case (p_ShowDestination Is Nothing)            : Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
-                Case TypeName(p_LoggingDestination) = "Console": Ask = AskConsole(GetMessage(Catalog, Index, ErrorValues))
-            End Select
-            If Temp = False Then Ask = IS_ERROR
+            If TypeName(p_ShowDestination.Destination) = "Console" Then
+                Ask = AskConsole(Text)
+            Else
+                Temp = MsgBox(GetMessage(Catalog, Index, ErrorValues), vbExclamation, "ERROR")
+                If Temp = False Then Ask = IS_ERROR
+            End If
             RaiseEvent AfterShow(Text)
         End If
     End Function
@@ -218,8 +183,8 @@ Public Event  AfterShow(Message As String)
         ProtInit
         p_ShowError = True
         p_LogError = True
-        Set p_LoggingDestination = Nothing
-        Set p_ShowDestination = Nothing
+        p_LoggingDestination.Destination = Nothing
+        p_ShowDestination.Destination = Nothing
     End Sub
 
     Private Sub Class_Terminate()

@@ -84,11 +84,11 @@ Option Explicit
         Dim Temp() As Variant
 
         RaiseEvent BeforeDelete()
-        Temp = p_Data
         Size = Size - 1
         If Size = -1 Then
             p_Data = Temp
         Else
+            Temp = p_Data
             ReDim p_Data(Size)
             For i = 0 To Size
                 If IsObject(Temp(i)) Then

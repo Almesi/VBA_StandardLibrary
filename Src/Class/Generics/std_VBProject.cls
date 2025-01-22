@@ -73,6 +73,7 @@ End Enum
         CompName = GetCompName(FilePath)
 
         Select Case True
+            Case 
             Case CheckFileFormat(FilePath) And CheckClassType(FilePath)
                 Include = Import(FilePath, CompName, PasteType, Temporary, ThrowError)
             Case FilePath Like "*.frx" And CheckClassType(FilePath) = False
@@ -183,7 +184,7 @@ End Enum
         Exit Function
         Error:
         AddCodeFromFile = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName)
-
+        
     End Function
 
     Public Function AddCodeFromComponent(FromComponent As VBComponent, ToComponent As VBComponent, Optional StartLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
@@ -477,6 +478,27 @@ End Enum
         End If
 
     End Function
+
+    Public Function GetFileString(FilePath As String, Optional ThrowError As Boolean = True) As String
+        Dim Line As String
+        Dim FileNumber As Integer
+        Dim ErrorCode As Long
+
+        On Error GoTo Error
+        FileNumber = FreeFile
+        ErrorCode = 21
+        Open FilePath For Input As #FileNumber
+        ErrorCode = 30
+        Do Until EOF(FileNumber)
+            Line Input #FileNumber, Line
+        Loop
+        Close #FileNumber
+        GetFileString = Line
+        Exit Function
+        Error:
+        Call p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath)
+        GetFileString = Empty
+    End Function
 '
 
 ' Private Procedures
@@ -648,7 +670,7 @@ End Enum
         ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "could not delete code from module"
         ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "could not include component"
         ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "could not include folder"
-        ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "PLACEHOLDER"
+        ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "could not extract line"
         ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
         ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
         ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"

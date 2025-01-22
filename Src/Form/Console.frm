@@ -479,6 +479,10 @@ Option Explicit
             Set GetPublicVariable = Nothing
         End If
     End Function
+
+    Public Property Get LineCount() As Long
+        LineCount = CurrentLineIndex
+    End Property
 '
 
 ' Initialization
