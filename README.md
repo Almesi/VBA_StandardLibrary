@@ -31,16 +31,16 @@ Basic programming tools:
 Manipulation of VBE:  
 
 * `std_VBProject.cls`
-* 
+
 Excel specific:
 
 * `xl_Workbook.cls`
 * `xl_Worksheet.cls`
-* 
+
 Files:
 
 * `std_File.cls`
-* 
+
 Beyond VBA:
 
 * `std_Graphics` for OpenGL implementation
