@@ -25,15 +25,22 @@ After some time it became tedious to remember all that, which let me to start th
 
 ## What is included
 Here a few examples of things included in this library  
+
 Basic programming tools:  
+
 Manipulation of VBE:  
+
 * `std_VBProject.cls`
-Excel specific:  
+* 
+Excel specific:
+
 * `xl_Workbook.cls`
 * `xl_Worksheet.cls`
-Files:  
+Files:
+
 * `std_File.cls`
-Beyond VBA:  
+Beyond VBA:
+
 * `std_Graphics` for OpenGL implementation
 
 ## Structure
