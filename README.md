@@ -24,16 +24,25 @@ Those codebases had some basic tools that i rewrote and specified for the use ra
 After some time it became tedious to remember all that, which let me to start this library, to standardize all those tools and allow myself to easily manipulate apps out of the VBA enviroment from within VBA.
 
 ## What is included
-Here a few examples of things included in this library
-Basic programming tools:
-Manipulation of VBE:
+Here a few examples of things included in this library  
+
+Basic programming tools:  
+
+Manipulation of VBE:  
+
 * `std_VBProject.cls`
+
 Excel specific:
+
 * `xl_Workbook.cls`
 * `xl_Worksheet.cls`
+
 Files:
+
 * `std_File.cls`
+
 Beyond VBA:
+
 * `std_Graphics` for OpenGL implementation
 
 ## Structure
