@@ -24,7 +24,7 @@ Public Function IncrementString(Text As String) As String
     Dim LastChar As String
     LastChar = Mid(Text, Len(Text))
     If IsNumeric(LastChar) Then
-        Mid(Text, Len(Text)) = CLng(LastChar) + 1
+        IncrementString = Mid(Text, Len(Text) - 1) & (CLng(LastChar) + 1)
     Else
         IncrementString = Text & 0
     End If
