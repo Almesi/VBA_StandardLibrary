@@ -39,7 +39,7 @@ End Enum
 
     Public Property Let Handler(n_Handler As std_Error)
         Set p_Handler = n_Handler
-    End Function
+    End Property
 
     Public Property Get IS_ERROR() As Boolean
         IS_ERROR = p_Handler.IS_ERROR
@@ -73,7 +73,6 @@ End Enum
         CompName = GetCompName(FilePath)
 
         Select Case True
-            Case 
             Case CheckFileFormat(FilePath) And CheckClassType(FilePath)
                 Include = Import(FilePath, CompName, PasteType, Temporary, ThrowError)
             Case FilePath Like "*.frx" And CheckClassType(FilePath) = False

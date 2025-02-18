@@ -88,15 +88,15 @@ Private Sub OnCancel()
     Hide
 End Sub
 
-Private Sub CommandButton1_Click() : Call SetDate(01) : End Sub
-Private Sub CommandButton2_Click() : Call SetDate(02) : End Sub
-Private Sub CommandButton3_Click() : Call SetDate(03) : End Sub
-Private Sub CommandButton4_Click() : Call SetDate(04) : End Sub
-Private Sub CommandButton5_Click() : Call SetDate(05) : End Sub
-Private Sub CommandButton6_Click() : Call SetDate(06) : End Sub
-Private Sub CommandButton7_Click() : Call SetDate(07) : End Sub
-Private Sub CommandButton8_Click() : Call SetDate(08) : End Sub
-Private Sub CommandButton9_Click() : Call SetDate(09) : End Sub
+Private Sub CommandButton1_Click() : Call SetDate(01): End Sub
+Private Sub CommandButton2_Click() : Call SetDate(02): End Sub
+Private Sub CommandButton3_Click() : Call SetDate(03): End Sub
+Private Sub CommandButton4_Click() : Call SetDate(04): End Sub
+Private Sub CommandButton5_Click() : Call SetDate(05): End Sub
+Private Sub CommandButton6_Click() : Call SetDate(06): End Sub
+Private Sub CommandButton7_Click() : Call SetDate(07): End Sub
+Private Sub CommandButton8_Click() : Call SetDate(08): End Sub
+Private Sub CommandButton9_Click() : Call SetDate(09): End Sub
 Private Sub CommandButton10_Click(): Call SetDate(10): End Sub
 Private Sub CommandButton11_Click(): Call SetDate(11): End Sub
 Private Sub CommandButton12_Click(): Call SetDate(12): End Sub

@@ -36,6 +36,7 @@ Public Function CreateFromFile(VertexShaderFile As String, FragmentShaderFile As
     Dim FileNumber As Long
     Dim VertexShaderSource As String
     Dim FragmentShaderSource As String
+    Dim Line As String
 
     FileNumber = FreeFile
     Open VertexShaderFile For Input As #FileNumber
@@ -66,9 +67,9 @@ Public Function CreateFromString(VertexShaderSource As String, FragmentShaderSou
         .FragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
 
         SourcePtr = VarPtr(VertexShaderSource)
-        Call glVertexShaderSource(.VertexShader, 1, SourcePtr, Len(VertexShaderSource))
+        Call glShaderSource(.VertexShader, 1, SourcePtr, Len(VertexShaderSource))
         SourcePtr = VarPtr(VertexShaderSource)
-        Call glFragmentShaderSource(.FragmentShader, 1, SourcePtr, Len(FragmentShaderSource))
+        Call glShaderSource(.FragmentShader, 1, SourcePtr, Len(FragmentShaderSource))
 
         Call glCompileShader(.VertexShader)
         Call glCompileShader(.FragmentShader)
@@ -78,12 +79,12 @@ Public Function CreateFromString(VertexShaderSource As String, FragmentShaderSou
         .LinkedShader = glCreateProgram()
         Call glAttachShader(.LinkedShader, .VertexShader)
         Call glAttachShader(.LinkedShader, .FragmentShader)
-        Call glLinkProgram(CreateFromStringLinkedShader)
+        Call glLinkProgram(.LinkedShader)
         If .LinkStatus(.LinkedShader) = False Then Exit Function  
     End With
 End Function
 
-Private Function CompileStatus(Shader As Long) As Boolean
+Public Function CompileStatus(Shader As Long) As Boolean
     Dim Compiled As Long
     Call glGetShaderiv(Shader, GL_COMPILE_STATUS, Compiled)
     If Compiled = 0 Then
@@ -93,7 +94,7 @@ Private Function CompileStatus(Shader As Long) As Boolean
     End If
 End Function
 
-Private Function LinkStatus(Shader As Long) As Boolean
+Public Function LinkStatus(Shader As Long) As Boolean
     Dim Linked As Long
     Call glGetProgramiv(Shader, GL_LINK_STATUS, Linked)
     If Linked = 0 Then
@@ -124,7 +125,6 @@ Private Sub DeleteShaders()
 End Sub
 
 Private Sub Class_Initialize()
-    ProtInit
 End Sub
 
 Private Sub Class_Terminate()

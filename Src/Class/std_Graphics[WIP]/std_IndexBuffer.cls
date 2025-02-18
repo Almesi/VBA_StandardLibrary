@@ -19,7 +19,7 @@ Private Sub Class_Initialize()
 End Sub
 
 Private Sub Class_Terminate()
-    Call GLCall(glDeleteBuffers(1, VarPtr(p_ID)) );
+    Call GLCall(glDeleteBuffers(1, VarPtr(p_ID)))
 End Sub
 
 Public Property Get ID() As Long
