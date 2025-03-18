@@ -15,37 +15,32 @@ Option Explicit
 Private p_ID As Long
 
 Private Sub Class_Initialize()
-    GLCall(glGenVertexArrays(1, VarPtr(p_ID)))
+    Call glGenVertexArrays(1, p_ID)
 End Sub
 
 Private Sub Class_Terminate()
-    GLCall(glDeleteVertexArrays(1, VarPtr(p_ID)))
+    Call glDeleteVertexArrays(1, p_ID)
 End Sub
 
-Public Sub AddBuffer(VB As VertexBuffer, Layout As VertexBufferLayout)
-    Dim Elements As VertexBufferLayout.VertexBufferElement
-    Dim Element As VertexBufferLayout.VertexBufferElement
+Public Sub AddBuffer(VB As std_Buffer, Layout As std_BufferLayout)
     Dim Offset As Long
     Dim i As Long
 
     Call Bind()
     Call VB.Bind()
-    Elements = Layout.Elements
-    For i = 0 To Elements.Size
-        Element = Elements(i)
-        With Elements(i)
-            Call GLCall(glEnableVertexAttribArray(i))
-            Call GLCall(glVertexAttribPointer(i, .Count, .Typee, .Normalized, Layout.GetStride(), INT2VOIDP(Offset)))
-            Offset += .Count * .GetSizeOfType(.Typee);
+    For i = 0 To Ubound(Layout.Elements)
+        With Layout.Element(i)
+            Call glEnableVertexAttribArray(i)
+            Call glVertexAttribPointer(i, .Count, .Typee, .Normalized, Layout.Stride(), Offset)
+            Offset = Offset + (.Count * Layout.GetSizeOfType(.Typee))
         End With
     Next i
-
 End Sub
 
 Public Sub Bind()
-    Call GLCall(glBindVertexArray(p_ID))
+    Call glBindVertexArray(p_ID)
 End Sub
 
-Public Sub Bind()
-    Call GLCall(glBindVertexArray(0))
+Public Sub UnBind()
+    Call glBindVertexArray(0)
 End Sub

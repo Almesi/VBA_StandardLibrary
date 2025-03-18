@@ -11,84 +11,68 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-
-Private Const GL_VERTEX_SHADER   As Long = &H8B31
-Private Const GL_FRAGMENT_SHADER As Long = &H8B30
-Private Const GL_COMPILE_STATUS  As Long = &H8B81
-Private Const GL_INFO_LOG_LENGTH As Long = &H8B84
-
-Private p_VertexShader As Long
-Private p_FragmentShader As Long
 Private p_LinkedShader As Long
 
-
-
-Public Property Get VertexShader()          : VertexShader     = p_VertexShader   : End Property
-Public Property Get FragmentShader()        : FragmentShader   = p_FragmentShader : End Property
 Public Property Get LinkedShader()          : LinkedShader     = p_LinkedShader   : End Property
-
-Public Property Let VertexShader(n_Value)   : p_VertexShader   = n_Value          : End Property
-Public Property Let FragmentShader(n_Value) : p_FragmentShader = n_Value          : End Property
 Public Property Let LinkedShader(n_Value)   : p_LinkedShader   = n_Value          : End Property
 
 
-Public Function CreateFromFile(VertexShaderFile As String, FragmentShaderFile As String) As std_Shader
-    Dim FileNumber As Long
+Public Function CreateFromFile(VertexShaderFile As String, FragmentShaderFile As String) As Boolean
     Dim VertexShaderSource As String
     Dim FragmentShaderSource As String
-    Dim Line As String
+    Dim FSO  as Object 
+    Dim TSO As Object 
 
-    FileNumber = FreeFile
-    Open VertexShaderFile For Input As #FileNumber
-    Do Until EOF(FileNumber)
-        Line Input #FileNumber, Line
-        VertexShaderSource = VertexShaderSource & Line
-    Loop
-    Close #FileNumber
-    
-    FileNumber = FreeFile
-    Open FragmentShaderFile For Input As #FileNumber
-    Do Until EOF(FileNumber)
-        Line Input #FileNumber, Line
-        FragmentShaderSource = FragmentShaderSource & Line
-    Loop
-    Close #FileNumber
-    Set CreateFromFile = CreateFromString(VertexShaderSource, FragmentShaderSource)
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+
+    Set TSO = FSO.OpenTextFile(VertexShaderFile) 
+    VertexShaderSource = TSO.ReadAll
+
+    Set TSO = FSO.OpenTextFile(FragmentShaderFile)
+    FragmentShaderSource = TSO.ReadAll
+    CreateFromFile = CreateFromString(VertexShaderSource, FragmentShaderSource)
 End Function
 
-Public Function CreateFromString(VertexShaderSource As String, FragmentShaderSource As String) As std_Shader
-    Dim SourcePtr As LongPtr
+Public Function CreateFromString(VertexShaderSource As String, FragmentShaderSource As String)
+    Dim VertexShader As Long
+    Dim FragmentShader As Long
+    VertexShader   = glCreateShader(GL_VERTEX_SHADER)
+    FragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
+    If CreateCompiledShader(VertexShader, VertexShaderSource)     = False Then Exit Function
+    If CreateCompiledShader(FragmentShader, FragmentShaderSource) = False Then Exit Function
+    p_LinkedShader = glCreateProgram()
+    Call glAttachShader(p_LinkedShader, VertexShader)
+    Call glAttachShader(p_LinkedShader, FragmentShader)
+    Call DeleteShader(VertexShader)
+    Call DeleteShader(FragmentShader)
+    Call glLinkProgram(p_LinkedShader)
+    If LinkStatus(p_LinkedShader) = False Then Exit Function
+    CreateFromString = True
+End Function
 
-    Set CreateFromString = New std_Shader
+Private Function CreateCompiledShader(Shader As Long, SourceCode As String) As Boolean
+    Dim SourcePtr(0) As LongPtr
+    Dim Length(0) As Long
+    Dim Chars() As Byte
 
-    With CreateFromString 
-
-        .VertexShader   = glCreateShader(GL_VERTEX_SHADER)
-        .FragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-
-        SourcePtr = VarPtr(VertexShaderSource)
-        Call glShaderSource(.VertexShader, 1, SourcePtr, Len(VertexShaderSource))
-        SourcePtr = VarPtr(VertexShaderSource)
-        Call glShaderSource(.FragmentShader, 1, SourcePtr, Len(FragmentShaderSource))
-
-        Call glCompileShader(.VertexShader)
-        Call glCompileShader(.FragmentShader)
-
-        If .CompileStatus(.VertexShader)   = False Then Exit Function
-        If .CompileStatus(.FragmentShader) = False Then Exit Function
-        .LinkedShader = glCreateProgram()
-        Call glAttachShader(.LinkedShader, .VertexShader)
-        Call glAttachShader(.LinkedShader, .FragmentShader)
-        Call glLinkProgram(.LinkedShader)
-        If .LinkStatus(.LinkedShader) = False Then Exit Function  
-    End With
+    Chars = StrConv(SourceCode, vbFromUnicode)
+    SourcePtr(0) = VarPtr(Chars(0))
+    If Chars(Ubound(Chars)) = 0 Then
+        Call glShaderSource(Shader, 1, VarPtr(SourcePtr(0)), 0)
+    Else
+        Length(0) = Ubound(Chars) + 1
+        Call glShaderSource(Shader, 1, VarPtr(SourcePtr(0)), Length(0))
+    End If
+    Call glCompileShader(Shader)
+    CreateCompiledShader = CompileStatus(Shader)
+    If CreateCompiledShader = False Then DeleteShader(Shader)
 End Function
 
 Public Function CompileStatus(Shader As Long) As Boolean
     Dim Compiled As Long
     Call glGetShaderiv(Shader, GL_COMPILE_STATUS, Compiled)
-    If Compiled = 0 Then
-        GetError(Shader)
+    If Compiled = GL_FALSE Then
+        Debug.Print PrintErrorShader(Shader)
     Else
         CompileStatus = True
     End If
@@ -97,36 +81,71 @@ End Function
 Public Function LinkStatus(Shader As Long) As Boolean
     Dim Linked As Long
     Call glGetProgramiv(Shader, GL_LINK_STATUS, Linked)
-    If Linked = 0 Then
-        Debug.Print GetError(Shader)
+    If Linked = GL_FALSE Then
+        Debug.Print PrintErrorProgram(Shader)
     Else
-        CompileStatus = True
+        LinkStatus = True
     End If
 End Function
 
-Private Function GetError(Shader As Long) As String
+Public Sub Bind()
+    Call glUseProgram(p_LinkedShader)
+End Sub
+
+Public Sub Unbind()
+    Call glUseProgram(0)
+End Sub
+
+' Public Sub SetUniform1i(Name As String, Value As Long)
+'     Call glUniform1i(GetUniformLocation(Name), Value)
+' End Sub
+' 
+' Public Sub SetUniform1f(Name As String, Value As Double)
+'     Call glUniform1f(GetUniformLocation(Name), Value)
+' End Sub
+' 
+' Public Sub SetUniform4f(Name As String, f0 As Double , f1 As Double, f2 As Double, f3 As Double)
+'     Call glUniform4f(GetUniformLocation(Name), f0, f1, f2, f3)
+' End Sub
+
+Private Function PrintErrorShader(Shader As Long) As String
     Dim Log() As Byte
     Dim InfoLogLength As Long
 
-    Call glGetProgramiv(Shader, GL_INFO_LOG_LENGTH, InfoLogLength)
-    ReDim Log(InfoLogLength - 1)
-    Call glGetProgramInfoLog(Shader, InfoLogLength, 0, Log(0))
-    GetError = StrConv(Log, vbUnicode)
+    Call glGetShaderiv(Shader, GL_INFO_LOG_LENGTH, InfoLogLength)
+    If InfoLogLength <> 0 Then
+        ReDim Log(InfoLogLength)
+        Call glGetShaderInfoLog(Shader, InfoLogLength, InfoLogLength, VarPtr(Log(0)))
+        PrintErrorShader = PrintErrorShader & StrConv(Log, vbUnicode)
+    End If
+    Call glGetShaderiv(Shader, GL_SHADER_SOURCE_LENGTH, InfoLogLength)
+    If InfoLogLength <> 0 Then
+        ReDim Log(InfoLogLength)
+        Call glGetShaderInfoLog(Shader, InfoLogLength, InfoLogLength, VarPtr(Log(0)))
+        PrintErrorShader = PrintErrorShader & StrConv(Log, vbUnicode)
+    End If
+End Function
+
+Private Function PrintErrorProgram(Program As Long) As String
+    Dim Log() As Byte
+    Dim InfoLogLength As Long
+
+    Call glGetProgramiv(Program, GL_INFO_LOG_LENGTH, InfoLogLength)
+    If InfoLogLength <> 0 Then
+        ReDim Log(InfoLogLength)
+        Call glGetProgramInfoLog(Program, InfoLogLength, InfoLogLength, VarPtr(Log(0)))
+        PrintErrorProgram = PrintErrorProgram & StrConv(Log, vbUnicode)
+    End If
 End Function
 
 Private Sub DeleteShader(Shader As Long)
+    Call glDeleteShader(Shader)
     Shader = 0
-End Sub
-
-Private Sub DeleteShaders()
-    Call DeleteShader(p_VertexShader)
-    Call DeleteShader(p_FragmentShader)
-    Call DeleteShader(p_LinkedShader)
 End Sub
 
 Private Sub Class_Initialize()
 End Sub
 
 Private Sub Class_Terminate()
-    Call DeleteShaders
+    Call DeleteShader(p_LinkedShader)
 End Sub

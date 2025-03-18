@@ -14,8 +14,8 @@ Option Explicit
 
 Private p_Destination As Variant
 
-Public Event  BeforeAdd(Text As String)
-Public Event  AfterAdd(Text As String)
+Public Event BeforeAdd(Text As String)
+Public Event AfterAdd(Text As String)
 
 Public Property Let Destination(n_Value As Variant)
     If IsObject(n_Value) Then
@@ -42,6 +42,7 @@ Public Function Add(Text As String) As Long
     Dim i As Long
     Dim fso As Object
     Dim TextStream As Object
+    On Error Resume Next ' To avoid empty TextStream file
     RaiseEvent BeforeAdd(Text)
     Select Case True
         Case TypeName(p_Destination) = "Console"
@@ -54,15 +55,19 @@ Public Function Add(Text As String) As Long
             Add = i
         Case TypeName(p_Destination) = "File", TypeName(p_Destination) = "String"
             If TypeName(p_Destination) = "String" Then
-                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(2, 2)
+                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(ForReading, TristateUseDefault)
+                Text = TextStream.ReadAll & Text
+                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(ForWriting, TristateUseDefault)
             Else
-                Set TextStream = p_Destination.OpenAsTextStream(2, 2) '(ForWriting, TristateUseDefault)
+                Set TextStream = p_Destination.OpenAsTextStream(ForReading, TristateUseDefault)
+                Text = TextStream.ReadAll & Text
+                Set TextStream = p_Destination.OpenAsTextStream(ForWriting, TristateUseDefault)
             End If
             TextStream.WriteLine Text
-            Add = Textstream.Line
+            Add = TextStream.Line
             TextStream.Close
         Case (p_Destination = Empty)
-            MsgBox(Text)
+            MsgBox (Text)
             Add = -1
         Case (p_Destination Is Nothing)
             Debug.Print Text

@@ -18,34 +18,65 @@ Private p_Width As Long
 Private p_Height As Long
 Private p_BPP As Long
 
-Public Function Create(Path As String) As std_Texture
-    p_FilePath = Path
-    Call stbi_set_flip_vertically_on_load(1)
-
-    p_LocalBuffer = stbi_load(VarPtr(Path), VarPtr(p_Width), VarPtr(p_Height), VarPtr(p_BPP), 4)
-    Call GLCall(glGenTextures(1, VarPtr(p_ID)))
-    Call GLCall(glBindTexture(GL_TEXTURE_2D, p_ID))
-
-    Call GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
-    Call GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR))
-    Call GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE))
-    Call GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE))
-
-    Call GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, p_Width, p_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, p_LocalBuffer))
-    Unbind()
-
-    If Ubound(p_LocalBuffer) >= 0 Then stbi_image_free(p_LocalBuffer);
-End Function
-
-Public Sub Bind(Slot As Long)
-    Call GLCall(glActiveTexture(GL_TEXTURE0 + Slot))
-    Call GLCall(glBindTexture(GL_TEXTURE_2D, p_ID))
-End Sub
-
-Public Sub Unbind()
-    Call GLCall(glBindTexture(GL_TEXTURE_2D, 0))
+Private Sub Class_Initialize()
+    Call glGenTextures(1, p_ID)
 End Sub
 
 Private Sub Class_Terminate()
-    Call GLCall(glDeleteTextures(1, VarPtr(p_ID)))
+    Call glDeleteTextures(1, p_ID)
+End Sub
+
+Public Function Create(Path As String) As std_Texture
+    Dim Image As New WIA.ImageFile
+
+    Call Image.LoadFile(Path)
+    p_LocalBuffer = Image.FileData.BinaryData
+    p_Width = Image.Width
+    p_Height = Image.Height
+    p_BPP = 4
+    p_FilePath = Path
+    
+    Call Bind(0)
+    Call glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    Call glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    Call glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+    Call glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+    Call glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, p_Width, p_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, VarPtr(p_LocalBuffer(0)))
+End Function
+
+Public Sub Bind(Slot As Long)
+    Call glActiveTexture(GL_TEXTURE0 + Slot)
+    Call glBindTexture(GL_TEXTURE_2D, p_ID)
+End Sub
+
+Public Sub Unbind()
+    Call glBindTexture(GL_TEXTURE_2D, 0)
+End Sub
+
+Sub GetImageInfoWIA()
+    Dim imgPath As String
+    Dim img As WIA.ImageFile
+    Dim width As Integer, height As Integer
+    Dim i As Long
+    
+    ' Create WIA ImageFile object
+    Set img = New WIA.ImageFile
+    
+    
+    imgPath = "C:\Users\deallulic\Documents\TestFolder\TestTexture.png"
+    img.LoadFile imgPath
+    
+    ' Get dimensions
+    width = img.width
+    height = img.height
+    
+    Dim one As LongPtr, two As LongPtr
+    Dim bytes() As Byte
+    bytes() = img.FileData.BinaryData
+    
+    For i = 0 To 40000
+        one = VarPtr(bytes(i))
+        two = VarPtr(bytes(0))
+        Debug.Print one - two
+    Next i
 End Sub

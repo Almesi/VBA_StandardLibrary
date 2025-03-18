@@ -13,12 +13,17 @@ Option Explicit
 
 
 Public Sub Clear()
-    Call GLCall(glClear( GL_COLOR_BUFFER_BIT))
+    Call glClear(GL_COLOR_BUFFER_BIT OR GL_DEPTH_BUFFER_BIT)
 End Sub
 
-Public Sub Draw(VA As std_VertexArray, IB As std_IndexBuffer, Shader As std_Shader) const
-    Call Shader.Bind()
+Public Sub Draw(VA As std_VertexArray, IndexBuffer As std_Buffer, Shader As std_Shader, Optional r As Single = 0, Optional g As Single = 0, Optional b As Single = 0, Optional a As Single = 0)
     Call VA.Bind()
-    Call IB.Bind()
-    Call GLCall(glDrawElements(GL_TRIANGLES, IB.Count, GL_UNSIGNED_INT, nullptr))
+    Call Shader.Bind()
+    Call glClearColor(r, g, b, a)
+    If IndexBuffer Is Nothing Then
+        Call glDrawArrays(GL_TRIANGLES, 0, 3)
+    Else
+        Call IndexBuffer.Bind()
+        Call glDrawElements(GL_TRIANGLES, IndexBuffer.Mesh.Count, GL_UNSIGNED_INT, 0)
+    End If
 End Sub
