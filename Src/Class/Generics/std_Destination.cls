@@ -55,13 +55,13 @@ Public Function Add(Text As String) As Long
             Add = i
         Case TypeName(p_Destination) = "File", TypeName(p_Destination) = "String"
             If TypeName(p_Destination) = "String" Then
-                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(ForReading, TristateUseDefault)
+                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(1, -2) ' For Reading, TriStateUseDefault
                 Text = TextStream.ReadAll & Text
-                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(ForWriting, TristateUseDefault)
+                Set TextStream = fso.GetFile(p_Destination).OpenAsTextStream(2, -2) ' For Writing, TriStateUseDefault
             Else
-                Set TextStream = p_Destination.OpenAsTextStream(ForReading, TristateUseDefault)
+                Set TextStream = p_Destination.OpenAsTextStream(1, -2)
                 Text = TextStream.ReadAll & Text
-                Set TextStream = p_Destination.OpenAsTextStream(ForWriting, TristateUseDefault)
+                Set TextStream = p_Destination.OpenAsTextStream(2, -2)
             End If
             TextStream.WriteLine Text
             Add = TextStream.Line

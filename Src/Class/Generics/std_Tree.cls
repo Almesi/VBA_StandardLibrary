@@ -12,13 +12,7 @@
 Option Explicit
 
 ' Private Variables
-    Private Type Node
-        Value As Variant
-        Branches() As Long
-    End Type
-
-
-    Private p_Tree() As Node
+    Private p_Tree() As std_TreeNode
     Private p_Width As Long
     Private p_Depth As Long
 '
@@ -33,112 +27,72 @@ Option Explicit
 ' Let Set Get
 
     Public Property Let Value(Index As Long, Variable As Variant)
-        If IsObject(Variable) Then
-            Set p_Tree(Index).Value = Variable
-        Else
-            p_Tree(Index).Value = Variable
-        End If
+        p_Tree(Index).Value = Variable
     End Property
-
     Public Property Get Value(Index As Long) As Variant
-        If IsObject(p_Tree(Index).Value) Then
-            Set Value = p_Tree(Index).Value
-        Else
-            Value = p_Tree(Index).Value
-        End If
+        Value = p_Tree(Index).Value
     End Function
 
-    Public Property Let TreeData(ByVal n_Tree As std_Tree)
-        Dim Temp() As Node
-        Temp = p_Tree
-        Me.Tree = n_Tree.Tree
-        p_Width = n_Tree.Width
-        p_Depth = n_Tree.Depth
-    End Property
+    Public Property Get Branches(Index As Long) As Long()
+        Branches = p_Tree(Index).Branches
+    End Function
 
-    Public Property Get Tree() As Variant()
-        Dim BiggestSize As Long: BiggestSize = -1
-        Dim i As Long, j As Long
-        Dim Temp() As Variant
-        ReDim Temp(UboundT(p_Tree), 0)
-        For i = 0 To UboundT(p_Tree)
-            Temp(i, 0) = p_Tree(i).Value
-            If BiggestSize < UboundK(p_Tree(i).Branches) Then BiggestSize = UboundK(p_Tree(i).Branches)
-        Next
-        If BiggestSize <> -1 Then ReDim Preserve Temp(UboundT(p_Tree), BiggestSize + 1)
-        For i = 0 To UboundK(Temp, 1)
-            For j = 1 To UboundK(Temp, 2)
-                If j =< UboundK(p_Tree(i).Branches) + 1 Then
-                    Temp(i, j) = p_Tree(i).Branches(j - 1)
-                End If
-            Next j
-        Next i
-        Tree = Temp
-    End Property
-
-    Public Property Let Tree(Data() As Variant)
-        Dim i As Long, j As Long, k As Long
-        Dim Temp() As Node
-        ReDim Temp(UboundK(Data, 1))
-        For i = 0 To UboundK(Data, 1)
-            Temp(i).Value = Data(i, 0)
-            j = 1
-            For j = 1 To UboundK(Data, 2)
-                If Data(i, j) = Empty Then Exit For
-            Next
-            j = j - 2 ' One for 1 and one for Empty
-            If j >= 0 Then ReDim Temp(i).Branches(j)
-            For k = 0 To j
-                Temp(i).Branches(k) = Data(i, k + 1)
-            Next
-        Next i
-        p_Tree = Temp
+    Public Property Get Tree() As std_TreeNode()
+        Tree = p_Tree
     End Property
 
     Public Property Get Width() As Long
         Width = p_Width
     End Property
-
     Public Property Get Depth() As Long
         Depth = p_Depth
+    End Property
+
+    Public Property Let Width(n_Value As Long)
+        p_Width = n_Value
+    End Property
+    Public Property Let Depth(n_Value As Long)
+        p_Depth = n_Value
     End Property
 '
 
 ' Public Functions
-    Public Function Create(Optional Branches As Long = -1, Optional Depth As Long = 0) As std_Tree
-        Call Init(Branches, Depth)
-        If Branches < -1 Or Depth < 0 Then
-            Set Create = Nothing
-        Else
-            Set Create = New std_Tree
-            Call CreateTreeRecursion(0, Branches, Depth)
-            Create.TreeData = Me
-        End If
-        Call Init(0, 0)
+    Public Function Create(Optional Branches As Long = 0, Optional Depth As Long = 0) As std_Tree
+        Set Create = New std_Tree
+        Call Create.CreateTreeRecursion(-1, Branches, Depth)
+        Create.Width = Branches
+        Create.Depth = Depth
     End Function
 
-    Public Function Add(Index As Long, Value As Variant) As Long
-        RaiseEvent BeforeAdd(Index, Value)
-        If Width <> -1 Then
-            ReDim Preserve p_Tree(UBoundT(p_Tree) + 1)
-            If IsObject(Value) Then
-                Set p_Tree(UBoundT(p_Tree)).Value = Value
-            Else
-                p_Tree(UBoundT(p_Tree)).Value = Value
-            End If
-
-            ReDim Preserve p_Tree(Index).Branches(UBoundK(p_Tree(Index).Branches) + 1)
-            p_Tree(Index).Branches(UBoundK(p_Tree(Index).Branches)) = UBoundT(p_Tree)
-            Add = UBoundT(p_Tree)
-        Else
-            Add = -1
+    Public Sub CreateTreeRecursion(ByVal CurrentNode As Long, ByVal Width As Long, ByVal Depth As Long)
+        Dim i As Long
+        If Depth > -1 Then
+            Depth = Depth - 1
+            For i = 0 To Width
+                Call CreateTreeRecursion(Add(CurrentNode, Empty), Width, Depth)
+            Next
         End If
+    End Sub
+
+    Public Function Add(Index As Long, Value As Variant) As Long
+        Dim NewSize As Long
+        RaiseEvent BeforeAdd(Index, Value)
+        If Index = -1 Then
+            NewSize = 0
+        Else
+            NewSize = UboundK(p_Tree) + 1
+            p_Tree(Index).AddBranch(NewSize)
+        End If
+        ReDim Preserve p_Tree(NewSize)
+        Set p_Tree(NewSize) = New std_TreeNode
+        p_Tree(NewSize).Value = Value
+        Add = NewSize
         RaiseEvent AfterAdd(Index, Value)
     End Function
 
     Public Function Delete(Index As Long) As Long
         Dim i As Long, j As Long
-        Dim Temp() As Node
+        Dim Temp() As New std_TreeNode
         Dim ToDelete() As Long
         Dim Skip As Boolean
         RaiseEvent BeforeDelete(Index)
@@ -146,8 +100,8 @@ Option Explicit
         ReDim ToDelete(0)
         ToDelete(0) = Index
         Call GetIndexAll(ToDelete, Index)
-        ReDim p_Tree(UBoundT(p_Tree) - (UBoundK(ToDelete) + 1))
-        For i = 0 To UBoundT(p_Tree)
+        ReDim p_Tree(UboundK(p_Tree) - (UBoundK(ToDelete) + 1))
+        For i = 0 To UboundK(p_Tree)
             For j = 0 To UBoundK(ToDelete)
                 If ToDelete(j) = i Then Skip = True: Exit For
             Next
@@ -155,7 +109,7 @@ Option Explicit
             Skip = False
         Next i
 
-        For i = 0 To UboundT(p_Tree)
+        For i = 0 To UboundK(p_Tree)
             For j = 0 To UboundK(ToDelete)
                 p_Tree(i).Branches = ReRollBranches(p_Tree(i).Branches, ToDelete(j))
             Next j
@@ -243,43 +197,16 @@ Option Explicit
         End If
     End Function
 
-    Public Sub Display()
-        Dim Temp() As String
-        Dim i As Long
-        Call DisplayX(-1, 0, Temp)
-        For i = 0 To UboundK(Temp)
-            Debug.Print Temp(i)
-        Next i
-    End Sub
-
     Public Sub Clear()
-        Dim Temp() As Node
+        Dim Temp() As New std_TreeNode
         p_Tree = Temp
     End Sub
 '
 
 ' Privates
-    Private Sub Init(Width As Long, Depth As Long)
-        ReDim p_Tree(0)
-        p_Width = Width
-        p_Depth = Depth
-    End Sub
 
     Private Function MiddleBranch(Index As Long) As Long
         MiddleBranch = Int(UBoundK(p_Tree(Index).Branches) / 2)
-    End Function
-
-    Private Function SetTo4Hex(Value As Variant) As String
-        If IsObject(Value) Then
-            SetTo4Hex = " Obj"
-        Else
-            SetTo4Hex = CStr(Hex(Value))
-        End If
-        Select Case Len(SetTo4Hex)
-            Case 1: SetTo4Hex = "000" & SetTo4Hex
-            Case 2: SetTo4Hex = "00"  & SetTo4Hex
-            Case 3: SetTo4Hex = "0"   & SetTo4Hex
-        End Select
     End Function
 
     Private Sub SortBranch(Arr() As Long, Ascending As Boolean)
@@ -331,43 +258,6 @@ Option Explicit
         Arr(UboundK(Arr)) = Value
     End Sub
 
-    Private Sub DisplayX(Index As Long, Depth As Long, Messages() As String)
-        Dim i As Long
-        Dim CurrentMessage As String
-        Dim BranchSize As Long
-
-        If Index = -1 Then 
-            ReDim Messages (0)
-            Messages(0) = SetTo4Hex(p_Tree(0).Value)
-            Index = 0
-            Depth = 1
-        End If
-        BranchSize = UboundK(p_Tree(Index).Branches)
-
-        If Depth > UboundK(Messages) And BranchSize <> -1 Then ReDim Preserve Messages(Depth)
-        If BranchSize <> -1 Then
-            For i = 0 To BranchSize
-                CurrentMessage = CurrentMessage & SetTo4Hex(p_Tree(p_Tree(Index).Branches(i)).Value) & " "
-                Call DisplayX(p_Tree(Index).Branches(i), Depth + 1, Messages)
-            Next i
-            Messages(Depth) = Messages(Depth) & CurrentMessage
-        End If
-
-    End Sub
-
-    Private Sub CreateTreeRecursion(ByVal CurrentNode As Long, ByVal Width As Long, ByVal Depth As Long)
-        Dim i As Long
-        Dim Temp As Long
-        If Depth > -1 Then
-            If Width = -1 Then Width = 0
-            Depth = Depth - 1
-            For i = 0 To Width
-                Temp = Add(CurrentNode, 0)
-                Call CreateTreeRecursion(Temp, Width, Depth)
-            Next
-        End If
-    End Sub
-
     Private Function ReRollBranches(Data() As Long, CompareValue As Long) As Long()
         Dim Temp() As Long
         Dim Index As Long
@@ -408,9 +298,8 @@ Option Explicit
         UBoundK = UBound(Arr, Dimension)
     End Function
 
-    Private Function UBoundT(Tree() As Node) As Long
-        On Error Resume Next
-        UBoundT = -1
-        UBoundT = UBound(Tree)
-    End Function
+    Private Sub Class_Initialize()
+        p_Width = -1 ' -1 means it can have a variable width
+        p_Depth = 0
+    End Sub
 '

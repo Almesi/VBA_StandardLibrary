@@ -13,16 +13,16 @@ Option Explicit
 
 Implements IConfig
 
-Private p_Destination As Range
+Private p_Destination As Worksheet
 
 Public Event BeforeLet(Indicator As Variant, Value As Variant)
 Public Event AfterLet(Indicator As Variant, Value As Variant)
 Public Event BeforeGet(Indicator As Variant)
 Public Event AfterGet(Indicator As Variant)
 
-Public Function Create(n_Destination As Variant) As std_ConfigRange
-    Set Create = New std_ConfigRange
-    Create.IConfig_Destination = n_Destination
+Public Function IConfig_Create(n_Destination As Variant) As IConfig
+    Set IConfig_Create = New std_ConfigRange
+    IConfig_Create.Destination = n_Destination
 End Function
 
 Public Property Let IConfig_Destination(n_Destination As Variant)
@@ -94,8 +94,12 @@ End Function
 
 Public Function GetScope(Indicator As Variant) As Range
     Dim Rng As Range
-    Set Rng = p_Destination.Find(Indicator)
+    Set Rng = p_Destination.Cells.Find(Indicator)
     If Not Rng Is Nothing Then
-        Set GetScope = Range(Rng.Offset(0, 1), Rng.End(xlToRight))
+        If Rng.Offset(0, 2).Formula = Empty Then
+            Set GetScope = Rng.Offset(0, 1)
+        Else
+            Set GetScope = Range(Rng.Offset(0, 1), Rng.End(xlToRight))
+        End If
     End If
 End Function

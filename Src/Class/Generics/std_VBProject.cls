@@ -289,7 +289,6 @@ End Enum
     End Function
 
     Public Function AddReference(Optional AddFromFile As String = "", Optional AddFromGuid As String = "", Optional Major As Long = 0, Optional Minor As Long = 0, Optional ThrowError As Boolean = True) As Boolean
-
         Dim ErrorCode As Long
         Dim Ref As VBIDE.Reference
 
@@ -311,7 +310,6 @@ End Enum
 
         Error:
         AddReference = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, AddFromFile, AddFromGuid, Major, Minor)
-
     End Function
 
     Public Function RemoveReference(Value As String, AccordingTo As String, Optional ThrowError As Boolean = True) As Boolean

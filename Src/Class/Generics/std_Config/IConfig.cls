@@ -11,6 +11,9 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
+Public Function Create(n_Destination As Variant) As IConfig
+End Function
+
 Public Property Let Destination(n_Destination As Variant)
 End Property
 
