@@ -11,9 +11,12 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private VBProj As VBIDE.VBProject
-Private ErrorCatalog(1, 99) As Variant
 Private TempIncludes() As String
-Private p_Handler As New std_Error
+Private p_Handler As std_ErrorHandler
+
+Private Template As String
+Private CurrentIdentity As String
+Private ErrorValue As Variant
 
 Public Enum VBProjPasteType
     NormalInclude = 0
@@ -37,36 +40,33 @@ End Enum
 
 ' Public Procedures
 
-    Public Property Let Handler(n_Handler As std_Error)
+    Public Property Let Handler(n_Handler As std_ErrorHandler)
         Set p_Handler = n_Handler
     End Property
-
-    Public Property Get IS_ERROR() As Boolean
-        IS_ERROR = p_Handler.IS_ERROR
+    Public Property Get Handler() As std_ErrorHandler
+        Set Handler = p_Handler
     End Property
-
-    Public Function Create(Project As VBIDE.VBProject) As std_VBProject
-        Set Create = New std_VBProject
-        Create.Project = Project
-    End Function
 
     Public Property Let Project(Project As VBIDE.VBProject)
         Set VBProj = Project
     End Property
-
     Public Property Get Project() As VBIDE.VBProject
         Set Project = VBProj
     End Property
 
-    Public Function Include(FilePath As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As vbext_ComponentType = vbext_ct_StdModule, Optional ThrowError As Boolean = True) As Boolean
+    Public Function Create(n_Project As VBIDE.VBProject, n_Handler As std_ErrorHandler) As std_VBProject
+        Set Create = New std_VBProject
+        Create.Project = n_Project
+        Create.Handler = n_Handler
+    End Function
+
+    Public Function Include(FilePath As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False, Optional TryAsInclude As Boolean = False, Optional ComponentName As String = Empty, Optional ComponentType As vbext_ComponentType = vbext_ct_StdModule) As Boolean
     
         Dim Temp() As String
         Dim CompName As String
-        Dim ErrorCode As Long
-        Dim ErrorValue As Variant
 
-        If FilePath = Empty Then ErrorCode = 5: ErrorValue = FilePath: GoTo Error
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error
+        If EmptyString(FilePath, "FilePath", "Include") = Handler.IS_ERROR Then Exit Function
+        If ValidPasteType(PasteType, "Include") = Handler.IS_ERROR Then Exit Function
 
         FilePath = ValidateFilePath(FilePath)
         Temp = Split(FilePath, "/")
@@ -74,61 +74,58 @@ End Enum
 
         Select Case True
             Case CheckFileFormat(FilePath) And CheckClassType(FilePath)
-                Include = Import(FilePath, CompName, PasteType, Temporary, ThrowError)
+                Include = Import(FilePath, CompName, PasteType, Temporary)
             Case FilePath Like "*.frx" And CheckClassType(FilePath) = False
             Case CheckClassType(FilePath) = False
-                If ComponentName = Empty Then ErrorCode = 18: ErrorValue = ComponentName: GoTo Error
-                If ComponentType = 0     Then ErrorCode = 20: ErrorValue = ComponentType: GoTo Error
-                If DeleteCode(CompName) <> p_Handler.IS_ERROR Then
-                    Include = AddCodeFromFile(FilePath, CompName, 1, 10, -1, ThrowError)
+                If EmptyString(ComponentName, "ComponentName", "Include") = Handler.IS_ERROR Then Exit Function
+                If ValidComponentType(ComponentType, "Include") = Handler.IS_ERROR Then Exit Function
+                If DeleteCode(CompName) <> Handler.IS_ERROR Then
+                    Include = AddCodeFromFile(FilePath, CompName, 1, 10, -1)
                 End If
             Case TryAsInclude
-                If ComponentName = Empty Then ErrorCode = 18: ErrorValue = ComponentName: GoTo Error
-                If ComponentType = 0     Then ErrorCode = 20: ErrorValue = ComponentType: GoTo Error
-                If AddComponent(ComponentName, ComponentType, PasteType, ThrowError) <> p_Handler.IS_Error Then
-                    Include = AddCodeFromFile(FilePath, ComponentName, 1, 0, -1, ThrowError)
+                If EmptyString(ComponentName, "ComponentName", "Include") = Handler.IS_ERROR Then Exit Function
+                If ValidComponentType(ComponentType, "Include") = Handler.IS_ERROR Then Exit Function
+                If AddComponent(ComponentName, ComponentType, PasteType) <> Handler.IS_ERROR Then
+                    Include = AddCodeFromFile(FilePath, ComponentName, 1, 0, -1)
                 End If
                 Call AddTemporary(Temporary, CompName)
             Case Else
-                ErrorCode = 16: ErrorValue = FilePath: GoTo Error
+                Template = "wrong file format. It needs to be .cls, .bas or .frm: VAR0"
+                ErrorValue =  FilePath
+                GoTo Error
         End Select
         Exit Function
 
         Error:
-        Include = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ComponentType)
-    
+        CurrentIdentity = "Include"
+        Include = GetError(Handler.IS_ERROR)
     End Function
     
-    Public Function Declude(CompName As String, Optional ThrowError As Boolean = True) As Boolean
+    Public Function Declude(CompName As String) As Boolean
 
         Dim VBComp As VBIDE.VBComponent
         Dim Found As Boolean
-        Dim ErrorCode As Long
 
         On Error GoTo Error
-        If CompName = Empty           Then ErrorCode = 05: GoTo Error
-        If CompName = "std_VBProject" Then ErrorCode = 17: GoTo Error
-        If CompName = "p_Handler"       Then ErrorCode = 17: GoTo Error
+        If EmptyString(CompName, "CompName", "Declude") = Handler.IS_ERROR Then Exit Function
         Set VBComp = VBProj.VBComponents(CompName) 
         VBProj.VBComponents.Remove VBComp
         Exit Function
 
         Error:
-        ErrorCode = 14
-        If Exists(CompName, VBProj) = False Then ErrorCode = 12
-        Declude = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName)
-    
+        CurrentIdentity = "Declude"
+        Template = "could not declude: VAR0"
+        If Exists(CompName, VBProj) = False Then Template = "Component doesnt exist: VAR0"
+        Declude = GetError(Handler.IS_ERROR)
     End Function
     
-    Public Function AddComponent(Name As String, ComponentType As vbext_ComponentType, Optional PasteType As VBProjPasteType = NormalInclude, Optional ThrowError As Boolean = True) As Boolean
+    Public Function AddComponent(Name As String, ComponentType As vbext_ComponentType, Optional PasteType As VBProjPasteType = NormalInclude) As Boolean
     
         Dim VBComp As VBComponent
         Dim i As Long
-        Dim ErrorValue As Variant
-        Dim ErrorCode As Long
 
-        If ComponentType <> 1 And ComponentType <> 2 And ComponentType <> 3 And ComponentType <> 11 And ComponentType <> 100 Then ErrorCode = 20: ErrorValue = Name: GoTo Error
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error 
+        If ValidComponentType(ComponentType, "AddComponent") = Handler.IS_ERROR Then Exit Function
+        If ValidPasteType(PasteType, "AddComponent") = Handler.IS_ERROR Then Exit Function
 
         If Exists(Name, VBProj) Then
             If PasteType = 2 Then
@@ -141,11 +138,9 @@ End Enum
             ElseIf PasteType = 1 Then
                 Exit Function
             Else
-                If ThrowError Then
-                    AddComponent = ErrorCode = 19: ErrorValue = Name: GoTo Error
-                Else
-                    AddComponent = p_Handler.IS_ERROR
-                End If
+                Template = "could not create Component: VAR0"
+                ErrorValue = Name
+                GoTo Error
             End If
         Else
             Set VBComp = VBProj.VBComponents.Add(ComponentType)
@@ -154,26 +149,28 @@ End Enum
         Exit Function
 
         Error:
-        AddComponent = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue)
-    
+        CurrentIdentity = "AddComponent"
+        AddComponent = GetError(Handler.IS_ERROR)
     End Function
     
-    Public Function AddCodeFromFile(FilePath As String, CompName As String, Optional StartLine As Long = 1, Optional FileStart As Long = 0, Optional FileEnd As Long = -1, Optional ThrowError As Boolean = True) As Boolean
+    Public Function AddCodeFromFile(FilePath As String, CompName As String, Optional StartLine As Long = 1, Optional FileStart As Long = 0, Optional FileEnd As Long = -1) As Boolean
     
         Dim CodeMod As CodeModule
         Dim Line As String
         Dim FileNumber As Integer
         Dim i As Long
-        Dim ErrorCode As Long
 
         On Error GoTo Error
-        ErrorCode = 12
+        Template = "Component doesnt exist: VAR0"
+        ErrorValue = CompName
         Set CodeMod = VbProj.VBComponents(CompName).CodeModule
         FileNumber = FreeFile
-        ErrorCode = 21
+        Template = "could not open file: VAR0"
+        ErrorValue = FilePath
         Open FilePath For Input As #FileNumber
-        ErrorCode = 22
+        Template = "could not add line of code: VAR0"
         Do Until EOF(FileNumber) Or i = FileEnd
+            ErrorValue = Line
             Line Input #FileNumber, Line
             If i >= FileStart Then CodeMod.InsertLines StartLine, Line
             StartLine = StartLine + 1
@@ -181,12 +178,13 @@ End Enum
         Loop
         Close #FileNumber
         Exit Function
-        Error:
-        AddCodeFromFile = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName)
         
+        Error:
+        CurrentIdentity = "AddCodeFromFile"
+        AddCodeFromFile = GetError(Handler.IS_ERROR)
     End Function
 
-    Public Function AddCodeFromComponent(FromComponent As VBComponent, ToComponent As VBComponent, Optional StartLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    Public Function AddCodeFromComponent(FromComponent As VBComponent, ToComponent As VBComponent, Optional StartLine As Long = 0) As Boolean
     
         On Error GoTo Error
         If StartLine = 0 Then
@@ -197,11 +195,11 @@ End Enum
         Exit Function
 
         Error:
-        AddCodeFromComponent = p_Handler.Handle(ErrorCatalog, 28, ThrowError, FromComponent.Name)
-
+        CurrentIdentity = "AddCodeFromComponent"
+        AddCodeFromComponent = GetError(Handler.IS_ERROR)
     End Function
 
-    Public Function AddCodeFromString(CompName As String, Text As String, Optional StartLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    Public Function AddCodeFromString(CompName As String, Text As String, Optional StartLine As Long = 0) As Boolean
 
         Dim VBComp As VBComponent
         Set VBComp = Exists(CompName, VBProj, True, False)
@@ -212,65 +210,63 @@ End Enum
                 VBComp.CodeModule.AddFromString(Text)
             End If
         Else
-            AddCodeFromString = p_Handler.Handle(ErrorCatalog, 12, ThrowError, CompName, Text)
+            CurrentIdentity = "AddCodeFromString"
+            Template = "Component doesnt exist: VAR0"
+            ErrorValue = CompName
+            AddCodeFromString = GetError(Handler.IS_ERROR)
         End If
-
     End Function
 
-    Public Function DeleteCode(CompName As String, Optional StartLine As Long = 1, Optional EndLine As Long = 0, Optional ThrowError As Boolean = True) As Boolean
+    Public Function DeleteCode(CompName As String, Optional StartLine As Long = 1, Optional EndLine As Long = 0) As Boolean
 
         Dim CodeModule As CodeModule
-        Dim ErrorCode As Long
 
         On Error GoTo Error
-        If CompName = Empty Then DeleteCode = ErrorCode = 5: GoTo Error
+        If EmptyString(CompName, "CompName", "DeleteCode") = Handler.IS_ERROR Then Exit Function
         Set CodeModule = VBProj.VBComponents(CompName).CodeModule
         If EndLine = 0 Then EndLine = CodeModule.CountOfLines
-        ErrorCode = 27
+        Template = "could not delete code from module: VAR0, VAR1, VAR2"
         CodeModule.DeleteLines StartLine, EndLine
         Exit Function
 
         Error:
-        DeleteCode = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, CompName, StartLine, EndLine)
-
+        CurrentIdentity = "DeleteCode"
+        DeleteCode = GetError(Handler.IS_ERROR)
     End Function
     
-    Public Function IncludeFolder(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
+    Public Function IncludeFolder(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
-        IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
+        IncludeFolder = IncludeFolderArr(FolderPath, PasteType, Temporary, TryAsInclude, Ignores)
     End Function
 
-    Public Function IncludeFolderArr(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, ThrowError As Boolean, Ignore As Variant) As Boolean
+    Public Function IncludeFolderArr(FolderPath As String, PasteType As VBProjPasteType, Temporary As Boolean, TryAsInclude As Boolean, Ignore As Variant) As Boolean
     
         Dim fso As Object
         Dim Folder As Object
-        Dim ErrorCode As Long
-        Dim ErrorValue As Variant
     
         On Error GoTo Error
-        If FolderPath = Empty Then ErrorCode = 5: ErrorValue = FolderPath: GoTo Error
-        If PasteType <> 0 And PasteType <> 1 And PasteType <> 2 Then ErrorCode = 25: ErrorValue = PasteType: GoTo Error
-        ErrorCode = 29
+        If EmptyString(FolderPath, "FolderPath", "InlcudeFolderArr") = Handler.IS_ERROR Then Exit Function
+        If ValidPasteType(PasteType, "InlcudeFolderArr") = Handler.IS_ERROR Then Exit Function
+        Template = "could not include folder: VAR0"
         ErrorValue = FolderPath
         Set fso = CreateObject("Scripting.FileSystemObject")
         Set Folder = fso.GetFolder(FolderPath)
-        IncludeFolderArr = RecursiveInclude(Folder, PasteType, Temporary, Ignore, TryAsInclude, ThrowError)
+        IncludeFolderArr = RecursiveInclude(Folder, PasteType, Temporary, Ignore, TryAsInclude)
         Exit Function
 
         Error:
-        IncludeFolderArr = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue): Exit Function
-    
+        CurrentIdentity = "IncludeFolderArr"
+        IncludeFolderArr = GetError(Handler.IS_ERROR)
     End Function
     
-    Public Function DecludeFolder(FolderPath As String, Optional ThrowError As Boolean = True) As Boolean
+    Public Function DecludeFolder(FolderPath As String) As Boolean
     
         Dim VBComp As VBComponent
         Dim fso As Object
         Dim Folder As Object
-        Dim ErrorCode As Long
     
-        If FolderPath = Empty Then ErrorCode = 5: GoTo Error
+        If EmptyString(FolderPath, "FolderPath", "InlcudeFolderArr") = Handler.IS_ERROR Then Exit Function
         Set fso = CreateObject("Scripting.FileSystemObject")
         Set Folder = fso.GetFolder(FolderPath)
         For Each File In Folder.Files
@@ -279,40 +275,40 @@ End Enum
             Next
         Next    
         For Each SubFolder In Folder.SubFolders
-            DecludeFolder = DecludeFolder(SubFolder.Path, ThrowError)
+            DecludeFolder = DecludeFolder(SubFolder.Path)
         Next
         Exit Function
 
         Error:
-        DecludeFolder = p_Handler.Handle(ErrorCatalog, 5, ThrowError, FolderPath)
-    
+        CurrentIdentity = "DecludeFolder"
+        DecludeFolder = GetError(Handler.IS_ERROR)
     End Function
 
-    Public Function AddReference(Optional AddFromFile As String = "", Optional AddFromGuid As String = "", Optional Major As Long = 0, Optional Minor As Long = 0, Optional ThrowError As Boolean = True) As Boolean
-        Dim ErrorCode As Long
+    Public Function AddReference(Optional AddFromFile As String = "", Optional AddFromGuid As String = "", Optional Major As Long = 0, Optional Minor As Long = 0) As Boolean
         Dim Ref As VBIDE.Reference
 
         On Error GoTo Error
         If AddFromFile = "" Then
             If AddFromGuid = "" Then
-                ErrorCode = 5
+                Template = "String empty: VAR0, VAR1, VAR2, VAR3"
             ElseIf Major = 0 Or Minor = 0 Then
-                ErrorCode = 25
+                Template = "invalid value: VAR0, VAR1, VAR2, VAR3"
             Else
-                ErrorCode = 24
+                Template = "could not add reference via AddFromGui: VAR0, VAR1, VAR2, VAR3"
                 Set Ref = VBProj.References.AddFromGuid(AddFromGuid, Major, Minor)
             End If
         Else
-            ErrorCode = 23
+            Template = "could not add reference via AddFromFile: VAR0, VAR1, VAR2, VAR3"
             Set Ref = VBProj.References.AddFromFile(AddFromFile)
         End If
         Exit Function
 
         Error:
-        AddReference = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, AddFromFile, AddFromGuid, Major, Minor)
+        CurrentIdentity = "AddReference"
+        AddReference = GetError(Handler.IS_ERROR)
     End Function
 
-    Public Function RemoveReference(Value As String, AccordingTo As String, Optional ThrowError As Boolean = True) As Boolean
+    Public Function RemoveReference(Value As String, AccordingTo As String) As Boolean
         
         Dim Ref As VBIDE.Reference
         
@@ -333,8 +329,8 @@ End Enum
         Exit Function
 
         Error:
-        RemoveReference = p_Handler.Handle(ErrorCatalog, 26, ThrowError, Ref.FullPath, Ref.Name, Ref.Major, Ref.Minor, Ref.Description, Ref.Type, Ref.BuiltIn, Ref.GUID, Ref.IsBroken)
-    
+        CurrentIdentity = "RemoveReference"
+        RemoveReference = GetError(Handler.IS_ERROR)
     End Function
 
     Public Function GetReferenceProperties(Ref As VBIDE.Reference, Optional Property As VBProjReferenceType = ALL) As String
@@ -392,13 +388,13 @@ End Enum
 
     End Function
 
-    Public Function IncludeWorkbook(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, ThrowError As Boolean, ParamArray Ignore() As Variant) As Boolean
+    Public Function IncludeWorkbook(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, ParamArray Ignore() As Variant) As Boolean
         Dim Ignores As Variant
         Ignores = Ignore
-        IncludeWorkbook = IncludeWorkbookArr(WB, PasteType, Temporary, TryAsInclude, ThrowError, Ignores)
+        IncludeWorkbook = IncludeWorkbookArr(WB, PasteType, Temporary, TryAsInclude, Ignores)
     End Function
 
-    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, ThrowError As Boolean, Ignore() As Variant) As Boolean
+    Public Function IncludeWorkbookArr(WB As Workbook, PasteType As VBProjPasteType, Temporary As Boolean, Ignore() As Variant) As Boolean
         Dim WBProject As VBProject
         Dim VBComp As VBComponent
         Dim Existing As Boolean
@@ -406,27 +402,30 @@ End Enum
         Set WBProject = WB.VBProject
         For Each VBComp In WBProject.VBComponents
             If Exists(VBComp.Name, Ignore) = False Then
-                If AddComponent(VBComp.Name, VBComp.Type, PasteType, False, ThrowError) <> p_Handler.IS_ERROR Then
-                    If PasteType = 1 Then Call DeleteCode(VBComp.Name, ThrowError)
-                    Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), ThrowError)
-                    Call AddTemporary(Temporary, VBComp.Name, ThrowError)
+                If AddComponent(VBComp.Name, VBComp.Type, PasteType, False) <> Handler.IS_ERROR Then
+                    If PasteType = 1 Then Call DeleteCode(VBComp.Name)
+                    Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name))
+                    Call AddTemporary(Temporary, VBComp.Name)
                 End If
             End If
         Next VBComp
     End Function
 
-    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As VBProjPasteType, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Public Function IncludeWorkbookSingle(WB As Workbook, CompName As String, PasteType As VBProjPasteType, Optional Temporary As Boolean = False) As Boolean
         Dim VBComp As VBComponent
  
         Set VBComp = Exists(CompName, WB.VBProject, True, False)
         If Not VBComp Is Nothing Then
-            If AddComponent(VBComp.Name, VBComp.Type, PasteType, ThrowError) <> p_Handler.IS_ERROR Then
-                If PasteType = 1 Then Call DeleteCode(VBComp.Name, , , ThrowError)
-                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name), , ThrowError)
+            If AddComponent(VBComp.Name, VBComp.Type, PasteType) <> Handler.IS_ERROR Then
+                If PasteType = 1 Then Call DeleteCode(VBComp.Name)
+                Call AddCodeFromComponent(VBComp, VBProj.VBComponents(VBComp.Name))
                 Call AddTemporary(Temporary, VBComp.Name)
             End If
         Else
-            IncludeWorkbookSingle = p_Handler.Handle(ErrorCatalog, 28, ThrowError, WB.Name, CompName, PasteType, Temporary)
+            CurrentIdentity = "IncludeWorkbookSingle"
+            Template = "could not include component: VAR0"
+            ErrorValue = CompName
+            IncludeWorkbookSingle = GetError(Handler.IS_ERROR)
         End If
     End Function
 
@@ -476,44 +475,46 @@ End Enum
 
     End Function
 
-    Public Function GetFileString(FilePath As String, Optional ThrowError As Boolean = True) As String
+    Public Function GetFileString(FilePath As String) As String
         Dim Line As String
         Dim FileNumber As Integer
-        Dim ErrorCode As Long
 
         On Error GoTo Error
         FileNumber = FreeFile
-        ErrorCode = 21
+        Template = "could not open file: VAR0"
         Open FilePath For Input As #FileNumber
-        ErrorCode = 30
+        Template = "could not extract line: VAR0"
         Do Until EOF(FileNumber)
             Line Input #FileNumber, Line
+            ErrorValue = Line
         Loop
         Close #FileNumber
         GetFileString = Line
         Exit Function
         Error:
-        Call p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, FilePath)
+        CurrentIdentity = ""
+        Call GetError(Handler.IS_ERROR)
         GetFileString = Empty
     End Function
 '
 
 ' Private Procedures
-    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Private Function Import(FilePath As String, ComponentName As String, Optional PasteType As VBProjPasteType = NormalInclude, Optional Temporary As Boolean = False) As Boolean
 
         Dim VBComp As VBIDE.VBComponent
         Dim Found As Boolean
         Dim Temp As Boolean
-        Dim ErrorCode As Long
-        Dim ErrorValue As Variant
 
         On Error GoTo Error
-        ErrorCode = 1: ErrorValue = FilePath
+        Template = "Could not import: VAR0"
+        ErrorValue = FilePath
         Found = Exists(ComponentName)
         Select Case PasteType
             Case 0
                 If Found Then
-                    ErrorCode = 11: ErrorValue = ComponentName: GoTo Error
+                    Template = "Component already exists: VAR0"
+                    ErrorValue = ComponentName
+                    GoTo Error
                 Else
                     VBProj.VBComponents.Import FilePath
                 End If
@@ -521,7 +522,7 @@ End Enum
                 If Found Then
                     Set VBComp = Exists(ComponentName,,,False)
                     VBComp.Name = ComponentName & "_TODELETE"
-                    If Declude(ComponentName & "_TODELETE", ThrowError) <> p_Handler.IS_ERROR Then
+                    If Declude(ComponentName & "_TODELETE") <> Handler.IS_ERROR Then
                         VBProj.VBComponents.Import FilePath
                     End If
                 Else
@@ -529,8 +530,6 @@ End Enum
                 End If
             Case 2
                 VBProj.VBComponents.Import FilePath
-            Case Else
-                ErrorCode = 25: ErrorValue = PasteType: GoTo Error
         End Select
         If Temporary Then
             ReDim Preserve TempIncludes(Ubound(TempIncludes) + 1)
@@ -539,11 +538,11 @@ End Enum
         Exit Function
 
         Error:
-        Import = p_Handler.Handle(ErrorCatalog, ErrorCode, ThrowError, ErrorValue)
-
+        CurrentIdentity = "Import"
+        Import = GetError(Handler.IS_ERROR)
     End Function
 
-    Private Function RecursiveInclude(Folder As Object, PasteType As VBProjPasteType, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False, Optional ThrowError As Boolean = True) As Boolean
+    Private Function RecursiveInclude(Folder As Object, PasteType As VBProjPasteType, Temporary As Boolean, Ignore As Variant, Optional TryAsInclude As Boolean = False) As Boolean
 
         Dim File As Object
         Dim SubFolder As Object
@@ -567,7 +566,7 @@ End Enum
             Else
                 CompName = GetCompName(File.Path)
                 CompType = vbext_ComponentType.vbext_ct_StdModule
-                If Include(File.Path, PasteType, Temporary, TryAsInclude, CompName, CompType, ThrowError) = p_Handler.IS_Error Then RecursiveInclude = p_Handler.IS_Error
+                If Include(File.Path, PasteType, Temporary, TryAsInclude, CompName, CompType) = Handler.IS_ERROR Then RecursiveInclude = Handler.IS_ERROR
                 CompName = ""
                 CompType = 0
             End If
@@ -580,7 +579,7 @@ End Enum
             If Skip Then
                 Skip = False
             Else
-            RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore, TryAsInclude, ThrowError)
+            RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore, TryAsInclude)
             End If
         Next
 
@@ -623,8 +622,38 @@ End Enum
         End If
     End Sub
 
+    Private Function EmptyString(Text As String, VariableName As String, Identity As String) As Boolean
+        CurrentIdentity = Identity
+        ErrorValue = VariableName
+        Template = "Variable [VAR0] is Empty"
+        EmptyString = GetError(Text = Empty)
+    End Function
+
+    Private Function ValidPasteType(PasteType As VBProjPasteType, Identity As String) As Boolean
+        Dim Condition As Boolean
+        Condition = (PasteType < 0 Or PasteType > 2)
+        CurrentIdentity = Identity
+        ErrorValue = PasteType
+        Template = "PasteType [VAR0] is not a valid option"
+        ValidPasteType = GetError(Condition)
+    End Function
+
+    Private Function ValidComponentType(ComponentType As vbext_ComponentType, Identity As String) As Boolean
+        Dim Condition As Boolean
+        Condition = (ComponentType <> 1 And ComponentType <> 2 And ComponentType <> 3 And ComponentType <> 11 And ComponentType <> 100)
+        CurrentIdentity = Identity
+        ErrorValue = ComponentType
+        Template = "ComponentType [VAR0] is not a valid option"
+        ValidComponentType = GetError(Condition)
+    End Function
+
+    Private Function GetError(Condition As Boolean) As Boolean
+        Dim CurrentError As std_Error
+        Set CurrentError = std_Error.Create("std_VBProject", "major", CurrentIdentity, Template, Empty, ErrorValue)
+        GetError = Handler.Handle(Condition, CurrentError)
+    End Function
+
     Private Sub Class_Initialize()
-        ProtInit
         ReDim TempIncludes(0)
     End Sub
 
@@ -635,107 +664,3 @@ End Enum
             Temp = Declude(TempIncludes(i))
         Next
     End Sub
-
-    Private Sub ProtInit()
-        ErrorCatalog(0, 0000) = 0002: ErrorCatalog(1, 0000) = "std_VBProject"
-        ErrorCatalog(0, 0001) = 1000: ErrorCatalog(1, 0001) = "Could not import"
-        ErrorCatalog(0, 0002) = 1000: ErrorCatalog(1, 0002) = "Could import"
-        ErrorCatalog(0, 0003) = 1000: ErrorCatalog(1, 0003) = "Could not include file"
-        ErrorCatalog(0, 0004) = 1000: ErrorCatalog(1, 0004) = "Could include file"
-        ErrorCatalog(0, 0005) = 1000: ErrorCatalog(1, 0005) = "String empty"
-        ErrorCatalog(0, 0006) = 1000: ErrorCatalog(1, 0006) = "String invalid"
-        ErrorCatalog(0, 0007) = 1000: ErrorCatalog(1, 0007) = "could not import temporary"
-        ErrorCatalog(0, 0008) = 1000: ErrorCatalog(1, 0008) = "could import temporary"
-        ErrorCatalog(0, 0009) = 1000: ErrorCatalog(1, 0009) = "could not include temporary file"
-        ErrorCatalog(0, 0010) = 1000: ErrorCatalog(1, 0010) = "could include temporary file"
-        ErrorCatalog(0, 0011) = 1000: ErrorCatalog(1, 0011) = "Component already exists"
-        ErrorCatalog(0, 0012) = 1000: ErrorCatalog(1, 0012) = "Component doesnt exist"
-        ErrorCatalog(0, 0013) = 1000: ErrorCatalog(1, 0013) = "Unknown error"
-        ErrorCatalog(0, 0014) = 1000: ErrorCatalog(1, 0014) = "could not declude"
-        ErrorCatalog(0, 0015) = 1000: ErrorCatalog(1, 0015) = "could not declude file"
-        ErrorCatalog(0, 0016) = 1000: ErrorCatalog(1, 0016) = "wrong file format. It needs to be .cls, .bas or .frm"
-        ErrorCatalog(0, 0017) = 1000: ErrorCatalog(1, 0017) = "This Component cant be removed, as this code needs it to run"
-        ErrorCatalog(0, 0018) = 1000: ErrorCatalog(1, 0018) = "Could not include file, no ComponentName"
-        ErrorCatalog(0, 0019) = 1000: ErrorCatalog(1, 0019) = "could not create Component"
-        ErrorCatalog(0, 0020) = 1000: ErrorCatalog(1, 0020) = "componentType is invalid"
-        ErrorCatalog(0, 0021) = 1000: ErrorCatalog(1, 0021) = "could not open file"
-        ErrorCatalog(0, 0022) = 1000: ErrorCatalog(1, 0022) = "could not add line of code"
-        ErrorCatalog(0, 0023) = 1000: ErrorCatalog(1, 0023) = "could not add reference via AddFromFile"
-        ErrorCatalog(0, 0024) = 1000: ErrorCatalog(1, 0024) = "could not add reference via AddFromGui"
-        ErrorCatalog(0, 0025) = 1000: ErrorCatalog(1, 0025) = "invalid value"
-        ErrorCatalog(0, 0026) = 1000: ErrorCatalog(1, 0026) = "could not remove reference"
-        ErrorCatalog(0, 0027) = 1000: ErrorCatalog(1, 0027) = "could not delete code from module"
-        ErrorCatalog(0, 0028) = 1000: ErrorCatalog(1, 0028) = "could not include component"
-        ErrorCatalog(0, 0029) = 1000: ErrorCatalog(1, 0029) = "could not include folder"
-        ErrorCatalog(0, 0030) = 1000: ErrorCatalog(1, 0030) = "could not extract line"
-        ErrorCatalog(0, 0031) = 1000: ErrorCatalog(1, 0031) = "PLACEHOLDER"
-        ErrorCatalog(0, 0032) = 1000: ErrorCatalog(1, 0032) = "PLACEHOLDER"
-        ErrorCatalog(0, 0033) = 1000: ErrorCatalog(1, 0033) = "PLACEHOLDER"
-        ErrorCatalog(0, 0034) = 1000: ErrorCatalog(1, 0034) = "PLACEHOLDER"
-        ErrorCatalog(0, 0035) = 1000: ErrorCatalog(1, 0035) = "PLACEHOLDER"
-        ErrorCatalog(0, 0036) = 1000: ErrorCatalog(1, 0036) = "PLACEHOLDER"
-        ErrorCatalog(0, 0037) = 1000: ErrorCatalog(1, 0037) = "PLACEHOLDER"
-        ErrorCatalog(0, 0038) = 1000: ErrorCatalog(1, 0038) = "PLACEHOLDER"
-        ErrorCatalog(0, 0039) = 1000: ErrorCatalog(1, 0039) = "PLACEHOLDER"
-        ErrorCatalog(0, 0040) = 1000: ErrorCatalog(1, 0040) = "PLACEHOLDER"
-        ErrorCatalog(0, 0041) = 1000: ErrorCatalog(1, 0041) = "PLACEHOLDER"
-        ErrorCatalog(0, 0042) = 1000: ErrorCatalog(1, 0042) = "PLACEHOLDER"
-        ErrorCatalog(0, 0043) = 1000: ErrorCatalog(1, 0043) = "PLACEHOLDER"
-        ErrorCatalog(0, 0044) = 1000: ErrorCatalog(1, 0044) = "PLACEHOLDER"
-        ErrorCatalog(0, 0045) = 1000: ErrorCatalog(1, 0045) = "PLACEHOLDER"
-        ErrorCatalog(0, 0046) = 1000: ErrorCatalog(1, 0046) = "PLACEHOLDER"
-        ErrorCatalog(0, 0047) = 1000: ErrorCatalog(1, 0047) = "PLACEHOLDER"
-        ErrorCatalog(0, 0048) = 1000: ErrorCatalog(1, 0048) = "PLACEHOLDER"
-        ErrorCatalog(0, 0049) = 1000: ErrorCatalog(1, 0049) = "PLACEHOLDER"
-        ErrorCatalog(0, 0050) = 1000: ErrorCatalog(1, 0050) = "PLACEHOLDER"
-        ErrorCatalog(0, 0051) = 1000: ErrorCatalog(1, 0051) = "PLACEHOLDER"
-        ErrorCatalog(0, 0052) = 1000: ErrorCatalog(1, 0052) = "PLACEHOLDER"
-        ErrorCatalog(0, 0053) = 1000: ErrorCatalog(1, 0053) = "PLACEHOLDER"
-        ErrorCatalog(0, 0054) = 1000: ErrorCatalog(1, 0054) = "PLACEHOLDER"
-        ErrorCatalog(0, 0055) = 1000: ErrorCatalog(1, 0055) = "PLACEHOLDER"
-        ErrorCatalog(0, 0056) = 1000: ErrorCatalog(1, 0056) = "PLACEHOLDER"
-        ErrorCatalog(0, 0057) = 1000: ErrorCatalog(1, 0057) = "PLACEHOLDER"
-        ErrorCatalog(0, 0058) = 1000: ErrorCatalog(1, 0058) = "PLACEHOLDER"
-        ErrorCatalog(0, 0059) = 1000: ErrorCatalog(1, 0059) = "PLACEHOLDER"
-        ErrorCatalog(0, 0060) = 1000: ErrorCatalog(1, 0060) = "PLACEHOLDER"
-        ErrorCatalog(0, 0061) = 1000: ErrorCatalog(1, 0061) = "PLACEHOLDER"
-        ErrorCatalog(0, 0062) = 1000: ErrorCatalog(1, 0062) = "PLACEHOLDER"
-        ErrorCatalog(0, 0063) = 1000: ErrorCatalog(1, 0063) = "PLACEHOLDER"
-        ErrorCatalog(0, 0064) = 1000: ErrorCatalog(1, 0064) = "PLACEHOLDER"
-        ErrorCatalog(0, 0065) = 1000: ErrorCatalog(1, 0065) = "PLACEHOLDER"
-        ErrorCatalog(0, 0066) = 1000: ErrorCatalog(1, 0066) = "PLACEHOLDER"
-        ErrorCatalog(0, 0067) = 1000: ErrorCatalog(1, 0067) = "PLACEHOLDER"
-        ErrorCatalog(0, 0068) = 1000: ErrorCatalog(1, 0068) = "PLACEHOLDER"
-        ErrorCatalog(0, 0069) = 1000: ErrorCatalog(1, 0069) = "PLACEHOLDER"
-        ErrorCatalog(0, 0070) = 1000: ErrorCatalog(1, 0070) = "PLACEHOLDER"
-        ErrorCatalog(0, 0071) = 1000: ErrorCatalog(1, 0071) = "PLACEHOLDER"
-        ErrorCatalog(0, 0072) = 1000: ErrorCatalog(1, 0072) = "PLACEHOLDER"
-        ErrorCatalog(0, 0073) = 1000: ErrorCatalog(1, 0073) = "PLACEHOLDER"
-        ErrorCatalog(0, 0074) = 1000: ErrorCatalog(1, 0074) = "PLACEHOLDER"
-        ErrorCatalog(0, 0075) = 1000: ErrorCatalog(1, 0075) = "PLACEHOLDER"
-        ErrorCatalog(0, 0076) = 1000: ErrorCatalog(1, 0076) = "PLACEHOLDER"
-        ErrorCatalog(0, 0077) = 1000: ErrorCatalog(1, 0077) = "PLACEHOLDER"
-        ErrorCatalog(0, 0078) = 1000: ErrorCatalog(1, 0078) = "PLACEHOLDER"
-        ErrorCatalog(0, 0079) = 1000: ErrorCatalog(1, 0079) = "PLACEHOLDER"
-        ErrorCatalog(0, 0080) = 1000: ErrorCatalog(1, 0080) = "PLACEHOLDER"
-        ErrorCatalog(0, 0081) = 1000: ErrorCatalog(1, 0081) = "PLACEHOLDER"
-        ErrorCatalog(0, 0082) = 1000: ErrorCatalog(1, 0082) = "PLACEHOLDER"
-        ErrorCatalog(0, 0083) = 1000: ErrorCatalog(1, 0083) = "PLACEHOLDER"
-        ErrorCatalog(0, 0084) = 1000: ErrorCatalog(1, 0084) = "PLACEHOLDER"
-        ErrorCatalog(0, 0085) = 1000: ErrorCatalog(1, 0085) = "PLACEHOLDER"
-        ErrorCatalog(0, 0086) = 1000: ErrorCatalog(1, 0086) = "PLACEHOLDER"
-        ErrorCatalog(0, 0087) = 1000: ErrorCatalog(1, 0087) = "PLACEHOLDER"
-        ErrorCatalog(0, 0088) = 1000: ErrorCatalog(1, 0088) = "PLACEHOLDER"
-        ErrorCatalog(0, 0089) = 1000: ErrorCatalog(1, 0089) = "PLACEHOLDER"
-        ErrorCatalog(0, 0090) = 1000: ErrorCatalog(1, 0090) = "PLACEHOLDER"
-        ErrorCatalog(0, 0091) = 1000: ErrorCatalog(1, 0091) = "PLACEHOLDER"
-        ErrorCatalog(0, 0092) = 1000: ErrorCatalog(1, 0092) = "PLACEHOLDER"
-        ErrorCatalog(0, 0093) = 1000: ErrorCatalog(1, 0093) = "PLACEHOLDER"
-        ErrorCatalog(0, 0094) = 1000: ErrorCatalog(1, 0094) = "PLACEHOLDER"
-        ErrorCatalog(0, 0095) = 1000: ErrorCatalog(1, 0095) = "PLACEHOLDER"
-        ErrorCatalog(0, 0096) = 1000: ErrorCatalog(1, 0096) = "PLACEHOLDER"
-        ErrorCatalog(0, 0097) = 1000: ErrorCatalog(1, 0097) = "PLACEHOLDER"
-        ErrorCatalog(0, 0098) = 1000: ErrorCatalog(1, 0098) = "PLACEHOLDER"
-        ErrorCatalog(0, 0099) = 1000: ErrorCatalog(1, 0099) = "PLACEHOLDER"
-    End Sub
-'
