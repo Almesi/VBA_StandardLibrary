@@ -19,7 +19,7 @@ Public Function Create() As std_ImmiedeateDestination
     Set Create = New std_ImmiedeateDestination
 End Function
 
-Private Function IDestination_Add(ByVal Message As String, ReturnValue As Variant) As Long
+Private Function IDestination_Add(ByVal Message As String, ByRef ReturnValue As Variant) As Long
     ReturnValue = Empty
     Debug.Print Message
     IDestination_Add = Count

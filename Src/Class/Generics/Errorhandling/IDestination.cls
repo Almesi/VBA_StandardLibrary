@@ -11,5 +11,5 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Public Function Add(ByVal Message As String, ReturnValue As Variant) As Long
+Public Function Add(ByVal Message As String, ByRef ReturnValue As Variant) As Long
 End Function

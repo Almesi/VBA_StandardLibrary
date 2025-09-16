@@ -552,11 +552,12 @@ End Enum
         Dim Skip As Boolean
 
         If Ubound(Ignore) < 0 Then ReDim Ignore(0)
-        For Each SubFolder In Folder.SubFolders        
-            For Each Element In Ignore
-                If SubFolder.Name = Cstr(Element) Then Skip = True: Exit For
-            Next
-        Next
+        'No clue why i put it in in the first place
+        'For Each SubFolder In Folder.SubFolders        
+        '    For Each Element In Ignore
+        '        If SubFolder.Name = Cstr(Element) Then Skip = True: Exit For
+        '    Next
+        'Next
         For Each File In Folder.Files
             For Each Element In Ignore
                 If File.Name = Cstr(Element) Then Skip = True: Exit For
@@ -579,7 +580,7 @@ End Enum
             If Skip Then
                 Skip = False
             Else
-            RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore, TryAsInclude)
+                RecursiveInclude = RecursiveInclude(SubFolder, PasteType, Temporary, Ignore, TryAsInclude)
             End If
         Next
 

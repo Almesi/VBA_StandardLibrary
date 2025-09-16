@@ -15,14 +15,22 @@ Implements IErrorInterpret
 
 Private p_Variable As Variant
 
-Public Property Let Variable(n_Variable As Variant)
-    p_Variable = n_Variable
+Public Property Let Variable(ByVal n_Variable As Variant)
+    If IsObject(n_Variable) Then
+        Set p_Variable = n_Variable
+    Else
+        Let p_Variable = n_Variable
+    End If
 End Property
 Public Property Get Variable() As Variant
-    Variable = p_Variable
+    If IsObject(p_Variable) Then
+        Set Variable = p_Variable
+    Else
+        Let Variable = p_Variable
+    End If
 End Property
 
-Public Function Create(n_Variable As Variant) As std_ErrorInterpret
+Public Function Create(ByVal n_Variable As Variant) As std_ErrorInterpret
     Set Create = New std_ErrorInterpret
     Create.Variable = n_Variable
 End Function
