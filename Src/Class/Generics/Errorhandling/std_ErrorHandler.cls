@@ -6,7 +6,7 @@ Attribute VB_Name = "std_ErrorHandler"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 
 
 Option Explicit
@@ -22,8 +22,8 @@ End Function
 Public Property Let Logger(ByVal n_Logger  As IDestination)  : Set p_Logger = n_Logger : End Property
 Public Property Let Shower(ByVal n_Shower  As IDestination)  : Set p_Shower = n_Shower : End Property
 
-Public Property Get Logger()               As IDestination  : Set Logger   = p_Logger : End Property
-Public Property Get Shower()               As IDestination  : Set Shower   = p_Shower : End Property
+Public Property Get Logger()               As IDestination   : Set Logger   = p_Logger : End Property
+Public Property Get Shower()               As IDestination   : Set Shower   = p_Shower : End Property
 
 
 Public Function Create(ByVal n_Shower As IDestination, ByVal n_Logger As IDestination) As std_ErrorHandler

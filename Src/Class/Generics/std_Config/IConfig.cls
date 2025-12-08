@@ -6,13 +6,10 @@ Attribute VB_Name = "IConfig"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 
 
 Option Explicit
-
-Public Function Create(n_Destination As Variant) As IConfig
-End Function
 
 Public Property Let Destination(n_Destination As Variant)
 End Property
@@ -27,5 +24,4 @@ Public Property Get Setting(Indicator As Variant, Optional Check As Boolean = Fa
 End Property
 
 Public Function Check(Scope As Variant, Value As Variant) As Boolean
-
 End Function

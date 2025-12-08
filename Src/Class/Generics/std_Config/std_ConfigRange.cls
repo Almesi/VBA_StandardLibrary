@@ -6,7 +6,7 @@ Attribute VB_Name = "std_ConfigRange"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 
 
 Option Explicit
@@ -20,9 +20,9 @@ Public Event AfterLet(Indicator As Variant, Value As Variant)
 Public Event BeforeGet(Indicator As Variant)
 Public Event AfterGet(Indicator As Variant)
 
-Public Function IConfig_Create(n_Destination As Variant) As IConfig
-    Set IConfig_Create = New std_ConfigRange
-    IConfig_Create.Destination = n_Destination
+Public Function Create(n_Destination As Variant) As IConfig
+    Set Create = New std_ConfigRange
+    Create.Destination = n_Destination
 End Function
 
 Public Property Let IConfig_Destination(n_Destination As Variant)

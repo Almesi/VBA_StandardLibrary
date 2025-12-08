@@ -6,7 +6,7 @@ Attribute VB_Name = "std_ErrorInterpret"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 
 
 Option Explicit
@@ -42,6 +42,6 @@ Private Function IErrorInterpret_Interpret() As String
         Case vbDouble : IErrorInterpret_Interpret = Cstr(Variable)
         Case vbLong   : IErrorInterpret_Interpret = Cstr(Variable)
         Case vbInteger: IErrorInterpret_Interpret = Cstr(Variable)
-        Case Else     : IErrorInterpret_Interpret = "NON-PRINTABLE-VALUE"
+        Case Else     : IErrorInterpret_Interpret = "NON-PRINTABLE-VALUE[TypeName: " & TypeName(Variable) & "]"
     End Select
 End Function

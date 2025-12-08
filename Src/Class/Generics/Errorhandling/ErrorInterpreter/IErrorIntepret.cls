@@ -2,14 +2,14 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "IDestination"
+Attribute VB_Name = "IErrorInterpret"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = False
+Attribute VB_Exposed = True
 
 
 Option Explicit
 
-Public Function Add(ByVal Message As String, ByRef ReturnValue As Variant) As Long
+Public Function Interpret() As String
 End Function
