@@ -395,16 +395,13 @@ Private Function AddComp(ByVal CompType As vbext_ComponentType, ByVal Name As St
 End Function
 
 Private Sub AddCode(ByRef Comp As CallableComp, ByVal Code As String)
-    Dim Lines() As String : Lines = Split(Code, vbCrLf)
+    Dim CleanCode As String
+    Dim Matches As Object
     Dim i As Long
-    Dim Result As String
-    Dim Line As String
-    For i = 0 To Ubound(Lines)
-        Line = GetMultiLine(Lines, i)
-        Result = ExpressionResult(Line)
-        If Result <> Empty Then
-            Call AddCallable(Comp.Typee, Comp.Name, Comp.Callables, Comp.Size, Result)
-        End If
+    CleanCode = JoinContinuationLines(Code)
+    Set Matches = RegExp.Execute(CleanCode)
+    For i = 0 To Matches.Count - 1
+        Call AddCallable(Comp.Typee, Comp.Name, Comp.Callables, Comp.Size, Matches(i).Value)
     Next i
 End Sub
 
@@ -415,14 +412,6 @@ Private Sub AddCallable(ByVal CompType As Long, ByVal CompName As String, ByRef 
     ReDim Preserve Callables(Size)
     Set Callables(Size) = Result
 End Sub
-
-Private Function ExpressionResult(ByVal Text As String) As String
-    If RegExp.Test(Text) Then
-        Dim Temp As Object
-        Set Temp = RegExp.Execute(Text)(0)
-        ExpressionResult = Temp.Value
-    End If
-End Function
 
 Private Function GetTypeFromName(ByVal Name As String) As vbext_ComponentType
     Dim Parts() As String
@@ -447,23 +436,31 @@ Private Function CreateNewObject(ByVal Proj As VBIDE.VBProject, ByVal CompType A
     #End If
 End Function
 
-Private Function GetMultiLine(ByRef Lines() As String, ByVal Index As Long) As String
+Private Function JoinContinuationLines(ByVal Code As String) As String
+    Dim Lines() As String
+    Dim i As Long
     Dim Result As String
-    Do
-        Dim Size As Long
-        Size = Len(Lines(Index))
-        If Size = 0 Then Exit Do
-
-        Result = Result & Lines(Index)
-        If Mid(Result, Len(Result), 1) = "_" Then
-            Result = Mid(Result, 1, Len(Result) - 1)
-        End If
-        Index = Index + 1
-        If Index > Ubound(Lines) Then Exit Do
-    Loop While (Lines(Index - 1) Like "*_")
-    GetMultiLine = Result
+    
+    Lines = Split(Code, vbCrLf)
+    i = 0
+    
+    Do While i <= UBound(Lines)
+        Dim Line As String
+        Line = Lines(i)
+        
+        ' Remove trailing underscore and concatenate with next line
+        Do While Right(Line, 1) = "_"
+            Line = Mid(Line, 1, Len(Line) - 1) & " " & Lines(i + 1)
+            i = i + 1
+            If i >= UBound(Lines) Then Exit Do
+        Loop
+        
+        Result = Result & Line & vbCrLf
+        i = i + 1
+    Loop
+    
+    JoinContinuationLines = Result
 End Function
-
 
 
 
@@ -471,9 +468,8 @@ Private Sub Class_Initialize()
     Size = -1
     Set RegExp = CreateObject("VBScript.RegExp")
     With RegExp
-        .pattern = "^\s*(Public|Private|Friend)?\s*(Static\s*)?(Function|Sub|Property Get|Property Let|Property Set)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)\s*(As\s+[A-Za-z_][A-Za-z0-9_\.]*)?(?=\s*:|\s*$)"
-
+        .pattern = "(Public|Private|Friend)?\s*(Static\s*)?(Function|Sub|Property Get|Property Let|Property Set)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)(?=\))\)(.*?)(?=$|\r\n|\s*\:)"
         .IgnoreCase = True
-        .Global = False
+        .Global = True
     End With
 End Sub
