@@ -32,8 +32,8 @@ End Type
 
 Private This As TView
 
-Public Function Create(ByVal Title As String, ByVal Message As String, ByVal MessType As MessageType) As CallValueForm
-    Set Create = New CallValueForm
+Public Function Create(ByVal Title As String, ByVal Message As String, ByVal MessType As MessageType) As MessageForm
+    Set Create = New MessageForm
     Call Create.Initialize(nCallable)
 End Function
 

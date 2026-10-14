@@ -3,6 +3,7 @@ Attribute VB_Name = "TestValueForms"
 Option Explicit
 
 Public Sub TestAllValueForms()
+    Call TestColorValueForm
     Call TestCallValueForm
     Call TestEnumValueForm
     Call TestFreeValueForm
@@ -66,5 +67,21 @@ Public Sub TestFreeValueForm()
     Result = View.Show(Model)
 
     Debug.Print "FreeValueForm result: "; Result
+    Debug.Print "Model value: "; Model.Value
+End Sub
+
+Public Sub TestColorValueForm()
+    Dim View   As IView
+    Dim Model  As ValueModel
+    Dim Result As FormReturn
+
+    Set Model = New ValueModel
+    Model.Value = "FF8000"
+
+    Set View = ColorValueForm.Create()
+
+    Result = View.Show(Model)
+
+    Debug.Print "ColorValueForm result: "; Result
     Debug.Print "Model value: "; Model.Value
 End Sub

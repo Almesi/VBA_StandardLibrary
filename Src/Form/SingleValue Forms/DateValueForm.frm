@@ -2,8 +2,6 @@ VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} DateValueForm 
    Caption         =   "Select Date"
    ClientHeight    =   3210
-   ClientLeft      =   120
-   ClientTop       =   465
    ClientWidth     =   2865
    OleObjectBlob   =   "DateValueForm.frx":0000
    StartUpPosition =   1  'CenterOwner

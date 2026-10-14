@@ -289,6 +289,8 @@ End Enum
             If Formater.CanHandle(Source) Then
                 Result = Formater.AddQueue(Me, Source)
                 Exit For
+            Else
+                Result = True
             End If
         Next i
         AddQueue = Result
