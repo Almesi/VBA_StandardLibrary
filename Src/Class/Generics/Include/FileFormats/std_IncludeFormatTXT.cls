@@ -2,11 +2,11 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
 END
-Attribute VB_Name = "IIncludeFormatTXT"
+Attribute VB_Name = "std_IncludeFormatTXT"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
+Attribute VB_Exposed = False
 
 Option Explicit
 
@@ -14,8 +14,8 @@ Implements IIncludeFormat
 
 Private Reader As New std_IncludeFileReader
 
-Public Function Create() As IIncludeFormatTXT
-    Set Create = New IIncludeFormatTXT
+Public Function Create() As std_IncludeFormatTXT
+    Set Create = New std_IncludeFormatTXT
 End Function
 
 
