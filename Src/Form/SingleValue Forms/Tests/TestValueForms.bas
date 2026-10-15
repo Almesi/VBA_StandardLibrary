@@ -3,10 +3,62 @@ Attribute VB_Name = "TestValueForms"
 Option Explicit
 
 Public Sub TestAllValueForms()
+    Call TestTreeValueForm
     Call TestColorValueForm
     Call TestCallValueForm
     Call TestEnumValueForm
     Call TestFreeValueForm
+End Sub
+
+Public Sub TestTreeValueForm()
+    Dim View   As IView
+    Dim Model  As ValueModel
+    Dim Root   As TreeDisplay
+    Dim Group  As TreeDisplay
+    Dim Item   As TreeDisplay
+    Dim Result As FormReturn
+
+    Set Root = New TreeDisplay
+    Root.DisplayName = "Products"
+    Root.Value = "products"
+
+    Set Group = New TreeDisplay
+    Group.DisplayName = "Fruit"
+    Group.Value = "fruit"
+    Call Root.AddChild(Group)
+
+    Set Item = New TreeDisplay
+    Item.DisplayName = "Apple"
+    Item.Value = 101
+    Call Group.AddChild(Item)
+
+    Set Item = New TreeDisplay
+    Item.DisplayName = "Orange"
+    Item.Value = 102
+    Call Group.AddChild(Item)
+
+    Set Group = New TreeDisplay
+    Group.DisplayName = "Vegetables"
+    Group.Value = "vegetables"
+    Call Root.AddChild(Group)
+
+    Set Item = New TreeDisplay
+    Item.DisplayName = "Carrot"
+    Item.Value = 201
+    Call Group.AddChild(Item)
+
+    Set Model = New ValueModel
+    Set View = TreeValueForm.Create(Root)
+
+    Result = View.Show(Model)
+
+    Debug.Print "TreeValueForm result: "; Result
+
+    If Result = FormReturnOK Then
+        Debug.Print "Selected value: "; Model.Value.Value
+    Else
+        Debug.Print "Selection cancelled."
+    End If
 End Sub
 
 Public Function GetDateFromForm() As Date

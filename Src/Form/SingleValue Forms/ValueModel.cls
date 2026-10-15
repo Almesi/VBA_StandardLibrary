@@ -16,6 +16,14 @@ End Type
 
 Private This As TModel
 
+Public Sub Assign(ByVal nValue As Variant)
+    If ISObject(nValue) Then
+        Set Value = nValue
+    Else
+        Let Value = nValue
+    End If
+End Sub
+
 Public Property Set Value(ByVal Value As Variant)
     Set This.Value = Value
 End Property
