@@ -39,31 +39,32 @@ Friend Sub Initialize(ByVal Source As DataSet, ByVal ParentField As Field)
     If ParentField Is Nothing Then Err.Raise vbObjectError + 1602, "DataSetTree.Build", "ParentField cannot be Nothing."
 
 
-    ReDim Nodes(1 To Source.RowCount)
+    Dim Count As Long
+    Count = Source.RowCount
+    ReDim Nodes(Count)
 
     ' First pass: create one node per row.
-    For RowIndex = 1 To Source.RowCount
+    For RowIndex = 1 To Count
         Set Node = DataTreeNode.Create(Source.Row(RowIndex))
         Set Nodes(RowIndex) = Node
     Next RowIndex
 
     ' Second pass: connect nodes to their parents.
-    For RowIndex = 1 To Source.RowCount
+    For RowIndex = 1 To Count
         Set ParentEntry = ParentField.Item(RowIndex)
 
         ' Missing parent entry means this row is a root.
-        If ParentEntry Is Nothing Then
+        If ISNumeric(ParentEntry.Value) = False Then
             Call mRoots.Add(Nodes(RowIndex))
         Else
             ParentIndex = CLng(ParentEntry.Value)
-                If ParentIndex < 0 Or ParentIndex > Source.RowCount Then
-                    Err.Raise vbObjectError + 1604, "DataSetTree.Build", "Parent row index out of range at row " & RowIndex
-                ElseIf ParentIndex = RowIndex Then
-                    Err.Raise vbObjectError + 1605, "DataSetTree.Build", "A row cannot be its own parent."
-                Else
-                    Set ParentNode = Nodes(ParentIndex)
-                    Call ParentNode.AddChild(Nodes(RowIndex))
-                End If
+            If ParentIndex < 0 Or ParentIndex > Source.RowCount Then
+                Err.Raise vbObjectError + 1604, "DataSetTree.Build", "Parent row index out of range at row " & RowIndex
+            ElseIf ParentIndex = RowIndex Then
+                Err.Raise vbObjectError + 1605, "DataSetTree.Build", "A row cannot be its own parent."
+            Else
+                Set ParentNode = Nodes(ParentIndex)
+                Call ParentNode.AddChild(Nodes(RowIndex))
             End If
         End If
     Next RowIndex

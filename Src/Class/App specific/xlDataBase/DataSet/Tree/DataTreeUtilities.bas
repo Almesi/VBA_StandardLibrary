@@ -13,7 +13,7 @@ Public Function TranslateTreeNodeToTreeDisplay(ByVal Source As DataTreeNode, ByV
     Set Result       = TreeDisplay.Create()
     Set Result.Value = Source.RowEntry
 
-    Set NameEntry = NameField.Item(Source.RowEntry.Index)
+    Set NameEntry = NameField.Item(Source.RowEntry.ByName("ID").DataEntry.Value)
     Result.DisplayName = CStr(NameEntry.Value)
 
     For Each Child In Source.Children

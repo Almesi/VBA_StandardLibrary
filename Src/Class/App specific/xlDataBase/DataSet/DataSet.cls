@@ -31,6 +31,67 @@ Public Sub Clear()
 End Sub
 
 
+
+
+'============================================================
+'====================[Factory Functions]====================
+'============================================================
+
+Public Function Create() As DataSet
+    Set Create = New DataSet
+End Function
+
+Public Function CreateFromRowEntries(ByVal RowEntries As Collection) As DataSet
+    Dim Result     As DataSet
+    Dim Value      As RowEntry
+    Dim FirstRow   As RowEntry
+    Dim FieldIndex As Long
+
+    Set Result = DataSet.Create()
+
+    If RowEntries Is Nothing Then
+        Err.Raise vbObjectError + 1507, "DataSet.CreateFromRowEntries", _
+                  "Values cannot be Nothing."
+    End If
+
+    If RowEntries.Count = 0 Then
+        Set CreateFromRowEntries = Result
+        Exit Function
+    End If
+
+    'Use the first row to establish the dataset's field definitions.
+    Set FirstRow = RowEntries.Item(1)
+    For FieldIndex = 1 To FirstRow.Count
+        Result.AddFieldDefinition FirstRow.Item(FieldIndex).Definition
+    Next FieldIndex
+
+    'Add all rows in their original order.
+    For Each Value In RowEntries
+        Call Result.AddRow(Value)
+    Next Value
+
+    Set CreateFromRowEntries = Result
+End Function
+
+Public Function CreateFromFields(ByVal Values As Collection) As DataSet
+    Dim Result As DataSet
+    Dim Value As Field
+
+    Set Result = DataSet.Create()
+
+    If Values Is Nothing Then
+        Err.Raise vbObjectError + 1508, "DataSet.CreateFromFields", _
+                  "Values cannot be Nothing."
+    End If
+
+    For Each Value In Values
+        Call Result.AddField(Value)
+    Next Value
+
+    Set CreateFromFields = Result
+End Function
+
+
 '============================================================
 '====================[Getters/Setters]=======================
 '============================================================
@@ -173,7 +234,7 @@ Public Sub AddFieldDefinition(ByVal Value As FieldDefinition)
 End Sub
 
 
-Public Sub AddEntry( ByVal Value As DataEntry, ByVal FieldIndex As Long, ByVal RowIndex As Long)
+Public Sub AddEntry(ByVal Value As DataEntry, ByVal FieldIndex As Long, ByVal RowIndex As Long)
     Dim Entry As DataEntry
     If FieldIndex < 1 Or FieldIndex > mFieldCount Then
         Err.Raise vbObjectError + 1501,"DataSet.AddEntry","The specified FieldIndex does not exist."

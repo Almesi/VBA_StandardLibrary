@@ -16,6 +16,10 @@ End Type
 
 Private This As TModel
 
+Public Function Create() As ValueModel
+    Set Create = New ValueModel
+End Function
+
 Public Sub Assign(ByVal nValue As Variant)
     If ISObject(nValue) Then
         Set Value = nValue
