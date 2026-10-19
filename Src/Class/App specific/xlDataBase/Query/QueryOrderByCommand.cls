@@ -112,8 +112,7 @@ Private Function SortDataSet(ByVal Source As DataSet) As DataSet
     Dim RowIndexes() As Long
     Dim Index As Long
 
-    Set Result = New DataSet
-    Call CopyStructure(Source, Result)
+    Set Result = Source.CopyStructure
 
     If Source.RowCount = 0 Then
         Set SortDataSet = Result
@@ -261,14 +260,3 @@ Private Function FieldIndexByName(ByVal Source As DataSet, ByVal Name As String)
 End Function
 
 
-'===============================================================================
-' COPY STRUCTURE
-'===============================================================================
-
-Private Sub CopyStructure(ByVal Source As DataSet, ByVal Result As DataSet)
-    Dim Index As Long
-
-    For Index = 1 To Source.FieldCount
-        Call Result.AddFieldDefinition(Source.FieldDefinition(Index))
-    Next Index
-End Sub

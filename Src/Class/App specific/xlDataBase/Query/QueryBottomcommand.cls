@@ -62,9 +62,9 @@ Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As DataSet
     End If
 
     Set Source = Context.Current
-    Set Result = New DataSet
+    Set Result = DataSet.Create
 
-    Call CopyStructure(Source, Result)
+    Set Result = Source.CopyStructure
 
     If mCount = 0 Then
         Set IQueryCommand_Execute = Result
@@ -83,16 +83,3 @@ Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As DataSet
 
     Set IQueryCommand_Execute = Result
 End Function
-
-
-'===============================================================================
-' COPY STRUCTURE
-'===============================================================================
-
-Private Sub CopyStructure(ByVal Source As DataSet, ByVal Result As DataSet)
-    Dim Index As Long
-
-    For Index = 1 To Source.FieldCount
-        Call Result.AddFieldDefinition(Source.FieldDefinition(Index))
-    Next Index
-End Sub

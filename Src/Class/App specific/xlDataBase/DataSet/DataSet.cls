@@ -91,6 +91,19 @@ Public Function CreateFromFields(ByVal Values As Collection) As DataSet
     Set CreateFromFields = Result
 End Function
 
+Public Function Copy() As DataSet
+    Set Copy = CreateFromFields(Fields())
+End Function
+
+Public Function CopyStructure() As DataSet
+    Set CopyStructure = DataSet.Create()
+    Dim Index As Long
+
+    For Index = 1 To FieldCount
+        Call CopyStructure.AddFieldDefinition(FieldDefinition(Index))
+    Next Index
+End Function
+
 
 '============================================================
 '====================[Getters/Setters]=======================
@@ -188,6 +201,30 @@ Public Function Row(ByVal Index As Long) As RowEntry
         End If
     Next FieldIndex
     Set Row = Result
+End Function
+
+Public Function RowFromEntry(ByVal Value As DataEntry) As RowEntry
+    Dim RowIndex As Long
+    Dim FieldIndex As Long
+
+    If Value Is Nothing Then Exit Function
+
+    Call GetEntryXY(Value, RowIndex, FieldIndex)
+    If RowIndex <> 0 Then
+        Set RowFromEntry = Row(RowIndex)
+    End If
+End Function
+
+Public Function FieldFromEntry(ByVal Value As DataEntry) As Field
+    Dim RowIndex As Long
+    Dim FieldIndex As Long
+
+    If Value Is Nothing Then Exit Function
+
+    Call GetEntryXY(Value, RowIndex, FieldIndex)
+    If FieldIndex <> 0 Then
+        Set FieldFromEntry = Field(FieldIndex)
+    End If
 End Function
 
 
@@ -406,3 +443,17 @@ Private Function MinLong(ByVal Value1 As Long, ByVal Value2 As Long) As Long
         MinLong = Value2
     End If
 End Function
+
+Public Sub GetEntryXY(ByVal Value As DataEntry, ByRef RowIndex As Long, ByRef FieldIndex As Long)
+    If Value Is Nothing Then Exit Function
+
+    For RowIndex = 1 To mRowCount
+        For FieldIndex = 1 To mFieldCount
+            If Value.Equals(mDataEntries(RowIndex, FieldIndex)) Then
+                Exit Function
+            End If
+        Next FieldIndex
+    Next RowIndex
+    RowIndex   = 0
+    FieldIndex = 0
+End Sub

@@ -25,12 +25,16 @@ Private Sub Class_Initialize()
     Set mFieldEntries = New Collection
 End Sub
 
-Public Function Create(ByVal nFieldEntries As Collection) As RowEntry
+Public Function Create() As RowEntry
     Set Create = New RowEntry
+End Function
+
+Public Function CreateFromEntries(ByVal nFieldEntries As Collection) As RowEntry
+    Set CreateFromEntries = Create()
 
     Dim Entry As FieldEntry
     For Each Entry In nFieldEntries
-        Create.AddFieldEntry(Entry)
+        Call CreateFromEntries.AddFieldEntry(Entry)
     Next Entry
 End Function
 

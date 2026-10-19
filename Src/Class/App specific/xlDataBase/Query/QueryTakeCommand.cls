@@ -60,8 +60,7 @@ Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As DataSet
     End If
 
     Set Source = Context.Current
-    Set Result = New DataSet
-    Call CopyStructure(Source, Result)
+    Set Result = Source.CopyStructure
     For RowIndex = 1 To MinLong(mCount, Source.RowCount)
         Call CopyRow(Source, Result, RowIndex)
     Next RowIndex

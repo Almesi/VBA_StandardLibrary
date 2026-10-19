@@ -50,10 +50,10 @@ Private Function UniqueDataSet(ByVal Source As DataSet) As DataSet
     Dim RowKey As String
     Dim Keys As Object
 
-    Set Result = New DataSet
+    Set Result = DataSet.Create
     Set Keys = CreateObject("Scripting.Dictionary")
 
-    Call CopyStructure(Source, Result)
+    Set Result = Source.CopyStructure
 
     For RowIndex = 1 To Source.RowCount
         RowKey = BuildRowKey(Source, RowIndex)
@@ -101,14 +101,3 @@ Private Function ValueKey(ByVal Value As Variant) As String
 End Function
 
 
-'===============================================================================
-' COPY STRUCTURE
-'===============================================================================
-
-Private Sub CopyStructure(ByVal Source As DataSet, ByVal Result As DataSet)
-    Dim Index As Long
-
-    For Index = 1 To Source.FieldCount
-        Call Result.AddFieldDefinition(Source.FieldDefinition(Index))
-    Next Index
-End Sub

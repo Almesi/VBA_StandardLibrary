@@ -61,7 +61,7 @@ Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As DataSet
     End If
 
     Set Source = Context.Current
-    Set Result = New DataSet
+    Set Result = DataSet.Create
 
     For Each FieldItem In Source.Fields
         Set SourceField = SkipFieldName(FieldItem)

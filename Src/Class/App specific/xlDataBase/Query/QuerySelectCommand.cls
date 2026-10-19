@@ -61,7 +61,7 @@ Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As DataSet
     End If
 
     Set Source = Context.Current
-    Set Result = New DataSet
+    Set Result = DataSet.Create
 
     For Each FieldName In mFields
         Set SourceField = Source.FieldByName(CStr(FieldName))

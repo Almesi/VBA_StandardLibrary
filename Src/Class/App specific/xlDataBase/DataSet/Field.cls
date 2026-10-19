@@ -27,12 +27,12 @@ Private Sub Class_Initialize()
 End Sub
 
 Public Function Create(ByVal nDefinition As FieldDefinition, ByVal nDataEntries As Collection) As Field
-    Dim Create = New Field
-    Create.Definition = nDefinition
+    Set Create = New Field
+    Set Create.Definition = nDefinition
 
     Dim Entry As DataEntry
     For Each Entry In nDataEntries
-        Create.AddDataEntry(Entry)
+        Call Create.AddDataEntry(Entry)
     Next Entry
 End Function
 
