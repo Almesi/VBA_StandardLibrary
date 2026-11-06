@@ -16,12 +16,12 @@ Private FunctionName      As String
 Private ExpectIFunction   As Boolean
 Private ArgIsIFunction    As Boolean
 
-Public Function Create(ByVal FunctionName As String, Optional ByVal n_ExpectIFunction As Boolean = True, Optional ByVal n_ArgIsIFunction As Boolean = True) As NamedFunction
+Public Function Create(ByVal FunctionName As String, Optional ByVal n_ExpectIFunction As Boolean = False, Optional ByVal n_ArgIsIFunction As Boolean = False) As NamedFunction
     Set Create = New NamedFunction
     Call Create.Initialize(FunctionName, n_ExpectIFunction, n_ArgIsIFunction)
 End Function
 
-Friend Sub Initialize(ByVal n_Name As String, Optional ByVal n_ExpectIFunction As Boolean = True, Optional ByVal n_ArgIsIFunction As Boolean = True)
+Friend Sub Initialize(ByVal n_Name As String, Optional ByVal n_ExpectIFunction As Boolean = False, Optional ByVal n_ArgIsIFunction As Boolean = False)
     Let FunctionName    = n_Name
     Let ExpectIFunction = n_ExpectIFunction
     Let ArgIsIFunction = n_ArgIsIFunction

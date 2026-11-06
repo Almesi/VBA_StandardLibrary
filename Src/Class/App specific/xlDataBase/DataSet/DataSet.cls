@@ -445,12 +445,12 @@ Private Function MinLong(ByVal Value1 As Long, ByVal Value2 As Long) As Long
 End Function
 
 Public Sub GetEntryXY(ByVal Value As DataEntry, ByRef RowIndex As Long, ByRef FieldIndex As Long)
-    If Value Is Nothing Then Exit Function
+    If Value Is Nothing Then Exit Sub
 
     For RowIndex = 1 To mRowCount
         For FieldIndex = 1 To mFieldCount
             If Value.Equals(mDataEntries(RowIndex, FieldIndex)) Then
-                Exit Function
+                Exit Sub
             End If
         Next FieldIndex
     Next RowIndex

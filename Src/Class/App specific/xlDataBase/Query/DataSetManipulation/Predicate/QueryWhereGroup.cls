@@ -28,6 +28,14 @@ Private mLogicalOperator As WhereGroupOperator
 ' CREATION
 '===============================================================================
 
+Public Function CreateFromCollection(ByVal Operator As WhereGroupOperator, ByVal Commands As Collection) As QueryWhereGroup
+    Set CreateFromCollection = Create(Operator)
+    Dim Command As IQueryCommand
+    For Each Command In Commands
+        Call CreateFromCollection.AddCondition(Command)
+    Next Command
+End Function
+
 Public Function Create(ByVal Operator As WhereGroupOperator) As QueryWhereGroup
     Set Create = New QueryWhereGroup
     Call Create.Initialize(Operator)

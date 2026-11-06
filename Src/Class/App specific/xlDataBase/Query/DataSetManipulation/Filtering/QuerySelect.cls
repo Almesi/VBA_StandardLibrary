@@ -2,7 +2,7 @@ VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1
 END
-Attribute VB_Name = "QuerySkip"
+Attribute VB_Name = "QuerySelect"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -23,13 +23,28 @@ Private Sub Class_Initialize()
     Set mFields = New Collection
 End Sub
 
-Public Function Create(ParamArray Names() As Variant) As QuerySkip
-    Set Create = New QuerySkip
-    Dim i As Long
-    For i = 0 To Ubound(Names)
-        Call Create.Add(Names(i))
-    Next i
+Public Function CreateFromCollection(ByVal Names As Collection) As QuerySelect
+    Dim Result As QuerySelect
+    Dim Name As String
+
+    Set Result = New QuerySelect
+    For Each Name In Names
+        Call Result.Add(Name)
+    Next Name
+    Set CreateFromCollection = Result
 End Function
+
+Public Function Create(ParamArray Names() As Variant) As QuerySelect
+    Dim Result As QuerySelect
+    Dim i As Long
+
+    Set Result = New QuerySelect
+    For i = LBound(Names) To UBound(Names)
+        Call Result.Add(Names(i))
+    Next i
+    Set Create = Result
+End Function
+
 
 
 Public Sub Add(ByVal Name As String)
@@ -50,34 +65,18 @@ End Property
 Private Function IQueryCommand_Execute(ByVal Context As QueryContext) As QueryValue
     If QueryAssert(Context, QueryValueKindDataSet) = False Then Exit Function
 
-
     Dim Source As DataSet
     Set Source = Context.Current.Value
 
     Dim Result As DataSet
     Set Result = DataSet.Create
 
-    Dim FieldItem   As Field
-    For Each FieldItem In Source.Fields
-        Dim SourceField As Field
-        Set SourceField = SkipFieldName(FieldItem)
-
-        If Not SourceField Is Nothing Then
-            Call Result.AddField(SourceField)
-        End If
-    Next FieldItem
-
-    Set IQueryCommand_Execute = QueryValue.CreateNormal(QueryValueKindDataSet, Result)
-End Function
-
-Private Function SkipFieldName(ByVal SourceField As Field) As Field
-    Dim FieldName As Variant
-
+    Dim FieldName   As Variant
     For Each FieldName In mFields
-        If StrComp(CStr(FieldName), SourceField.Definition.Name, vbTextCompare) = 0 Then
-            Exit Function
-        End If
+        If QueryAssert(Context, QueryValueKindDataSet, FieldName) = False Then Exit Function
+        Dim SourceField As Field
+        Set SourceField = Source.FieldByName(CStr(FieldName))
+        Call Result.AddField(SourceField)
     Next FieldName
-
-    Set SourceFieldIfNotSkipped = SourceField
+    Set IQueryCommand_Execute = QueryValue.CreateNormal(QueryValueKindDataSet, Result)
 End Function

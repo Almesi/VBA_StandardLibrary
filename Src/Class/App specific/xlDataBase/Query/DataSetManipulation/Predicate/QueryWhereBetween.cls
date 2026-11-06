@@ -54,6 +54,6 @@ Private Function EvaluateField(ByVal Field As Field)As Collection
     Set EvaluateField = Result
 End Function
 
-Private Function Matches(ByVal Entry As Entry) As Boolean
+Private Function Matches(ByVal Entry As DataEntry) As Boolean
     Matches = (Entry.IsGreaterThanOrEqual(mLowerValue) And Entry.IsLessThanOrEqual(mUpperValue))
 End Function

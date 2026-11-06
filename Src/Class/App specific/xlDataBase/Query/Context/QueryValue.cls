@@ -16,6 +16,7 @@ Public Enum QueryValueKind
     QueryValueKindScalar   = 1
     QueryValueKindSequence = 2
     QueryValueKindDataSet  = 3
+    QueryValueKindFunction = 4
 End Enum
 
 Private mKind  As QueryValueKind
@@ -24,8 +25,9 @@ Private mValue As Variant
 Public Function Create(ByVal NewValue As Variant) As QueryValue
     Dim KindType As QueryValueKind
     Select Case True
+        Case VarType(NewValue) Like "IFunction"  : KindType = QueryValueKindFunction
         Case VarType(NewValue) Like "DataSet"    : KindType = QueryValueKindDataSet
-        Case VarType(NewValue) Like "Collectoin" : KindType = QueryValueKindSequence
+        Case VarType(NewValue) Like "Collection" : KindType = QueryValueKindSequence
         Case VarType(NewValue) Like "Null"       : KindType = QueryValueKindNull
         Case Else                                : KindType = QueryValueKindScalar
     End Select
@@ -55,6 +57,10 @@ End Property
 
 Public Property Get IsDataSet() As Boolean
     IsDataSet = (mKind = QueryValueKindDataSet)
+End Property
+
+Public Property Get IsFunction() As Boolean
+    IsFunction = (mKind = QueryValueKindFunction)
 End Property
 
 Public Property Get Value() As Variant

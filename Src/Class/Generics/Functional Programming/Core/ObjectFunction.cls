@@ -18,12 +18,12 @@ Private Obj                As Object
 Private ExpectIFunction    As Boolean
 Private ArgIsIFunction    As Boolean
 
-Public Function Create(ByVal n_Obj As Object, ByVal n_MethodType As vbCallType, ByVal n_Method As String, Optional ByVal n_ExpectIFunction As Boolean = True, Optional ByVal n_ArgIsIFunction As Boolean = True) As ObjectFunction
+Public Function Create(ByVal n_Obj As Object, ByVal n_MethodType As vbCallType, ByVal n_Method As String, Optional ByVal n_ExpectIFunction As Boolean = False, Optional ByVal n_ArgIsIFunction As Boolean = False) As ObjectFunction
     Set Create = New ObjectFunction
     Call Create.Initialize(n_Obj, n_MethodType, n_Method, n_ExpectIFunction)
 End Function
 
-Friend Sub Initialize(ByVal n_Obj As Object, ByVal n_MethodType As vbCallType, ByVal n_Method As String, Optional ByVal n_ExpectIFunction As Boolean = True, Optional ByVal n_ArgIsIFunction As Boolean = True)
+Friend Sub Initialize(ByVal n_Obj As Object, ByVal n_MethodType As vbCallType, ByVal n_Method As String, Optional ByVal n_ExpectIFunction As Boolean = False, Optional ByVal n_ArgIsIFunction As Boolean = False)
     Let ObjectMethod     = n_Method
     Let MethodType       = n_MethodType
     Set Obj              = n_Obj

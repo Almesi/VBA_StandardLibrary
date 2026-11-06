@@ -26,7 +26,7 @@ Public Function Create(ByVal nFieldName As String, ByVal nFunc As IFunction) As 
 End Function
 
 Friend Sub Initialize(ByVal nFieldName As String, ByVal nFunc As IFunction)
-    Let mFieldName = FieldName
+    Let mFieldName = nFieldName
     Set mFunc      = nFunc
 End Sub
 
@@ -45,7 +45,7 @@ End Function
 
 Private Function FunctionDataSet(ByVal Source As DataSet) As Variant
     Dim Field As Field
-    Set Field = Result.FieldByName(mFieldName)
+    Set Field = Source.FieldByName(mFieldName)
 
     Dim Entries As Collection
     Set Entries = Field.DataEntries

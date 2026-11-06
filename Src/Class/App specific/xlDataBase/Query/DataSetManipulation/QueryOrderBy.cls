@@ -19,9 +19,26 @@ Private mFields As Collection
 ' CREATION
 '===============================================================================
 
-Public Function Create(ParamArray Fields() As Variant) As QueryOrderBy
-    Set Create = New QueryOrderBy
-    Call Create.Initialize(Fields)
+Public Function CreateFromCollection(ByVal Names As Collection) As QueryOrderBy
+    Dim Result As QueryOrderBy
+    Dim Name As String
+
+    Set Result = New QueryOrderBy
+    For Each Name In Names
+        Call Result.Add(Name)
+    Next Name
+    Set CreateFromCollection = Result
+End Function
+
+Public Function Create(ParamArray Names() As Variant) As QueryOrderBy
+    Dim Result As QueryOrderBy
+    Dim i As Long
+
+    Set Result = New QueryOrderBy
+    For i = LBound(Names) To UBound(Names)
+        Call Result.Add(Names(i))
+    Next i
+    Set Create = Result
 End Function
 
 

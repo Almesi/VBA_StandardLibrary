@@ -23,14 +23,26 @@ Private Sub Class_Initialize()
     Set mDataSets = New Collection
 End Sub
 
-Public Function Create(ParamArray Names() As Variant) As QueryUnion
-    Set Create = New QueryUnion
+Public Function CreateFromCollection(ByVal Names As Collection) As QueryUnion
+    Dim Result As QueryUnion
+    Dim Name As String
 
+    Set Result = New QueryUnion
+    For Each Name In Names
+        Call Result.Add(Name)
+    Next Name
+    Set CreateFromCollection = Result
+End Function
+
+Public Function Create(ParamArray Names() As Variant) As QueryUnion
+    Dim Result As QueryUnion
     Dim i As Long
 
-    For i = 0 To UBound(Names)
-        Call Create.Add(CStr(Names(i)))
+    Set Result = New QueryUnion
+    For i = LBound(Names) To UBound(Names)
+        Call Result.Add(Names(i))
     Next i
+    Set Create = Result
 End Function
 
 
