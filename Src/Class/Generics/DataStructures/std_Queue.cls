@@ -1,3 +1,4 @@
+
 VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
@@ -8,107 +9,130 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
-
 Option Explicit
 
-' Private Functions
-    Private p_Data() As Variant
-    Private p_Size As Long
-'
 
-' Events
-    Public Event BeforeAdd(Value As Variant)
-    Public Event AfterAdd(Value As Variant)
-    Public Event BeforeDelete()
-    Public Event AfterDelete()
-'
+' ==================================================
+' ====================[Properties]==================
+' ==================================================
 
-' Get Let
-    Public Property Let Data(n_Data() As Variant)
-        p_Data = n_Data
-    End Property
+Private mFirstNode  As std_Node
+Private mLastNode   As std_Node
+Private mCount      As Long
 
-    Public Property Get Data() As Variant()
-        Data = p_Data
-    End Property
+Private mEnumerator As std_NodeEnumerator
 
-    Private Property Let Size(n_Size As Long)
-        p_Size = n_Size
-    End Property
 
-    Public Property Get Size() As Long
-        Size = p_Size
-    End Property
+' ==================================================
+' ====================[Creation]====================
+' ==================================================
 
-    Public Property Let Value(n_Value As Variant)
-        If Size <> -1 Then
-            If IsObject(n_Value) Then
-                Set p_Data(0) = n_Value
-            Else
-                p_Data(0) = n_Value
-            End If
-        End If
-    End Property
+Public Function Create() As std_Queue
+    Set Create = New std_Queue
+End Function
 
-    Public Property Get Value() As Variant
-        If Size <> -1 Then
-            If IsObject(p_Data(0)) Then
-                Set Value = p_Data(0)
-            Else
-                Value = p_Data(0)
-            End If
-        Else
-            Set Value = Nothing
-        End If
-    End Property
+Public Function CreateWithValue(Optional ByVal Value As Variant) As std_Queue
+    Set CreateWithValue = Create()
+    Call CreateWithValue.Enqueue(Value)
+End Function
 
-'
 
-' Public Functions
-    Public Function Create(Optional n_Value As Variant) As std_Queue
-        Set Create = New std_Queue
-        If IsMissing(n_Value) = False Then Call Create.Add(n_Value)
-    End Function
+' ==================================================
+' ====================[Getters/Setters]=============
+' ==================================================
 
-    Public Function Add(n_Value As Variant) As Long
-        RaiseEvent BeforeAdd(n_Value)
-        Size = Size + 1
-        ReDim Preserve p_Data(Size)
-        If IsObject(Temp(i)) Then
-            Set p_Data(Size) = n_Value
-        Else
-            p_Data(Size) = n_Value
-        End If
-        Add = Size
-        RaiseEvent AfterAdd(n_Value)
-    End Function
+Public Property Get Count() As Long
+    Count = mCount
+End Property
 
-    Public Function Delete() As Long
-        Dim i As Long
-        Dim Temp() As Variant
+Public Property Get IsEmpty() As Boolean
+    IsEmpty = (mCount = 0)
+End Property
 
-        RaiseEvent BeforeDelete()
-        Size = Size - 1
-        If Size = -1 Then
-            p_Data = Temp
-        Else
-            Temp = p_Data
-            ReDim p_Data(Size)
-            For i = 0 To Size
-                If IsObject(Temp(i)) Then
-                    Set p_Data(i) = Temp(i + 1)
-                Else
-                    p_Data(i) = Temp(i + 1)
-                End If
-            Next i
-        End If
-        Delete = Size
-        RaiseEvent AfterDelete()
-    End Function
-'
+Public Property Get FrontNode() As std_Node
+    Set FrontNode = mFirstNode
+End Property
 
-' Private Functions
-    Private Sub Class_Initialize()
-        p_Size = -1
-    End Sub
-'
+Public Property Get BackNode() As std_Node
+    Set BackNode = mLastNode
+End Property
+
+Public Property Get NewEnum() As IUnknown
+    Attribute NewEnum.VB_UserMemId = -4
+    Set mEnumerator = std_NodeEnumerator.Create(mFirstNode, False)
+    Set NewEnum = mEnumerator.[_NewEnum]
+End Property
+
+
+' ==================================================
+' ====================[Methods]=====================
+' ==================================================
+
+Public Sub Enqueue(Optional ByVal Value As Variant)
+    Dim NewNode As std_Node
+
+    Set NewNode = std_Node.Create(Value)
+
+    If IsEmpty Then
+        Set mFirstNode = NewNode
+        Set mLastNode = NewNode
+    Else
+        Call mLastNode.AddReference(NewNode)
+        Set mLastNode = NewNode
+    End If
+
+    mCount = mCount + 1
+End Sub
+
+Public Function Dequeue() As std_Node
+    Dim CurrentNode As std_Node
+    Dim NextNode As std_Node
+
+    If IsEmpty Then
+        Err.Raise vbObjectError + 1502, "std_Queue.Dequeue", "Queue is empty."
+    End If
+
+    Set CurrentNode = mFirstNode
+    Set NextNode = CurrentNode.FirstReference
+
+    Call CurrentNode.ClearReferences()
+
+    Set mFirstNode = NextNode
+    mCount = mCount - 1
+
+    If IsEmpty Then
+        Set mLastNode = Nothing
+    End If
+
+    Set Dequeue = CurrentNode
+End Function
+
+Public Function Peek() As std_Node
+    If IsEmpty Then
+        Err.Raise vbObjectError + 1503, "std_Queue.Peek", "Queue is empty."
+    End If
+
+    Set Peek = mFirstNode
+End Function
+
+Public Sub Clear()
+    Dim CurrentNode As std_Node
+    Dim NextNode As std_Node
+
+    Set CurrentNode = mFirstNode
+
+    Do While Not CurrentNode Is Nothing
+        Set NextNode = CurrentNode.FirstReference
+        Call CurrentNode.ClearReferences()
+        Set CurrentNode = NextNode
+    Loop
+
+    Set mFirstNode = Nothing
+    Set mLastNode = Nothing
+    mCount = 0
+End Sub
+
+
+' ==================================================
+' ====================[Helpers]=====================
+' ==================================================

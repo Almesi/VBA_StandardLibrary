@@ -114,8 +114,8 @@ End Function
 '============================================================
 
 Private Function MakeValidator(ByVal Name As String, ByVal DataType As CoreValueType, ByVal ChoiceCollection As ChoiceCollector) As Validator
-    Dim Checker   As IValueChecker
-    Dim Converter As IValueConverter
+    Dim Checker   As ITypeValidator
+    Dim Converter As ITypeConverter
     Select Case DataType
         Case CoreChoice
             Dim ChoiceValues As Collection
