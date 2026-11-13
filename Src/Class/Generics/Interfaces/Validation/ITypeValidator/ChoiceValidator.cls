@@ -10,7 +10,7 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Implements ITypeValidator
+Implements IValidator
 
 Private mChoice As Collection
 
@@ -24,13 +24,22 @@ Friend Sub Initialize(ByVal Choice As Collection)
     Set mChoice = Choice
 End Sub
 
-Private Function ITypeValidator_IsValid(ByVal Value As Variant) As Boolean
+Private Function IValidator_IsValid(ByVal Value As Variant) As Boolean
     Dim Item As Variant
     
     For Each Item In mChoice
         If StrComp(CStr(Item), CStr(Value), vbTextCompare) = 0 Then
-            ITypeValidator_IsValid = True
+            IValidator_IsValid = True
             Exit Function
         End If
     Next Item
+End Function
+
+Private Function IValidator_Identity() As String
+    Dim Message As String
+    Dim Item As Variant
+    For Each Item In mChoice
+        Message = Message & "|" & Item
+    Next Item
+    IValidator_Identity = Mid(Message, 2, Len(Message) - 1)
 End Function

@@ -32,7 +32,7 @@ Public Function ITypeConverter_Convert(ByVal Value As Variant, ByRef Result As V
     ITypeConverter_Convert = True
     Exit Function
 
-ConversionError:
+    ConversionError:
     ITypeConverter_Convert = False
 End Function
 

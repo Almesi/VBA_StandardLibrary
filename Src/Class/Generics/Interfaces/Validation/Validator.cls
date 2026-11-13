@@ -10,60 +10,107 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Private mChecker   As ITypeValidator
+Public Enum CoreValueType
+
+    ' Text
+    CoreString
+    CoreChar
+
+    ' Integers
+    CoreByte
+    CoreShort
+    CoreInteger
+    CoreLong
+    CoreLongLong
+    CoreUInteger
+    CoreULong
+    CoreULongLong
+
+    ' Floating point
+    CoreSingle
+    CoreDouble
+
+    ' Decimal / precise numbers
+    CoreDecimal
+
+    ' Time and Date
+    CoreDate
+    CoreTime
+
+    ' Boolean
+    CoreBoolean
+
+    ' Number abstractions
+    CoreNumber
+    CorePercentage
+    CoreCurrency
+    CoreMoney
+    CoreRatio
+
+    ' Collections
+    CoreArray
+
+    ' References / objects
+    CoreObject
+    CoreNull
+
+    ' Dynamic / language-level
+    CoreVariant
+    CoreAny
+
+    ' Special
+    CoreGuid
+    CoreBinary
+
+    ' Constrained values
+    CoreChoice
+
+End Enum
+
+Private mChecker   As IValidator
 Private mConverter As ITypeConverter
 
 Public Function CreateFromCoreValueType(ByVal ValueType As CoreValueType) As Validator
     Select Case ValueType
-        Case CoreString     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreString)      , GenericConverter.Create(CoreString))
-        Case CoreChar       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreChar)        , GenericConverter.Create(CoreChar))
-        Case CoreByte       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreByte)        , GenericConverter.Create(CoreByte))
-        Case CoreShort      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreShort)       , GenericConverter.Create(CoreShort))
-        Case CoreInteger    : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreInteger)     , GenericConverter.Create(CoreInteger))
-        Case CoreLong       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreLong)        , GenericConverter.Create(CoreLong))
-        Case CoreLongLong   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreLongLong)    , GenericConverter.Create(CoreLongLong))
-        Case CoreUInteger   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreUInteger)    , GenericConverter.Create(CoreUInteger))
-        Case CoreULong      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreULong)       , GenericConverter.Create(CoreULong))
-        Case CoreULongLong  : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreULongLong)   , GenericConverter.Create(CoreULongLong))
-        Case CoreSingle     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreSingle)      , GenericConverter.Create(CoreSingle))
-        Case CoreDouble     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDouble)      , GenericConverter.Create(CoreDouble))
-        Case CoreExtended   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreExtended)    , GenericConverter.Create(CoreExtended))
-        Case CoreDecimal    : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDecimal)     , GenericConverter.Create(CoreDecimal))
-        Case CoreDate       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDate)        , GenericConverter.Create(CoreDate))
-        Case CoreTime       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreTime)        , GenericConverter.Create(CoreTime))
-        Case CoreDateTime   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDateTime)    , GenericConverter.Create(CoreDateTime))
-        Case CoreTimeSpan   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreTimeSpan)    , GenericConverter.Create(CoreTimeSpan))
-        Case CoreDuration   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDuration)    , GenericConverter.Create(CoreDuration))
-        Case CoreBoolean    : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreBoolean)     , GenericConverter.Create(CoreBoolean))
-        Case CoreNumber     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreNumber)      , GenericConverter.Create(CoreNumber))
-        Case CorePercentage : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CorePercentage)  , GenericConverter.Create(CorePercentage))
-        Case CoreCurrency   : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreCurrency)    , GenericConverter.Create(CoreCurrency))
-        Case CoreMoney      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreMoney)       , GenericConverter.Create(CoreMoney))
-        Case CoreRatio      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreRatio)       , GenericConverter.Create(CoreRatio))
-        Case CoreArray      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreArray)       , GenericConverter.Create(CoreArray))
-        Case CoreList       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreList)        , GenericConverter.Create(CoreList))
-        Case CoreDictionary : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreDictionary)  , GenericConverter.Create(CoreDictionary))
-        Case CoreSet        : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreSet)         , GenericConverter.Create(CoreSet))
-        Case CoreTuple      : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreTuple)       , GenericConverter.Create(CoreTuple))
-        Case CoreReference  : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreReference)   , GenericConverter.Create(CoreReference))
-        Case CoreObject     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreObject)      , GenericConverter.Create(CoreObject))
-        Case CoreNull       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreNull)        , GenericConverter.Create(CoreNull))
-        Case CoreVariant    : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreVariant)     , GenericConverter.Create(CoreVariant))
-        Case CoreAny        : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreAny)         , GenericConverter.Create(CoreAny))
-        'Case CoreEnum       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreEnum)        , GenericConverter.Create(CoreEnum))
-        'Case CoreGuid       : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreGuid)        , GenericConverter.Create(CoreGuid))
-        'Case CoreBinary     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreBinary)      , GenericConverter.Create(CoreBinary))
-        'Case CoreChoice     : Set CreateFromCoreValueType = Validator.Create(GenericChecker.Create(CoreChoice)      , GenericConverter.Create(CoreChoice))
+        Case CoreString     : Set CreateFromCoreValueType = Validator.Create(StringValidator.Create(CoreString)          , StringConverter.Create(CoreString))
+        Case CoreChar       : Set CreateFromCoreValueType = Validator.Create(CharValidator.Create(CoreChar)              , CharConverter.Create(CoreChar))
+        Case CoreByte       : Set CreateFromCoreValueType = Validator.Create(ByteValidator.Create(CoreByte)              , ByteConverter.Create(CoreByte))
+        Case CoreShort      : Set CreateFromCoreValueType = Validator.Create(ShortValidator.Create(CoreShort)            , ShortConverter.Create(CoreShort))
+        Case CoreInteger    : Set CreateFromCoreValueType = Validator.Create(IntegerValidator.Create(CoreInteger)        , IntegerConverter.Create(CoreInteger))
+        Case CoreLong       : Set CreateFromCoreValueType = Validator.Create(LongValidator.Create(CoreLong)              , LongConverter.Create(CoreLong))
+        Case CoreLongLong   : Set CreateFromCoreValueType = Validator.Create(LongLongValidator.Create(CoreLongLong)      , LongLongConverter.Create(CoreLongLong))
+        Case CoreUInteger   : Set CreateFromCoreValueType = Validator.Create(UIntegerValidator.Create(CoreUInteger)      , UIntegerConverter.Create(CoreUInteger))
+        Case CoreULong      : Set CreateFromCoreValueType = Validator.Create(ULongValidator.Create(CoreULong)            , ULongConverter.Create(CoreULong))
+        Case CoreULongLong  : Set CreateFromCoreValueType = Validator.Create(ULongLongValidator.Create(CoreULongLong)    , ULongLongConverter.Create(CoreULongLong))
+        Case CoreSingle     : Set CreateFromCoreValueType = Validator.Create(SingleValidator.Create(CoreSingle)          , SingleConverter.Create(CoreSingle))
+        Case CoreDouble     : Set CreateFromCoreValueType = Validator.Create(DoubleValidator.Create(CoreDouble)          , DoubleConverter.Create(CoreDouble))
+        Case CoreDecimal    : Set CreateFromCoreValueType = Validator.Create(DecimalValidator.Create(CoreDecimal)        , DecimalConverter.Create(CoreDecimal))
+        Case CoreDate       : Set CreateFromCoreValueType = Validator.Create(DateValidator.Create(CoreDate)              , DateConverter.Create(CoreDate))
+        Case CoreTime       : Set CreateFromCoreValueType = Validator.Create(TimeValidator.Create(CoreTime)              , TimeConverter.Create(CoreTime))
+        Case CoreBoolean    : Set CreateFromCoreValueType = Validator.Create(BooleanValidator.Create(CoreBoolean)        , BooleanConverter.Create(CoreBoolean))
+        Case CoreNumber     : Set CreateFromCoreValueType = Validator.Create(NumberValidator.Create(CoreNumber)          , NumberConverter.Create(CoreNumber))
+        Case CorePercentage : Set CreateFromCoreValueType = Validator.Create(PercentageValidator.Create(CorePercentage)  , PercentageConverter.Create(CorePercentage))
+        Case CoreCurrency   : Set CreateFromCoreValueType = Validator.Create(CurrencyValidator.Create(CoreCurrency)      , CurrencyConverter.Create(CoreCurrency))
+        Case CoreMoney      : Set CreateFromCoreValueType = Validator.Create(MoneyValidator.Create(CoreMoney)            , MoneyConverter.Create(CoreMoney))
+        Case CoreRatio      : Set CreateFromCoreValueType = Validator.Create(RatioValidator.Create(CoreRatio)            , RatioConverter.Create(CoreRatio))
+        Case CoreArray      : Set CreateFromCoreValueType = Validator.Create(ArrayValidator.Create(CoreArray)            , ArrayConverter.Create(CoreArray))
+        Case CoreObject     : Set CreateFromCoreValueType = Validator.Create(ObjectValidator.Create(CoreObject)          , ObjectConverter.Create(CoreObject))
+        Case CoreNull       : Set CreateFromCoreValueType = Validator.Create(NullValidator.Create(CoreNull)              , NullConverter.Create(CoreNull))
+        Case CoreVariant    : Set CreateFromCoreValueType = Validator.Create(VariantValidator.Create(CoreVariant)        , VariantConverter.Create(CoreVariant))
+        Case CoreAny        : Set CreateFromCoreValueType = Validator.Create(AnyValidator.Create(CoreAny)                , AnyConverter.Create(CoreAny))
+        Case CoreGuid       : Set CreateFromCoreValueType = Validator.Create(GuidValidator.Create(CoreGuid)              , GuidConverter.Create(CoreGuid))
+        Case CoreBinary     : Set CreateFromCoreValueType = Validator.Create(BinaryValidator.Create(CoreBinary)          , BinaryConverter.Create(CoreBinary))
+        Case CoreChoice     : Set CreateFromCoreValueType = Validator.Create(ChoiceValidator.Create(CoreChoice)          , ChoiceConverter.Create(CoreChoice))
     End Select
 End Function
 
-Public Function Create(ByVal Checker As ITypeValidator, ByVal Converter As ITypeConverter) As Validator
+Public Function Create(ByVal Checker As IValidator, ByVal Converter As ITypeConverter) As Validator
     Dim Result As New Validator
     Call Result.Initialize(Checker, Converter)
     Set Create = Result
 End Function
 
-Friend Sub Initialize(ByVal Checker As ITypeValidator, ByVal Converter As ITypeConverter)
+Friend Sub Initialize(ByVal Checker As IValidator, ByVal Converter As ITypeConverter)
     Set mChecker   = Checker
     Set mConverter = Converter
 End Sub
